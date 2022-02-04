@@ -27,4 +27,29 @@ export class AuthService {
             return null
         }
     }
+
+    async getUser(userId: string) {
+        const query = gql`query GetUser($userId:uuid!) {
+            user_by_pk(id:$userId) {
+                id
+                createdAt
+                email
+                firstName
+                lastActive
+                lastName
+                provider
+                status
+                type
+                updatedAt
+            }
+          }`
+        const response = await this.gqlService.client.request(query, {userId})
+        
+        if (response && response.user_by_pk) {
+            return response.user_by_pk
+        } else {
+            console.error('Could not find user');
+            return null
+        }
+    }
 }
