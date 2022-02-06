@@ -21,7 +21,7 @@ export class AuthController {
             throw new HttpException('Invalid Email Password Combination', HttpStatus.BAD_REQUEST)
         }
         const token = this.jwtService.generate(user)
-        return {token}
+        return {token, user}
     }
 
     @Get('me')
