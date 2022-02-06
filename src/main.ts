@@ -2,10 +2,11 @@ import { ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { AppModule } from './app.module';
+import { HttpExceptionFilter } from './filters/httpexception.filter';
 declare const module: any;
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create(AppModule, { cors: true });
 
   app.useGlobalPipes(
     new ValidationPipe({
@@ -13,6 +14,8 @@ async function bootstrap() {
       forbidNonWhitelisted: true // throw an error if non-whitelisted data is sent
     }),
   );  
+  app.useGlobalFilters(new HttpExceptionFilter());
+
 
   const config = new DocumentBuilder()
     .setTitle('Point Motion API')
@@ -41,6 +44,6 @@ async function bootstrap() {
     module.hot.dispose(() => app.close());
   }
 
-  await app.listen(3000);
+  await app.listen(9000);
 }
 bootstrap();
