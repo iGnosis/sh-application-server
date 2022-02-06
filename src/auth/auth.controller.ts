@@ -3,7 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import { ApiBearerAuth, ApiHeader } from '@nestjs/swagger';
 import { AuthService } from 'src/services/auth/auth.service';
 import { JwtService } from 'src/services/jwt/jwt.service';
-import { LoginRequestDto } from './auth.dto';
+import { LoginRequestDto, RequestResetPasswordDto, ResetPasswordDto } from './auth.dto';
 
 @Controller('auth')
 export class AuthController {
@@ -37,5 +37,22 @@ export class AuthController {
         // fetch user details from the database
         const user = await this.authService.getUser(userDetails.id)
         return user
+    }
+
+    @Post('/request-password-reset-link')
+    async requestPasswordResetLink(@Body() body: RequestResetPasswordDto) {
+        const user = await this.authService.findUserByEmail(body.email)
+        if (user) {
+            const url = await this.authService.generatePasswordResetURL(user)
+            this.authService.sendPasswordResetEmail(user, url)
+        }
+        return {result: true}
+    }
+
+    @Post('/reset-password')
+    async resetPassword(@Body() body: ResetPasswordDto) {
+        const user = await this.authService.resetPassword(body.code, body.password)
+        const token = this.jwtService.generate(user)
+        return {token, user}
     }
 }

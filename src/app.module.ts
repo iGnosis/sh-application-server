@@ -6,6 +6,7 @@ import { AuthModule } from './auth/auth.module';
 import { GqlService } from './services/gql/gql.service';
 import { AuthService } from './services/auth/auth.service';
 import { JwtService } from './services/jwt/jwt.service';
+import { EmailService } from './services/email/email.service';
 
 @Module({
   imports: [
@@ -15,6 +16,6 @@ import { JwtService } from './services/jwt/jwt.service';
     })
   ],
   controllers: [AppController],
-  providers: [AppService, GqlService, AuthService, JwtService],
+  providers: [AppService, GqlService, AuthService, JwtService, EmailService],
 })
 export class AppModule {}

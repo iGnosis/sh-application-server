@@ -15,14 +15,24 @@ export class LoginRequestDto {
     password: string;
 }
 
-export class ResetPasswordDto {
+export class RequestResetPasswordDto {
     @ApiProperty({
         description: 'Registered email address'
     })
+    @IsEmail()
     email: string;
+}
+
+export class ResetPasswordDto {
+    @ApiProperty({
+        description: 'New Password'
+    })
+    @IsNotEmpty()
+    password: string;
     
     @ApiProperty({
-        enum: ['aman', 'gautam']
+        description: 'Secret code'
     })
-    password: string;
+    @IsNotEmpty()
+    code: string
 }
