@@ -13,7 +13,7 @@ async function bootstrap() {
       transform: true,
       forbidNonWhitelisted: true // throw an error if non-whitelisted data is sent
     }),
-  );  
+  );
   app.useGlobalFilters(new HttpExceptionFilter());
 
 
@@ -22,7 +22,7 @@ async function bootstrap() {
     .setDescription('Custom APIs for Point Motion')
     .setVersion('1.0')
     .addBearerAuth(
-      { 
+      {
         // I was also testing it without prefix 'Bearer ' before the JWT
         description: `Please enter the JWT token`,
         name: 'Authorization',
@@ -37,12 +37,13 @@ async function bootstrap() {
   const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('api', app, document);
 
-  
-
   if (module.hot) {
     module.hot.accept();
     module.hot.dispose(() => app.close());
   }
+
+  // react to termination signal so we can clean up database connection pool.
+  app.enableShutdownHooks();
 
   await app.listen(9000);
 }
