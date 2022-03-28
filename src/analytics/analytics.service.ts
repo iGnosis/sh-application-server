@@ -9,7 +9,8 @@ export class AnalyticsService {
     private databaseService: DatabaseService
   ) { }
 
-  async getPatientReactionData(patientId: string) {
+  // required to display the reaction chart.
+  async getPatientReactionDataPerActivity(patientId: string) {
     let results = await this.databaseService.executeQuery(
       `-- Average reaction_time per task, score and created_at timestamp which indicates when
        -- the task was completed
@@ -34,6 +35,23 @@ export class AnalyticsService {
     )
 
     // do data manipulation here as required by charts.
+
+    return results;
+  }
+
+  // required to display the Achievement Ratio chart.
+  async getPatientAchievementDataPerActivity(patientId: string) {
+    let results = this.databaseService.executeQuery(`
+      SELECT session, activity, task_id, task_name, AVG(score) as score, created_at
+      FROM events
+      WHERE
+        patient = $1 AND
+        event_type = 'taskCompleted'
+      GROUP BY session, activity, task_id, task_name, created_at
+      ORDER BY CAST(created_at AS BIGINT) ASC`,
+      [patientId])
+
+    // do data manuplation if required
 
     return results;
   }
