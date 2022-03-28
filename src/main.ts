@@ -1,4 +1,5 @@
 import { ValidationPipe } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { NestFactory } from '@nestjs/core';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { AppModule } from './app.module';
@@ -45,6 +46,15 @@ async function bootstrap() {
   // react to termination signal so we can clean up database connection pool.
   app.enableShutdownHooks();
 
-  await app.listen(9000);
+  const configService = new ConfigService()
+
+  let port;
+  if (configService.get('ENV') === 'dev') {
+    port = 9000;
+  } else {
+    port = 443;
+  }
+
+  await app.listen(port);
 }
 bootstrap();
