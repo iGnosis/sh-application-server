@@ -1,4 +1,4 @@
-import { Controller, Get, Body } from "@nestjs/common";
+import { Controller, Body, Post } from "@nestjs/common";
 import { JwtService } from "src/services/jwt/jwt.service";
 import { AnalyticsService } from "./analytics.service";
 
@@ -10,12 +10,12 @@ export class AnalyticsController {
     private analyticsService: AnalyticsService,
   ) {}
 
-  @Get('activity/reaction-time-chart')
+  @Post('activity/reaction-time-chart')
   async reactionTimeChart(@Body('pid') patientId: string) {
     return this.analyticsService.getPatientReactionDataPerActivity(patientId);
   }
 
-  @Get('activity/achievement-ratio-chart')
+  @Post('activity/achievement-ratio-chart')
   async achievementRatioChart(@Body('pid') patientId: string) {
     return this.analyticsService.getPatientAchievementDataPerActivity(patientId);
   }
