@@ -45,16 +45,6 @@ async function bootstrap() {
 
   // react to termination signal so we can clean up database connection pool.
   app.enableShutdownHooks();
-
-  const configService = new ConfigService()
-
-  let port;
-  if (configService.get('ENV') === 'dev') {
-    port = 9000;
-  } else {
-    port = 443;
-  }
-
-  await app.listen(port);
+  await app.listen(9000);
 }
 bootstrap();
