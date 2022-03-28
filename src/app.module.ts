@@ -6,6 +6,7 @@ import { AppService } from './app.service';
 
 import { AuthModule } from './auth/auth.module';
 import { DatabaseModule } from './database/database.module';
+import { AnalyticsModule } from './analytics/analytics.module';
 
 import { AuthService } from './services/auth/auth.service';
 import { GqlService } from './services/gql/gql.service';
@@ -16,6 +17,7 @@ import { EmailService } from './services/email/email.service';
   imports: [
     AuthModule,
     DatabaseModule,
+    AnalyticsModule,
     ConfigModule.forRoot({
       isGlobal: true
     })
