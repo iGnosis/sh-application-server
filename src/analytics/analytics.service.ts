@@ -26,9 +26,9 @@ export class AnalyticsService {
             e2.created_at
       FROM events e1
       JOIN events e2
+      ON e1.attempt_id = e2.attempt_id
       JOIN activity a1
       ON a1.id = e1.activity
-      ON e1.attempt_id = e2.attempt_id
       WHERE e1.patient = $1 AND
             (e1.event_type = 'taskStarted' OR e1.event_type = 'taskReacted') AND
             e2.event_type = 'taskEnded'
