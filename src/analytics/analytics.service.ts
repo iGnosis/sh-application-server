@@ -10,7 +10,7 @@ export class AnalyticsService {
   ) { }
 
   // required to display the reaction chart.
-  async getPatientReactionDataPerActivity(patientId: string) {
+  async getPatientReactionDataPerActivity(sessionId: string) {
     let results = await this.databaseService.executeQuery(
       `-- Average reaction_time per task, score and created_at timestamp which indicates when
        -- the task was completed
@@ -29,12 +29,12 @@ export class AnalyticsService {
       ON e1.attempt_id = e2.attempt_id
       JOIN activity a1
       ON a1.id = e1.activity
-      WHERE e1.patient = $1 AND
+      WHERE e1.session = $1 AND
             (e1.event_type = 'taskStarted' OR e1.event_type = 'taskReacted') AND
             e2.event_type = 'taskEnded'
       GROUP BY e1.session, e1.activity, a1.name, e1.task_id, e1.attempt_id, e1.task_name, e2.created_at, e2.score
       ORDER BY CAST(e2.created_at AS BIGINT) ASC`,
-      [patientId]
+      [sessionId]
     )
 
     // do data manipulation here as required by charts.

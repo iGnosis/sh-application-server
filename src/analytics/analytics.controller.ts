@@ -11,8 +11,8 @@ export class AnalyticsController {
   ) {}
 
   @Post('activity/reaction-time-chart')
-  async reactionTimeChart(@Body('pid') patientId: string) {
-    return this.analyticsService.getPatientReactionDataPerActivity(patientId);
+  async reactionTimeChart(@Body('sessionId') sessionId: string) {
+    return this.analyticsService.getPatientReactionDataPerActivity(sessionId);
   }
 
   @Post('activity/achievement-ratio-chart')
