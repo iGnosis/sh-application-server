@@ -28,7 +28,7 @@ export class AnalyticsService {
       ON e1.attempt_id = e2.attempt_id
       WHERE e1.patient = $1 AND
             (e1.event_type = 'taskStarted' OR e1.event_type = 'taskReacted') AND
-            e2.event_type = 'taskCompleted'
+            e2.event_type = 'taskEnded'
       GROUP BY e1.session, e1.activity, e1.task_id, e1.attempt_id, e1.task_name, e2.created_at, e2.score
       ORDER BY CAST(e2.created_at AS BIGINT) ASC`,
       [patientId]
@@ -46,7 +46,7 @@ export class AnalyticsService {
       FROM events
       WHERE
         patient = $1 AND
-        event_type = 'taskCompleted'
+        event_type = 'taskEnded'
       GROUP BY session, activity, task_id, task_name, created_at
       ORDER BY CAST(created_at AS BIGINT) ASC`,
       [patientId])
