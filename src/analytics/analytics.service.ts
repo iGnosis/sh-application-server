@@ -17,6 +17,7 @@ export class AnalyticsService {
 
       SELECT e1.session,
             e1.activity,
+            a1.name as activity_name,
             e1.task_id,
             e1.attempt_id,
             e1.task_name,
@@ -25,11 +26,13 @@ export class AnalyticsService {
             e2.created_at
       FROM events e1
       JOIN events e2
+      JOIN activity a1
+      ON a1.id = e1.activity
       ON e1.attempt_id = e2.attempt_id
       WHERE e1.patient = $1 AND
             (e1.event_type = 'taskStarted' OR e1.event_type = 'taskReacted') AND
             e2.event_type = 'taskEnded'
-      GROUP BY e1.session, e1.activity, e1.task_id, e1.attempt_id, e1.task_name, e2.created_at, e2.score
+      GROUP BY e1.session, e1.activity, a1.name, e1.task_id, e1.attempt_id, e1.task_name, e2.created_at, e2.score
       ORDER BY CAST(e2.created_at AS BIGINT) ASC`,
       [patientId]
     )
