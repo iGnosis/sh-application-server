@@ -21,7 +21,7 @@ export class AnalyticsService {
             e1.task_id,
             e1.attempt_id,
             e1.task_name,
-            MAX(CAST(e1.created_at AS BIGINT)) - MIN(CAST(e1.created_at AS BIGINT)) as reaction_time,
+            MAX(e1.created_at) - MIN(e1.created_at) as reaction_time,
             e2.score,
             e2.created_at
       FROM events e1
@@ -33,7 +33,7 @@ export class AnalyticsService {
             (e1.event_type = 'taskStarted' OR e1.event_type = 'taskReacted') AND
             e2.event_type = 'taskEnded'
       GROUP BY e1.session, e1.activity, a1.name, e1.task_id, e1.attempt_id, e1.task_name, e2.created_at, e2.score
-      ORDER BY CAST(e2.created_at AS BIGINT) ASC`,
+      ORDER BY e2.created_at ASC`,
       [sessionId]
     )
 
@@ -51,7 +51,7 @@ export class AnalyticsService {
         patient = $1 AND
         event_type = 'taskEnded'
       GROUP BY session, activity, task_id, task_name, created_at
-      ORDER BY CAST(created_at AS BIGINT) ASC`,
+      ORDER BY created_at ASC`,
       [patientId])
 
     // do data manuplation if required
