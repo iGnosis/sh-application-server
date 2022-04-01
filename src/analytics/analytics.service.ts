@@ -30,7 +30,7 @@ export class AnalyticsService {
       JOIN activity a1
       ON a1.id = e1.activity
       WHERE e1.session = $1 AND
-            (e1.event_type = 'taskStarted' OR e1.event_type = 'taskReacted' OR e1.event_type = 'calibrationChanged') AND
+            (e1.event_type = 'taskStarted' OR e1.event_type = 'taskReacted') AND
             e2.event_type = 'taskEnded'
       GROUP BY e1.session, e1.activity, a1.name, e1.task_id, e1.attempt_id, e1.task_name, e2.created_at, e2.score
       ORDER BY e2.created_at ASC`,
