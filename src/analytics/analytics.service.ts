@@ -10,7 +10,7 @@ export class AnalyticsService {
   ) { }
 
   // required to display the reaction chart.
-  async getPatientReactionDataPerActivity(sessionId: string) {
+  async getAnalyticsData(sessionId: string): Promise<Array<any>> {
     let results = await this.databaseService.executeQuery(
       `-- Average reaction_time per task, score and created_at timestamp which indicates when
        -- the task was completed
@@ -57,5 +57,52 @@ export class AnalyticsService {
     // do data manuplation if required
 
     return results;
+  }
+
+  // Put data in hierarchy.
+  transformifyData(sessionList: any[]): any {
+    let patientObject: any = {}
+
+    // build session
+    for (const item of sessionList) {
+      if (item.session) {
+        patientObject[item.session] = {}
+      }
+    }
+
+    // build activity
+    for (const sessionId in patientObject) {
+      // console.log(session)
+      for (const item of sessionList) {
+        if (sessionId == item.session && item.activity) {
+          patientObject[sessionId][item.activity] = {}
+        }
+      }
+    }
+
+    // build events
+    for (const sessionId in patientObject) {
+      for (const activityId in patientObject[sessionId]) {
+        for (const item of sessionList) {
+          if (sessionId == item.session && activityId == item.activity) {
+
+            if (patientObject[sessionId][activityId].events == undefined) {
+              patientObject[sessionId][activityId]['events'] = []
+            }
+
+            patientObject[sessionId][activityId]['events'].push({
+              activityName: item.activity_name,
+              taskName: item.task_name,
+              reactionTime: item.reaction_time,
+              createdAt: item.created_at,
+              score: item.score
+            })
+
+          }
+        }
+      }
+    }
+    // this.logger.debug('tranformifyData:', patientObject)
+    return patientObject
   }
 }
