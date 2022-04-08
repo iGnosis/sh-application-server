@@ -1,4 +1,4 @@
-import { Controller, Body, Post } from "@nestjs/common";
+import { Controller, Body, Post, HttpCode } from "@nestjs/common";
 import { JwtService } from "src/services/jwt/jwt.service";
 import { AnalyticsService } from "./analytics.service";
 
@@ -15,6 +15,7 @@ export class AnalyticsController {
     return this.analyticsService.getAnalyticsData(sessionId);
   }
 
+  @HttpCode(200)
   @Post('activity/data')
   async getAnalyticsData(@Body('sessionIds') sessionIds: Array<string>) {
 
