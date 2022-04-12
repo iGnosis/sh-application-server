@@ -93,9 +93,9 @@ export class AnalyticsService {
             patientObject[sessionId][activityId]['events'].push({
               activityName: item.activity_name,
               taskName: item.task_name,
-              reactionTime: item.reaction_time,
-              createdAt: item.created_at,
-              score: item.score
+              reactionTime: parseFloat(item.reaction_time),
+              createdAt: parseInt(item.created_at),
+              score: parseFloat(item.score)
             })
 
           }
