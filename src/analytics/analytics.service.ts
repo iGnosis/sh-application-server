@@ -44,16 +44,18 @@ export class AnalyticsService {
 
   async achievementPerSession(patientId: string, startDate: string, endDate: string) {
     let results = this.databaseService.executeQuery(`
-    SELECT e1.session AS "sessionId", s1."createdAt", avg(e1.score) AS "avgAchievement"
+    SELECT e1.session AS "sessionId", s1."createdAt", c1.name AS "careplanName", avg(e1.score) AS "avgAchievement"
     FROM events e1
     JOIN session s1
     ON e1.session = s1.id
+    JOIN careplan c1
+    ON s1.careplan = c1.id
     WHERE
         e1.event_type = 'taskEnded' AND
         s1.patient = $1 AND
         s1."createdAt" >= $2 AND
         s1."createdAt" <= $3
-    GROUP BY e1.session, s1."createdAt"
+    GROUP BY e1.session, c1.name, s1."createdAt"
     ORDER BY s1."createdAt" ASC`, [patientId, startDate, endDate])
     return results;
   }
