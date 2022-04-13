@@ -2,7 +2,6 @@ import { Controller, Body, Post, HttpCode } from "@nestjs/common";
 import { JwtService } from "src/services/jwt/jwt.service";
 import { AnalyticsService } from "./analytics.service";
 
-
 @Controller('analytics')
 export class AnalyticsController {
   constructor(
@@ -27,7 +26,11 @@ export class AnalyticsController {
 
   @HttpCode(200)
   @Post('session/achievement-ratio')
-  async sessionAchievementRatio(@Body('sessionIds') sessionIds: Array<string>) {
-    return this.analyticsService.achievementPerSession(sessionIds);
+  async sessionAchievementRatio(
+    @Body('patientId') patientId: string,
+    @Body('startDate') startDate: string,
+    @Body('endDate') endDate: string,
+  ) {
+    return this.analyticsService.achievementPerSession(patientId, startDate, endDate);
   }
 }
