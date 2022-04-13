@@ -25,6 +25,7 @@ export class AnalyticsController {
     return this.analyticsService.transformifyData(results)
   }
 
+  @HttpCode(200)
   @Post('session/achievement-ratio')
   async sessionAchievementRatio(@Body('sessionIds') sessionIds: Array<string>) {
     return this.analyticsService.achievementPerSession(sessionIds);
