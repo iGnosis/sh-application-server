@@ -42,20 +42,12 @@ export class AnalyticsService {
     return results;
   }
 
-  // required to display the Achievement Ratio chart.
-  async getPatientAchievementDataPerActivity(patientId: string) {
+  async achievementPerSession(sessionIds: Array<string>) {
     let results = this.databaseService.executeQuery(`
-      SELECT session, activity, task_id, task_name, AVG(score) as score, created_at
-      FROM events
-      WHERE
-        patient = $1 AND
-        event_type = 'taskEnded'
-      GROUP BY session, activity, task_id, task_name, created_at
-      ORDER BY created_at ASC`,
-      [patientId])
-
-    // do data manuplation if required
-
+    SELECT session AS "sessionId", avg(score) AS "avgAchievement"
+    FROM events
+    WHERE session = ANY($1::uuid[]) AND event_type = 'taskEnded'
+    GROUP BY session`, [sessionIds])
     return results;
   }
 

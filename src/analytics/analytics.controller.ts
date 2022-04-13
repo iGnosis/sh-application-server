@@ -10,13 +10,8 @@ export class AnalyticsController {
     private analyticsService: AnalyticsService,
   ) { }
 
-  @Post('activity/reaction-time-chart')
-  async reactionTimeChart(@Body('sessionId') sessionId: string) {
-    return this.analyticsService.getAnalyticsData(sessionId);
-  }
-
   @HttpCode(200)
-  @Post('activity/data')
+  @Post('session/data')
   async getAnalyticsData(@Body('sessionIds') sessionIds: Array<string>) {
 
     let results = []
@@ -30,8 +25,8 @@ export class AnalyticsController {
     return this.analyticsService.transformifyData(results)
   }
 
-  @Post('activity/achievement-ratio-chart')
-  async achievementRatioChart(@Body('pid') patientId: string) {
-    return this.analyticsService.getPatientAchievementDataPerActivity(patientId);
+  @Post('session/achievement-ratio')
+  async sessionAchievementRatio(@Body('sessionIds') sessionIds: Array<string>) {
+    return this.analyticsService.achievementPerSession(sessionIds);
   }
 }
