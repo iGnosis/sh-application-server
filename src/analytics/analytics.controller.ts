@@ -33,4 +33,14 @@ export class AnalyticsController {
   ) {
     return this.analyticsService.achievementPerSession(patientId, startDate, endDate);
   }
+
+  @HttpCode(200)
+  @Post('session/engagement-ratio')
+  async sessionEngagementRatio(
+    @Body('patientId') patientId: string,
+    @Body('startDate') startDate: string,
+    @Body('endDate') endDate: string,
+  ) {
+    return this.analyticsService.engagementRatio(patientId, startDate, endDate)
+  }
 }

@@ -36,9 +36,6 @@ export class AnalyticsService {
       ORDER BY e2.created_at ASC`,
       [sessionId]
     )
-
-    // do data manipulation here as required by charts.
-
     return results;
   }
 
@@ -58,6 +55,47 @@ export class AnalyticsService {
     GROUP BY e1.session, c1.name, s1."createdAt"
     ORDER BY s1."createdAt" ASC`, [patientId, startDate, endDate])
     return results;
+  }
+
+  async engagementRatio(patientId: string, startDate: string, endDate: string) {
+    let results = await this.databaseService.executeQuery(`
+    -- Engagement Chart Analytics
+    SELECT
+        s1.id AS "sessionId",
+        s1."createdAt" AS "sessionCreatedAt",
+        s1.careplan AS "careplanId",
+        c1.name AS "careplanName",
+        CAST(SUM(ca1.reps) AS INT) AS "totalRepsCount"
+    FROM session s1
+    JOIN careplan_activity ca1
+    ON ca1.careplan = s1.careplan
+    JOIN careplan c1
+    ON c1.id = ca1.careplan
+    JOIN events e1
+    ON e1.session = s1.id
+    WHERE
+        s1.patient = $1 AND
+        s1."createdAt" >= $2 AND -- startDate
+        s1."createdAt" <= $3 AND -- endDate
+        e1.event_type = 'taskEnded'
+    GROUP BY
+        s1.id, c1.id, ca1.careplan, e1.id
+    ORDER BY s1."createdAt" ASC`, [patientId, startDate, endDate])
+
+    const sessionIds = results.map(o => o.sessionId)
+    const filteredResults = results.filter(({ sessionId }, index) => !sessionIds.includes(sessionId, index + 1))
+
+    filteredResults.forEach(item => {
+      const id = item.sessionId
+      item.totalTasksCount = 0
+      results.forEach(result => {
+        if (id === result.sessionId) {
+          item.totalTasksCount++
+        }
+      })
+      item.engagementRatio = parseFloat((item.totalTasksCount / item.totalRepsCount).toFixed(2))
+    })
+    return filteredResults;
   }
 
   // Put data in hierarchy.
