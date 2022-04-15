@@ -12,35 +12,39 @@ export class AnalyticsController {
   @HttpCode(200)
   @Post('session/data')
   async getAnalyticsData(@Body('sessionIds') sessionIds: Array<string>) {
-
     let results = []
-
-    // make SQL calls for each sessionId
     await Promise.all(sessionIds.map(async (sessionId: string) => {
       const sessionDetails = await this.analyticsService.getAnalyticsData(sessionId)
       results = [...results, ...sessionDetails]
     }))
-
     return this.analyticsService.transformifyData(results)
-  }
-
-  @HttpCode(200)
-  @Post('session/achievement-ratio')
-  async sessionAchievementRatio(
-    @Body('patientId') patientId: string,
-    @Body('startDate') startDate: string,
-    @Body('endDate') endDate: string,
-  ) {
-    return this.analyticsService.achievementPerSession(patientId, startDate, endDate);
   }
 
   @HttpCode(200)
   @Post('session/engagement-ratio')
   async sessionEngagementRatio(
+    @Body('sessionId') sessionId: string
+  ) {
+    return this.analyticsService.sessionEngagementRatio(sessionId)
+  }
+
+  @HttpCode(200)
+  @Post('patient/achievement-ratio')
+  async patientAchievementRatio(
     @Body('patientId') patientId: string,
     @Body('startDate') startDate: string,
     @Body('endDate') endDate: string,
   ) {
-    return this.analyticsService.engagementRatio(patientId, startDate, endDate)
+    return this.analyticsService.patientAchievementPerSession(patientId, startDate, endDate);
+  }
+
+  @HttpCode(200)
+  @Post('patient/engagement-ratio')
+  async patientEngagementRatio(
+    @Body('patientId') patientId: string,
+    @Body('startDate') startDate: string,
+    @Body('endDate') endDate: string,
+  ) {
+    return this.analyticsService.patientEngagementRatio(patientId, startDate, endDate)
   }
 }

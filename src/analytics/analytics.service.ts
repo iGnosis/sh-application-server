@@ -39,7 +39,7 @@ export class AnalyticsService {
     return results;
   }
 
-  async achievementPerSession(patientId: string, startDate: string, endDate: string) {
+  async patientAchievementPerSession(patientId: string, startDate: string, endDate: string) {
     let results = this.databaseService.executeQuery(`
     SELECT e1.session AS "sessionId", s1."createdAt", c1.name AS "careplanName", avg(e1.score) AS "avgAchievement"
     FROM events e1
@@ -57,7 +57,7 @@ export class AnalyticsService {
     return results;
   }
 
-  async engagementRatio(patientId: string, startDate: string, endDate: string) {
+  async patientEngagementRatio(patientId: string, startDate: string, endDate: string) {
     let results = await this.databaseService.executeQuery(`
     -- Engagement Chart Analytics
     SELECT
@@ -96,6 +96,31 @@ export class AnalyticsService {
       item.engagementRatio = parseFloat((item.totalTasksCount / item.totalRepsCount).toFixed(2))
     })
     return filteredResults;
+  }
+
+  async sessionEngagementRatio(sessionId: string) {
+    let results = await this.databaseService.executeQuery(`
+    SELECT
+      s1.id AS "sessionId",
+      SUM(ca1.reps) AS "totalRepsCount"
+    FROM session s1
+    JOIN careplan_activity ca1
+    ON ca1.careplan = s1.careplan
+    JOIN careplan c1
+    ON c1.id = ca1.careplan
+    JOIN events e1
+    ON e1.session = s1.id
+    WHERE
+      s1.id = $1 AND
+      e1.event_type = 'taskEnded'
+    GROUP BY
+      s1.id, e1.id`, [sessionId])
+
+    if (results && Array.isArray(results) && results.length > 0) {
+      const totalReps = results[0].totalRepsCount
+      const totalCompletedTask = results.length
+      return (totalCompletedTask / totalReps) * 100
+    }
   }
 
   // Put data in hierarchy.
