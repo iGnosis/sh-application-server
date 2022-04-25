@@ -1,11 +1,11 @@
-import { Body, Controller, HttpCode, Post, Response, StreamableFile } from "@nestjs/common";
-import { JwtService } from "src/services/jwt/jwt.service";
+import { Body, Controller, HttpCode, Post, Response, StreamableFile, UseGuards } from "@nestjs/common";
+import { AuthGuard } from "src/services/guard/auth.guard";
 import { PollyService } from "src/speechSynthesis/polly/polly.service";
 
 @Controller('speech')
+@UseGuards(AuthGuard)
 export class SpeechSynthesisController {
   constructor(
-    private jwtService: JwtService,
     private pollyService: PollyService
   ) { }
 

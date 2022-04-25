@@ -1,11 +1,11 @@
-import { Controller, Body, Post, HttpCode } from "@nestjs/common";
-import { JwtService } from "src/services/jwt/jwt.service";
+import { Controller, Body, Post, HttpCode, UseGuards } from "@nestjs/common";
+import { AuthGuard } from "src/services/guard/auth.guard";
 import { AnalyticsService } from "./analytics.service";
 
 @Controller('analytics')
+@UseGuards(AuthGuard)
 export class AnalyticsController {
   constructor(
-    private jwtService: JwtService,
     private analyticsService: AnalyticsService,
   ) { }
 
