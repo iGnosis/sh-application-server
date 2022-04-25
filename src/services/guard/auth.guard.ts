@@ -10,6 +10,9 @@ export class AuthGuard implements CanActivate {
   canActivate(context: ExecutionContext): boolean {
     const request = context.switchToHttp().getRequest();
 
+    // TODO: disable guard temporarily
+    return true
+
     if (!request || !request.headers || !request.headers.authorization) {
       return false
     }
@@ -20,6 +23,6 @@ export class AuthGuard implements CanActivate {
       return true
     }
     // TODO: disable guard temporarily
-    return true
+    return false
   }
 }
