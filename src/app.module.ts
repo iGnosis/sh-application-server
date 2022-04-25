@@ -12,12 +12,14 @@ import { AuthService } from './services/auth/auth.service';
 import { GqlService } from './services/gql/gql.service';
 import { JwtService } from './services/jwt/jwt.service';
 import { EmailService } from './services/email/email.service';
+import { SpeechSynthesisModule } from './speechSynthesis/speechSynthesis.module';
 
 @Module({
   imports: [
     AuthModule,
     DatabaseModule,
     AnalyticsModule,
+    SpeechSynthesisModule,
     ConfigModule.forRoot({
       isGlobal: true
     })
