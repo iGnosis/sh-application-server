@@ -1,8 +1,8 @@
-import { Logger, Module } from "@nestjs/common";
-import { ConfigService } from "@nestjs/config";
-import { ModuleRef } from "@nestjs/core";
+import { Logger, Module } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+import { ModuleRef } from '@nestjs/core';
 import { Pool } from 'pg';
-import { DatabaseService } from "./database.service";
+import { DatabaseService } from './database.service';
 
 // The purpose of this module is to connect to the database
 // expose a service for executing queries on the database.
@@ -25,14 +25,14 @@ const databasePoolFactory = async (configService: ConfigService) => {
       inject: [ConfigService],
       useFactory: databasePoolFactory,
     },
-    DatabaseService
+    DatabaseService,
   ],
-  exports: [DatabaseService]
+  exports: [DatabaseService],
 })
 export class DatabaseModule {
   private readonly logger = new Logger(DatabaseModule.name);
 
-  constructor(private readonly moduleRef: ModuleRef) { }
+  constructor(private readonly moduleRef: ModuleRef) {}
 
   onApplicationShutdown(signal?: string): any {
     this.logger.log(`Shutting down on signal ${signal}`);

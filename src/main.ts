@@ -1,5 +1,4 @@
 import { ValidationPipe } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
 import { NestFactory } from '@nestjs/core';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { AppModule } from './app.module';
@@ -12,11 +11,10 @@ async function bootstrap() {
   app.useGlobalPipes(
     new ValidationPipe({
       transform: true,
-      forbidNonWhitelisted: true // throw an error if non-whitelisted data is sent
+      forbidNonWhitelisted: true, // throw an error if non-whitelisted data is sent
     }),
   );
   app.useGlobalFilters(new HttpExceptionFilter());
-
 
   const config = new DocumentBuilder()
     .setTitle('Point Motion API')
@@ -30,7 +28,7 @@ async function bootstrap() {
         bearerFormat: 'Bearer',
         scheme: 'Bearer',
         type: 'http',
-        in: 'Header'
+        in: 'Header',
       },
       'access-token', // This name here is important for matching up with @ApiBearerAuth() in your controller!
     )

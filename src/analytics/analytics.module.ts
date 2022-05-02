@@ -7,7 +7,6 @@ import { AnalyticsService } from './analytics.service';
 @Module({
   imports: [DatabaseModule],
   controllers: [AnalyticsController],
-  providers: [JwtService, AnalyticsService]
+  providers: [JwtService, AnalyticsService],
 })
-
-export class AnalyticsModule { }
+export class AnalyticsModule {}

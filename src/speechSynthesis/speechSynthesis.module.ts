@@ -5,6 +5,6 @@ import { SpeechSynthesisController } from './speechSynthesis.controller';
 
 @Module({
   controllers: [SpeechSynthesisController],
-  providers: [JwtService, PollyService]
+  providers: [JwtService, PollyService],
 })
-export class SpeechSynthesisModule { }
+export class SpeechSynthesisModule {}

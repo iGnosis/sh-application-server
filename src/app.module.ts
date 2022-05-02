@@ -21,10 +21,10 @@ import { SpeechSynthesisModule } from './speechSynthesis/speechSynthesis.module'
     AnalyticsModule,
     SpeechSynthesisModule,
     ConfigModule.forRoot({
-      isGlobal: true
-    })
+      isGlobal: true,
+    }),
   ],
   controllers: [AppController],
   providers: [AppService, GqlService, AuthService, JwtService, EmailService],
 })
-export class AppModule { }
+export class AppModule {}

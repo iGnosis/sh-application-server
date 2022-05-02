@@ -7,6 +7,6 @@ import { AuthController } from './auth.controller';
 
 @Module({
   controllers: [AuthController],
-  providers: [AuthService, GqlService, JwtService, EmailService]
+  providers: [AuthService, GqlService, JwtService, EmailService],
 })
 export class AuthModule {}

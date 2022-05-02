@@ -1,17 +1,15 @@
-import { Injectable, Logger } from "@nestjs/common";
-import { DatabaseService } from "src/database/database.service";
+import { Injectable, Logger } from '@nestjs/common';
+import { DatabaseService } from 'src/database/database.service';
 
 @Injectable()
 export class AnalyticsService {
   private readonly logger = new Logger(AnalyticsService.name);
 
-  constructor(
-    private databaseService: DatabaseService
-  ) { }
+  constructor(private databaseService: DatabaseService) {}
 
   // required to display the reaction chart.
   async getAnalyticsData(sessionId: string): Promise<Array<any>> {
-    let results = await this.databaseService.executeQuery(
+    const results = await this.databaseService.executeQuery(
       `-- Average reaction_time per task, score and created_at timestamp which indicates when
        -- the task was completed
 
@@ -34,13 +32,18 @@ export class AnalyticsService {
             e2.event_type = 'taskEnded'
       GROUP BY e1.session, e1.activity, a1.name, e1.task_id, e1.attempt_id, e1.task_name, e2.created_at, e2.score
       ORDER BY e2.created_at ASC`,
-      [sessionId]
-    )
+      [sessionId],
+    );
     return results;
   }
 
-  async patientAchievementPerSession(patientId: string, startDate: string, endDate: string) {
-    let results = this.databaseService.executeQuery(`
+  async patientAchievementPerSession(
+    patientId: string,
+    startDate: string,
+    endDate: string,
+  ) {
+    const results = this.databaseService.executeQuery(
+      `
     SELECT e1.session AS "sessionId", s1."createdAt", c1.name AS "careplanName", avg(e1.score) AS "avgAchievement"
     FROM events e1
     JOIN session s1
@@ -53,12 +56,19 @@ export class AnalyticsService {
         s1."createdAt" >= $2 AND
         s1."createdAt" <= $3
     GROUP BY e1.session, c1.name, s1."createdAt"
-    ORDER BY s1."createdAt" ASC`, [patientId, startDate, endDate])
+    ORDER BY s1."createdAt" ASC`,
+      [patientId, startDate, endDate],
+    );
     return results;
   }
 
-  async patientEngagementRatio(patientId: string, startDate: string, endDate: string) {
-    let results = await this.databaseService.executeQuery(`
+  async patientEngagementRatio(
+    patientId: string,
+    startDate: string,
+    endDate: string,
+  ) {
+    const results = await this.databaseService.executeQuery(
+      `
     -- Engagement Chart Analytics
     SELECT
         s1.id AS "sessionId",
@@ -80,26 +90,33 @@ export class AnalyticsService {
         e1.event_type = 'taskEnded'
     GROUP BY
         s1.id, c1.id, ca1.careplan, e1.id
-    ORDER BY s1."createdAt" ASC`, [patientId, startDate, endDate])
+    ORDER BY s1."createdAt" ASC`,
+      [patientId, startDate, endDate],
+    );
 
-    const sessionIds = results.map(o => o.sessionId)
-    const filteredResults = results.filter(({ sessionId }, index) => !sessionIds.includes(sessionId, index + 1))
+    const sessionIds = results.map((o) => o.sessionId);
+    const filteredResults = results.filter(
+      ({ sessionId }, index) => !sessionIds.includes(sessionId, index + 1),
+    );
 
-    filteredResults.forEach(item => {
-      const id = item.sessionId
-      item.totalTasksCount = 0
-      results.forEach(result => {
+    filteredResults.forEach((item) => {
+      const id = item.sessionId;
+      item.totalTasksCount = 0;
+      results.forEach((result) => {
         if (id === result.sessionId) {
-          item.totalTasksCount++
+          item.totalTasksCount++;
         }
-      })
-      item.engagementRatio = parseFloat((item.totalTasksCount / item.totalRepsCount).toFixed(2))
-    })
+      });
+      item.engagementRatio = parseFloat(
+        (item.totalTasksCount / item.totalRepsCount).toFixed(2),
+      );
+    });
     return filteredResults;
   }
 
   async sessionEngagementRatio(sessionId: string) {
-    let results = await this.databaseService.executeQuery(`
+    const results = await this.databaseService.executeQuery(
+      `
     SELECT
       s1.id AS "sessionId",
       SUM(ca1.reps) AS "totalRepsCount"
@@ -114,23 +131,25 @@ export class AnalyticsService {
       s1.id = $1 AND
       e1.event_type = 'taskEnded'
     GROUP BY
-      s1.id, e1.id`, [sessionId])
+      s1.id, e1.id`,
+      [sessionId],
+    );
 
     if (results && Array.isArray(results) && results.length > 0) {
-      const totalReps = results[0].totalRepsCount
-      const totalCompletedTask = results.length
-      return (totalCompletedTask / totalReps) * 100
+      const totalReps = results[0].totalRepsCount;
+      const totalCompletedTask = results.length;
+      return (totalCompletedTask / totalReps) * 100;
     }
   }
 
   // Put data in hierarchy.
   transformifyData(sessionList: any[]): any {
-    let patientObject: any = {}
+    const patientObject: any = {};
 
     // build session
     for (const item of sessionList) {
       if (item.session) {
-        patientObject[item.session] = {}
+        patientObject[item.session] = {};
       }
     }
 
@@ -139,7 +158,7 @@ export class AnalyticsService {
       // console.log(session)
       for (const item of sessionList) {
         if (sessionId == item.session && item.activity) {
-          patientObject[sessionId][item.activity] = {}
+          patientObject[sessionId][item.activity] = {};
         }
       }
     }
@@ -149,9 +168,8 @@ export class AnalyticsService {
       for (const activityId in patientObject[sessionId]) {
         for (const item of sessionList) {
           if (sessionId == item.session && activityId == item.activity) {
-
             if (patientObject[sessionId][activityId].events == undefined) {
-              patientObject[sessionId][activityId]['events'] = []
+              patientObject[sessionId][activityId]['events'] = [];
             }
 
             patientObject[sessionId][activityId]['events'].push({
@@ -159,14 +177,13 @@ export class AnalyticsService {
               taskName: item.task_name,
               reactionTime: parseFloat(item.reaction_time),
               createdAt: parseInt(item.created_at),
-              score: parseFloat(item.score)
-            })
-
+              score: parseFloat(item.score),
+            });
           }
         }
       }
     }
     // this.logger.debug('tranformifyData:', patientObject)
-    return patientObject
+    return patientObject;
   }
 }
