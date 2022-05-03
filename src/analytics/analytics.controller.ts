@@ -13,9 +13,7 @@ export class AnalyticsController {
     let results = [];
     await Promise.all(
       sessionIds.map(async (sessionId: string) => {
-        const sessionDetails = await this.analyticsService.getAnalyticsData(
-          sessionId,
-        );
+        const sessionDetails = await this.analyticsService.getAnalyticsData(sessionId);
         results = [...results, ...sessionDetails];
       }),
     );
@@ -35,11 +33,7 @@ export class AnalyticsController {
     @Body('startDate') startDate: string,
     @Body('endDate') endDate: string,
   ) {
-    return this.analyticsService.patientAchievementPerSession(
-      patientId,
-      startDate,
-      endDate,
-    );
+    return this.analyticsService.patientAchievementPerSession(patientId, startDate, endDate);
   }
 
   @HttpCode(200)
@@ -49,10 +43,6 @@ export class AnalyticsController {
     @Body('startDate') startDate: string,
     @Body('endDate') endDate: string,
   ) {
-    return this.analyticsService.patientEngagementRatio(
-      patientId,
-      startDate,
-      endDate,
-    );
+    return this.analyticsService.patientEngagementRatio(patientId, startDate, endDate);
   }
 }

@@ -40,10 +40,7 @@ export class AuthService {
       return null;
     }
 
-    const isValidPassword = await this.compareHash(
-      credentials.password,
-      response.user[0].password,
-    );
+    const isValidPassword = await this.compareHash(credentials.password, response.user[0].password);
     if (!isValidPassword) return null;
 
     // delete password hash from user before sending a response
@@ -105,9 +102,7 @@ export class AuthService {
     const email: any = {};
     email.to = [user.email];
     email.subject = '[Point Motion] Your Password Reset Link';
-    email.body =
-      'Here is your password reset link (valid only for next 60 minutes) ' +
-      url;
+    email.body = 'Here is your password reset link (valid only for next 60 minutes) ' + url;
     email.text =
       'Here is your password reset link (valid only for next 60 minutes). Please copy paste this password reset link in your browser ' +
       url;
@@ -117,19 +112,12 @@ export class AuthService {
 
   async generatePasswordResetURL(user: User) {
     const uuid = uuidv4();
-    const url =
-      this.configService.get('SERVER_BASE_URL') +
-      '/public/auth/set-password/' +
-      uuid;
+    const url = this.configService.get('SERVER_BASE_URL') + '/public/auth/set-password/' + uuid;
     const dd = new Date();
     dd.setMinutes(dd.getMinutes() + 20);
     // Update the UUID in the database
     const mutation = gql`
-      mutation UpdateResetCode(
-        $user: uuid!
-        $expiry: timestamptz
-        $code: String
-      ) {
+      mutation UpdateResetCode($user: uuid!, $expiry: timestamptz, $code: String) {
         update_user_by_pk(
           pk_columns: { id: $user }
           _set: { resetPasswordExpiry: $expiry, resetPasswordCode: $code }
@@ -157,10 +145,7 @@ export class AuthService {
       query FindUser($code: String, $now: timestamptz) {
         user(
           where: {
-            _and: {
-              resetPasswordCode: { _eq: $code }
-              resetPasswordExpiry: { _gte: $now }
-            }
+            _and: { resetPasswordCode: { _eq: $code }, resetPasswordExpiry: { _gte: $now } }
           }
         ) {
           id
@@ -176,43 +161,30 @@ export class AuthService {
       code,
       now: new Date().toISOString(),
     });
-    if (
-      !response ||
-      !Array.isArray(response.user) ||
-      response.user.length == 0
-    ) {
-      throw new HttpException(
-        'Invalid or expired link.',
-        HttpStatus.BAD_REQUEST,
-      );
+    if (!response || !Array.isArray(response.user) || response.user.length == 0) {
+      throw new HttpException('Invalid or expired link.', HttpStatus.BAD_REQUEST);
     }
 
     // Take the first user and update it's password
     const id = response.user[0].id;
     const updateUserMutation = gql`
       mutation UpdatePassword($user: uuid!, $password: String) {
-        update_user_by_pk(
-          pk_columns: { id: $user }
-          _set: { password: $password }
-        ) {
+        update_user_by_pk(pk_columns: { id: $user }, _set: { password: $password }) {
           id
           password
         }
       }
     `;
-    const updateResponse = await this.gqlService.client.request(
-      updateUserMutation,
-      { user: id, password },
-    );
+    const updateResponse = await this.gqlService.client.request(updateUserMutation, {
+      user: id,
+      password,
+    });
     if (
       !updateResponse ||
       !updateResponse.update_user_by_pk ||
       updateResponse.update_user_by_pk.password != password
     ) {
-      throw new HttpException(
-        'Could not update password',
-        HttpStatus.BAD_REQUEST,
-      );
+      throw new HttpException('Could not update password', HttpStatus.BAD_REQUEST);
     }
 
     return response.user[0];

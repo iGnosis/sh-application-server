@@ -11,28 +11,18 @@ import {
 import { ApiBearerAuth } from '@nestjs/swagger';
 import { AuthService } from 'src/services/auth/auth.service';
 import { JwtService } from 'src/services/jwt/jwt.service';
-import {
-  LoginRequestDto,
-  RequestResetPasswordDto,
-  ResetPasswordDto,
-} from './auth.dto';
+import { LoginRequestDto, RequestResetPasswordDto, ResetPasswordDto } from './auth.dto';
 
 @Controller('auth')
 export class AuthController {
-  constructor(
-    private authService: AuthService,
-    private jwtService: JwtService,
-  ) {}
+  constructor(private authService: AuthService, private jwtService: JwtService) {}
 
   @Post('login')
   @HttpCode(200)
   async login(@Body() body: LoginRequestDto) {
     const user = await this.authService.login(body);
     if (!user) {
-      throw new HttpException(
-        'Invalid Email Password Combination',
-        HttpStatus.BAD_REQUEST,
-      );
+      throw new HttpException('Invalid Email Password Combination', HttpStatus.BAD_REQUEST);
     }
     const token = this.jwtService.generate(user);
     return { token, user };

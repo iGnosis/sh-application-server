@@ -17,10 +17,7 @@ export class SpeechSynthesisController {
 
   @HttpCode(200)
   @Post('generate')
-  func(
-    @Body('text') text: string,
-    @Response({ passthrough: true }) res,
-  ): Promise<StreamableFile> {
+  func(@Body('text') text: string, @Response({ passthrough: true }) res): Promise<StreamableFile> {
     const result = this.pollyService.generateSpeech(text);
     res.set({
       'Content-Type': 'audio/mpeg',

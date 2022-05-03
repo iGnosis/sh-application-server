@@ -37,11 +37,7 @@ export class AnalyticsService {
     return results;
   }
 
-  async patientAchievementPerSession(
-    patientId: string,
-    startDate: string,
-    endDate: string,
-  ) {
+  async patientAchievementPerSession(patientId: string, startDate: string, endDate: string) {
     const results = this.databaseService.executeQuery(
       `
     SELECT e1.session AS "sessionId", s1."createdAt", c1.name AS "careplanName", avg(e1.score) AS "avgAchievement"
@@ -62,11 +58,7 @@ export class AnalyticsService {
     return results;
   }
 
-  async patientEngagementRatio(
-    patientId: string,
-    startDate: string,
-    endDate: string,
-  ) {
+  async patientEngagementRatio(patientId: string, startDate: string, endDate: string) {
     const results = await this.databaseService.executeQuery(
       `
     -- Engagement Chart Analytics
@@ -107,9 +99,7 @@ export class AnalyticsService {
           item.totalTasksCount++;
         }
       });
-      item.engagementRatio = parseFloat(
-        (item.totalTasksCount / item.totalRepsCount).toFixed(2),
-      );
+      item.engagementRatio = parseFloat((item.totalTasksCount / item.totalRepsCount).toFixed(2));
     });
     return filteredResults;
   }
