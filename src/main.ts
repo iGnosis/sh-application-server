@@ -43,6 +43,8 @@ async function bootstrap() {
 
   // react to termination signal so we can clean up database connection pool.
   app.enableShutdownHooks();
-  await app.listen(9000);
+  const port = 9000;
+  await app.listen(port);
+  console.log('Started server on port ' + port);
 }
 bootstrap();
