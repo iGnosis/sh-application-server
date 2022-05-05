@@ -14,7 +14,7 @@ import { SpeechSynthesisDto } from './speechSynthesis.dto';
 @Controller('speech')
 @UseGuards(AuthGuard)
 export class SpeechSynthesisController {
-  constructor(private pollyService: PollyService) { }
+  constructor(private pollyService: PollyService) {}
 
   @HttpCode(200)
   @Get('generate')
