@@ -5,12 +5,16 @@ import { gql } from 'graphql-request';
 
 @Injectable()
 export class CronService {
-  constructor(private databaseService: DatabaseService, private gqlService: GqlService) {}
+  constructor(private databaseService: DatabaseService, private gqlService: GqlService) { }
 
+  // mark sessions with no events in past 45mins as 'trashed'
+  // this happens when a session is created but no corresponding events are found.
   async trashSessions() {
-    const result: Array<{ sessionId: string }> = await this.databaseService.executeQuery(`
+    const result: Array<{ sessionId: string; createdAt: string }> = await this.databaseService
+      .executeQuery(`
       SELECT
-        s1.id as "sessionId"
+        s1.id as "sessionId",
+        s1."createdAt"
       FROM session s1
       LEFT JOIN events e1
         ON e1.session = s1.id
@@ -22,7 +26,20 @@ export class CronService {
         e1.created_at IS NULL
       GROUP BY s1.id, s1."createdAt"
       ORDER BY s1."createdAt" DESC`);
-    const sessionIds = result.map((obj) => obj.sessionId);
+
+    const sessions = result.filter((obj) => {
+      const createdAt = new Date(obj.createdAt).getTime();
+      const now = new Date().getTime();
+
+      let timeDiffInMins = (now - createdAt) / 1000 / 60;
+      timeDiffInMins = Math.ceil(timeDiffInMins);
+      if (timeDiffInMins > 45) {
+        return true;
+      }
+      return false;
+    });
+
+    const sessionIds = sessions.map((obj) => obj.sessionId);
     const query = gql`
       mutation MarkSessionAsTrashed($sessionIds: [uuid!]) {
         update_session(_set: { status: trashed }, where: { id: { _in: $sessionIds } }) {
