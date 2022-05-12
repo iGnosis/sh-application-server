@@ -29,4 +29,4 @@ import { CronModule } from './cron/cron.module';
   controllers: [AppController],
   providers: [AppService, GqlService, AuthService, JwtService, EmailService],
 })
-export class AppModule { }
+export class AppModule {}

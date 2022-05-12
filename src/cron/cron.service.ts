@@ -5,10 +5,7 @@ import { gql } from 'graphql-request';
 
 @Injectable()
 export class CronService {
-  constructor(
-    private databaseService: DatabaseService,
-    private gqlService: GqlService
-  ) { }
+  constructor(private databaseService: DatabaseService, private gqlService: GqlService) {}
 
   async trashSessions() {
     const result: Array<{ sessionId: string }> = await this.databaseService.executeQuery(`
@@ -24,28 +21,28 @@ export class CronService {
         ) AND
         e1.created_at IS NULL
       GROUP BY s1.id, s1."createdAt"
-      ORDER BY s1."createdAt" DESC`
-    )
-    const sessionIds = result.map(obj => obj.sessionId)
+      ORDER BY s1."createdAt" DESC`);
+    const sessionIds = result.map((obj) => obj.sessionId);
     const query = gql`
       mutation MarkSessionAsTrashed($sessionIds: [uuid!]) {
-        update_session(_set: {status: trashed}, where: {id: {_in: $sessionIds}}) {
+        update_session(_set: { status: trashed }, where: { id: { _in: $sessionIds } }) {
           affected_rows
         }
-      }`
-    return this.gqlService.client.request(query, { sessionIds })
+      }
+    `;
+    return this.gqlService.client.request(query, { sessionIds });
   }
 
   // we get all the sessions which aren't yet ended
   // and sessions with no activity in past 45 minutes are ended by force.
   async completeInactiveSessions() {
     const result: Array<{
-      user: string,
-      patient: string,
-      session: string,
-      created_at: number,
-      score?: number,
-      event_type?: string
+      user: string;
+      patient: string;
+      session: string;
+      created_at: number;
+      score?: number;
+      event_type?: string;
     }> = await this.databaseService.executeQuery(`
       SELECT e1.user, patient, session, MAX(created_at) as "created_at"
       FROM events e1
@@ -61,30 +58,40 @@ export class CronService {
         WHERE
           event_type = 'sessionEnded'
         GROUP BY session)
-      GROUP BY e1.user, patient, session`)
+      GROUP BY e1.user, patient, session`);
 
-    const now = new Date().getTime()
+    const now = new Date().getTime();
     const sessionsToEnd = result.filter((obj) => {
-      let timeDiffInMins = ((now - obj.created_at) / 1000 / 60)
-      timeDiffInMins = Math.ceil(timeDiffInMins)
+      let timeDiffInMins = (now - obj.created_at) / 1000 / 60;
+      timeDiffInMins = Math.ceil(timeDiffInMins);
       if (timeDiffInMins > 45) {
-        return true
+        return true;
       }
-      return false
-    })
+      return false;
+    });
 
-    sessionsToEnd.forEach(obj => {
-      obj.score = 0
-      obj.event_type = 'sessionEnded'
-    })
+    sessionsToEnd.forEach((obj) => {
+      obj.score = 0;
+      obj.event_type = 'sessionEnded';
+    });
 
     const query = gql`
-      mutation EndSession($objects: [events_insert_input!] = {user: "", patient: "", session: "", score: "0", created_at: "", event_type: "sessionEnded"}) {
+      mutation EndSession(
+        $objects: [events_insert_input!] = {
+          user: ""
+          patient: ""
+          session: ""
+          score: "0"
+          created_at: ""
+          event_type: "sessionEnded"
+        }
+      ) {
         insert_events(objects: $objects) {
           affected_rows
         }
-      }`
+      }
+    `;
 
-    return this.gqlService.client.request(query, { objects: sessionsToEnd })
+    return this.gqlService.client.request(query, { objects: sessionsToEnd });
   }
 }
