@@ -13,6 +13,7 @@ import { GqlService } from './services/gql/gql.service';
 import { JwtService } from './services/jwt/jwt.service';
 import { EmailService } from './services/email/email.service';
 import { SpeechSynthesisModule } from './speechSynthesis/speechSynthesis.module';
+import { CronModule } from './cron/cron.module';
 
 @Module({
   imports: [
@@ -20,6 +21,7 @@ import { SpeechSynthesisModule } from './speechSynthesis/speechSynthesis.module'
     DatabaseModule,
     AnalyticsModule,
     SpeechSynthesisModule,
+    CronModule,
     ConfigModule.forRoot({
       isGlobal: true,
     }),
@@ -27,4 +29,4 @@ import { SpeechSynthesisModule } from './speechSynthesis/speechSynthesis.module'
   controllers: [AppController],
   providers: [AppService, GqlService, AuthService, JwtService, EmailService],
 })
-export class AppModule {}
+export class AppModule { }

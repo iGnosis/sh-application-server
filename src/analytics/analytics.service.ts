@@ -5,7 +5,7 @@ import { DatabaseService } from 'src/database/database.service';
 export class AnalyticsService {
   private readonly logger = new Logger(AnalyticsService.name);
 
-  constructor(private databaseService: DatabaseService) {}
+  constructor(private databaseService: DatabaseService) { }
 
   // required to display the reaction chart.
   async getAnalyticsData(sessionId: string): Promise<Array<any>> {
