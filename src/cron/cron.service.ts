@@ -1,10 +1,12 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { DatabaseService } from 'src/database/database.service';
 import { GqlService } from 'src/services/gql/gql.service';
 import { gql } from 'graphql-request';
 
 @Injectable()
 export class CronService {
+  private readonly logger = new Logger(CronService.name);
+
   constructor(private databaseService: DatabaseService, private gqlService: GqlService) { }
 
   // mark sessions with no events in past 45mins as 'trashed'
@@ -87,12 +89,16 @@ export class CronService {
       return false;
     });
 
+    if (sessionsToEnd && sessionsToEnd.length === 0) {
+      return;
+    }
+
     sessionsToEnd.forEach((obj) => {
       obj.score = 0;
       obj.event_type = 'sessionEnded';
     });
 
-    const query = gql`
+    const endSessionByForce = gql`
       mutation EndSession(
         $objects: [events_insert_input!] = {
           user: ""
@@ -109,6 +115,30 @@ export class CronService {
       }
     `;
 
-    return this.gqlService.client.request(query, { objects: sessionsToEnd });
+    try {
+      this.gqlService.client.request(endSessionByForce, { objects: sessionsToEnd });
+    } catch (error) {
+      this.logger.error('error whilst ending session by force:', error);
+    }
+
+    const sessionIds = sessionsToEnd.map((obj) => obj.session);
+
+    // also mark these sessions as partially complete.
+    const markSessionAsPartiallyComplete = gql`
+      mutation MarkSessionAsPartialComplete($sessionIds: [uuid!]) {
+        update_session(_set: { status: partiallycompleted }, where: { id: { _in: $sessionIds } }) {
+          affected_rows
+        }
+      }
+    `;
+
+    try {
+      const results = await this.gqlService.client.request(markSessionAsPartiallyComplete, {
+        sessionIds,
+      });
+      return results;
+    } catch (error) {
+      this.logger.error('error whilst marking session as partiallycompleted:', error);
+    }
   }
 }
