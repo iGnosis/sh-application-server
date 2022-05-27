@@ -11,11 +11,18 @@ import {
 import { ApiBearerAuth } from '@nestjs/swagger';
 import { AuthService } from 'src/services/auth/auth.service';
 import { JwtService } from 'src/services/jwt/jwt.service';
+import { PatientAuthService } from 'src/services/auth/patient/auth.service';
+import { PatientJwtService } from 'src/services/jwt/patient/jwt.service';
 import { LoginRequestDto, RequestResetPasswordDto, ResetPasswordDto } from './auth.dto';
 
 @Controller('auth')
 export class AuthController {
-  constructor(private authService: AuthService, private jwtService: JwtService) {}
+  constructor(
+    private authService: AuthService,
+    private jwtService: JwtService,
+    private patientAuthService: PatientAuthService,
+    private patientJwtServive: PatientJwtService,
+  ) {}
 
   @Post('login')
   @HttpCode(200)
@@ -26,6 +33,17 @@ export class AuthController {
     }
     const token = this.jwtService.generate(user);
     return { token, user };
+  }
+
+  @Post('patient/login')
+  @HttpCode(200)
+  async patientLogin(@Body() body: LoginRequestDto) {
+    const patient = await this.patientAuthService.login(body);
+    if (!patient) {
+      throw new HttpException('Invalid Email Password Combination', HttpStatus.BAD_REQUEST);
+    }
+    const token = this.patientJwtServive.generate(patient);
+    return { token, patient };
   }
 
   @Get('me')

@@ -4,9 +4,18 @@ import { EmailService } from 'src/services/email/email.service';
 import { GqlService } from 'src/services/gql/gql.service';
 import { JwtService } from 'src/services/jwt/jwt.service';
 import { AuthController } from './auth.controller';
+import { PatientAuthService } from 'src/services/auth/patient/auth.service';
+import { PatientJwtService } from 'src/services/jwt/patient/jwt.service';
 
 @Module({
   controllers: [AuthController],
-  providers: [AuthService, GqlService, JwtService, EmailService],
+  providers: [
+    AuthService,
+    GqlService,
+    JwtService,
+    EmailService,
+    PatientAuthService,
+    PatientJwtService,
+  ],
 })
 export class AuthModule {}
