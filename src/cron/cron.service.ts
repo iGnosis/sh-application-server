@@ -1,144 +1,85 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { DatabaseService } from 'src/database/database.service';
-import { GqlService } from 'src/services/gql/gql.service';
+import { ConfigService } from '@nestjs/config';
+import axios from 'axios';
 import { gql } from 'graphql-request';
-
+import { GqlService } from 'src/services/gql/gql.service';
 @Injectable()
 export class CronService {
   private readonly logger = new Logger(CronService.name);
 
-  constructor(private databaseService: DatabaseService, private gqlService: GqlService) { }
+  constructor(private configService: ConfigService, private gqlService: GqlService) {}
 
-  // mark sessions with no events in past 45mins as 'trashed'
-  // this happens when a session is created but no corresponding events are found.
-  async trashSessions() {
-    const result: Array<{ sessionId: string; createdAt: string }> = await this.databaseService
-      .executeQuery(`
-      SELECT
-        s1.id as "sessionId",
-        s1."createdAt"
-      FROM session s1
-      LEFT JOIN events e1
-        ON e1.session = s1.id
-      WHERE
-        (
-          s1.status != 'trashed' OR
-          s1.status IS NULL
-        ) AND
-        e1.created_at IS NULL
-      GROUP BY s1.id, s1."createdAt"
-      ORDER BY s1."createdAt" DESC`);
+  async scheduleOneOffCron(scheduleAt: string, apiEndpoint: string, payload = {}, comment = '') {
+    const scheduleEventBody = {
+      type: 'create_scheduled_event',
+      args: {
+        webhook: new URL(apiEndpoint, this.configService.get('APP_SERVER_URL')).href,
+        schedule_at: scheduleAt,
+        payload,
+        comment,
+      },
+    };
 
-    const sessions = result.filter((obj) => {
-      const createdAt = new Date(obj.createdAt).getTime();
-      const now = new Date().getTime();
+    const hasuraQueryEp = this.configService.get('HASURA_QUERY_ENDPOINT');
+    this.logger.debug('scheduleCron:hasuraQueryEp:', scheduleEventBody);
 
-      let timeDiffInMins = (now - createdAt) / 1000 / 60;
-      timeDiffInMins = Math.ceil(timeDiffInMins);
-      if (timeDiffInMins > 45) {
-        return true;
-      }
-      return false;
+    const scheduleReq = await axios.post(hasuraQueryEp, JSON.stringify(scheduleEventBody), {
+      headers: {
+        'x-hasura-admin-secret': this.configService.get('GQL_API_ADMIN_SECRET'),
+      },
     });
+    this.logger.debug('scheduleCron:response:', scheduleReq.data);
+  }
 
-    const sessionIds = sessions.map((obj) => obj.sessionId);
-    const query = gql`
-      mutation MarkSessionAsTrashed($sessionIds: [uuid!]) {
-        update_session(_set: { status: trashed }, where: { id: { _in: $sessionIds } }) {
-          affected_rows
+  async inspectSession(sessionId: string) {
+    const fetchSession = gql`
+      query FetchSessionEvents($sessionId: uuid = "") {
+        events(where: { session: { _eq: $sessionId } }, order_by: { created_at: desc }) {
+          id
+          event_type
+          created_at
         }
       }
     `;
-    return this.gqlService.client.request(query, { sessionIds });
-  }
 
-  // we get all the sessions which aren't yet ended
-  // and sessions with no activity in past 45 minutes are ended by force.
-  async completeInactiveSessions() {
-    const result: Array<{
-      user: string;
-      patient: string;
-      session: string;
-      created_at: number;
-      score?: number;
-      event_type?: string;
-    }> = await this.databaseService.executeQuery(`
-      SELECT e1.user, patient, session, MAX(created_at) as "created_at"
-      FROM events e1
-      WHERE session IN
-        (SELECT session
-        FROM events
-        WHERE
-          event_type != 'sessionEnded'
-        GROUP BY session
-        EXCEPT
-        SELECT session
-        FROM events
-        WHERE
-          event_type = 'sessionEnded'
-        GROUP BY session)
-      GROUP BY e1.user, patient, session`);
+    const response = await this.gqlService.client.request(fetchSession, { sessionId });
 
-    const now = new Date().getTime();
-    const sessionsToEnd = result.filter((obj) => {
-      let timeDiffInMins = (now - obj.created_at) / 1000 / 60;
-      timeDiffInMins = Math.ceil(timeDiffInMins);
-      if (timeDiffInMins > 45) {
-        return true;
-      }
-      return false;
-    });
-
-    if (sessionsToEnd && sessionsToEnd.length === 0) {
+    // if no events for the session.
+    if (!response || !Array.isArray(response.events) || !response.events.length) {
+      this._markSessionStatus(sessionId, 'trashed');
       return;
     }
 
-    sessionsToEnd.forEach((obj) => {
-      obj.score = 0;
-      obj.event_type = 'sessionEnded';
-    });
+    // if the session does not have any data for a rep.
+    const eventTypes = new Set(response.events.map((event) => event.event_type));
+    if (!eventTypes.has('taskEnded')) {
+      await this._markSessionStatus(sessionId, 'trashed');
+      return;
+    }
 
-    const endSessionByForce = gql`
-      mutation EndSession(
-        $objects: [events_insert_input!] = {
-          user: ""
-          patient: ""
-          session: ""
-          score: "0"
-          created_at: ""
-          event_type: "sessionEnded"
-        }
-      ) {
-        insert_events(objects: $objects) {
-          affected_rows
+    // sessions are sorted in reverse cronological order.
+    const createdAtDates = response.events.map((event) => event.created_at);
+
+    const lastestEventDate = createdAtDates[0];
+    const earliestEventDate = createdAtDates[createdAtDates.length - 1];
+    const diffInMinutes = (lastestEventDate - earliestEventDate) / 1000 / 60;
+
+    // sessions which lasted for >= 30mins are considered as completed.
+    if (diffInMinutes < 30) {
+      await this._markSessionStatus(sessionId, 'partiallycompleted');
+    } else {
+      await this._markSessionStatus(sessionId, 'completed');
+    }
+  }
+
+  async _markSessionStatus(sessionId: string, status: string) {
+    const query = gql`
+      mutation SetSessionStatus($sessionId: uuid = "", $status: session_type_enum) {
+        update_session_by_pk(pk_columns: { id: $sessionId }, _set: { status: $status }) {
+          id
         }
       }
     `;
-
-    try {
-      this.gqlService.client.request(endSessionByForce, { objects: sessionsToEnd });
-    } catch (error) {
-      this.logger.error('error whilst ending session by force:', error);
-    }
-
-    const sessionIds = sessionsToEnd.map((obj) => obj.session);
-
-    // also mark these sessions as partially complete.
-    const markSessionAsPartiallyComplete = gql`
-      mutation MarkSessionAsPartialComplete($sessionIds: [uuid!]) {
-        update_session(_set: { status: partiallycompleted }, where: { id: { _in: $sessionIds } }) {
-          affected_rows
-        }
-      }
-    `;
-
-    try {
-      const results = await this.gqlService.client.request(markSessionAsPartiallyComplete, {
-        sessionIds,
-      });
-      return results;
-    } catch (error) {
-      this.logger.error('error whilst marking session as partiallycompleted:', error);
-    }
+    await this.gqlService.client.request(query, { sessionId, status });
   }
 }

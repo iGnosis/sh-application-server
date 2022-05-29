@@ -1,22 +1,27 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsNotEmpty } from 'class-validator';
 
-export class CronDto {
+export class SessionEventTriggerRequestDto {
   @ApiProperty({
-    description: 'Unique ID of the cron job.',
+    description: 'Session ID for which to schedule the inspection.',
   })
   @IsNotEmpty()
-  id: string;
+  sessionId: string;
 
   @ApiProperty({
-    description: 'Time when cron was run.',
+    description: 'Session creation date.',
   })
   @IsNotEmpty()
-  scheduled_time: string;
+  createdAt: Date;
+}
 
+export class SessionInspectorEvent {
   @ApiProperty({
-    description: 'Name of the cron job',
+    description: 'Session payload for which to schedule the inspection.',
   })
   @IsNotEmpty()
-  name: string;
+  payload: {
+    payload: string;
+    comment: string;
+  };
 }
