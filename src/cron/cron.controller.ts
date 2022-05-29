@@ -14,8 +14,7 @@ export class CronController {
   // called when a session is inserted.
   async scheduleSessionInspector(@Body() body: SessionEventTriggerRequestDto) {
     const now = new Date();
-    // const fourtyFiveMinsInFuture = new Date(now.getTime() + 1000 * 60 * 45).toISOString();
-    const fourtyFiveMinsInFuture = new Date(now.getTime() + 1000 * 60 * 1).toISOString();
+    const fourtyFiveMinsInFuture = new Date(now.getTime() + 1000 * 60 * 45).toISOString();
     const payload = {
       sessionId: body.sessionId,
       createdAt: body.createdAt,
@@ -40,9 +39,6 @@ export class CronController {
     // Mark session as 'trashed', if no `taskEnded` event is found.
     // Mark session as 'completed' if session lasted for at least 30 minutes.
     // Mark session as 'partiallycompleted' if session lasted for less than 30 minutes.
-
-    console.dir(body, { depth: null }); // `depth: null` ensures unlimited recursion
-    this.logger.debug('inspectSessions:body:payload', body.payload);
 
     const { sessionId, createdAt } = body.payload;
     this.logger.debug('inspectSessions:sessionId:', sessionId);
