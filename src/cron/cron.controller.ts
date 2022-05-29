@@ -2,7 +2,6 @@ import { Body, Controller, HttpCode, Logger, Post, UseGuards } from '@nestjs/com
 import { AuthGuard } from 'src/services/guard/auth.guard';
 import { SessionEventTriggerRequestDto, SessionInspectorEvent } from './cron.dto';
 import { CronService } from './cron.service';
-
 @Controller('cron')
 @UseGuards(AuthGuard)
 export class CronController {
@@ -16,7 +15,7 @@ export class CronController {
   async scheduleSessionInspector(@Body() body: SessionEventTriggerRequestDto) {
     const now = new Date();
     // const fourtyFiveMinsInFuture = new Date(now.getTime() + 1000 * 60 * 45).toISOString();
-    const fourtyFiveMinsInFuture = new Date(now.getTime() + 1000 * 60 * 3).toISOString();
+    const fourtyFiveMinsInFuture = new Date(now.getTime() + 1000 * 60 * 1).toISOString();
     const payload = {
       sessionId: body.sessionId,
       createdAt: body.createdAt,
@@ -43,6 +42,8 @@ export class CronController {
     // Mark session as 'partiallycompleted' if session lasted for less than 30 minutes.
 
     this.logger.debug('inspectSessions:body:', body);
+    console.dir(body, { depth: null }); // `depth: null` ensures unlimited recursion
+
     const { sessionId, createdAt } = body.payload.payload;
     this.logger.debug('inspectSessions:sessionId:', sessionId);
     this.logger.debug('inspectSessions:createdAt:', createdAt);
