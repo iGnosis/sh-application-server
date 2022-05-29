@@ -15,7 +15,8 @@ export class CronController {
   // called when a session is inserted.
   async scheduleSessionInspector(@Body() body: SessionEventTriggerRequestDto) {
     const now = new Date();
-    const fourtyFiveMinsInFuture = new Date(now.getTime() + 1000 * 60 * 45).toISOString();
+    // const fourtyFiveMinsInFuture = new Date(now.getTime() + 1000 * 60 * 45).toISOString();
+    const fourtyFiveMinsInFuture = new Date(now.getTime() + 1000 * 60 * 5).toISOString();
     const payload = {
       sessionId: body.sessionId,
       createdAt: body.createdAt,
@@ -41,7 +42,7 @@ export class CronController {
     // Mark session as 'completed' if session lasted for at least 30 minutes.
     // Mark session as 'partiallycompleted' if session lasted for less than 30 minutes.
 
-    const { sessionId, createdAt } = JSON.parse(body.payload.payload);
+    const { sessionId, createdAt } = body.payload.payload;
     this.logger.debug('inspectSessions:sessionId:', sessionId);
     this.logger.debug('inspectSessions:createdAt:', createdAt);
 
