@@ -16,7 +16,7 @@ export class CronController {
   async scheduleSessionInspector(@Body() body: SessionEventTriggerRequestDto) {
     const now = new Date();
     // const fourtyFiveMinsInFuture = new Date(now.getTime() + 1000 * 60 * 45).toISOString();
-    const fourtyFiveMinsInFuture = new Date(now.getTime() + 1000 * 60 * 5).toISOString();
+    const fourtyFiveMinsInFuture = new Date(now.getTime() + 1000 * 60 * 3).toISOString();
     const payload = {
       sessionId: body.sessionId,
       createdAt: body.createdAt,

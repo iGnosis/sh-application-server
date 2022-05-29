@@ -21,10 +21,10 @@ export class SessionInspectorEvent {
   })
   @IsNotEmpty()
   payload: {
-      payload: {
-        sessionId: string;
-        createdAt: Date;
-      };
+    payload: {
+      sessionId: string;
+      createdAt: Date;
+    };
     comment: string;
   };
 }
