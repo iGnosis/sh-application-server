@@ -41,10 +41,10 @@ export class CronController {
     // Mark session as 'completed' if session lasted for at least 30 minutes.
     // Mark session as 'partiallycompleted' if session lasted for less than 30 minutes.
 
-    this.logger.debug('inspectSessions:body:', body);
     console.dir(body, { depth: null }); // `depth: null` ensures unlimited recursion
+    this.logger.debug('inspectSessions:body:payload', body.payload);
 
-    const { sessionId, createdAt } = body.payload.payload;
+    const { sessionId, createdAt } = body.payload;
     this.logger.debug('inspectSessions:sessionId:', sessionId);
     this.logger.debug('inspectSessions:createdAt:', createdAt);
 
