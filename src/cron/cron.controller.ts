@@ -23,7 +23,7 @@ export class CronController {
 
     await this.cronService.scheduleOneOffCron(
       fourtyFiveMinsInFuture,
-      '/session/inspection',
+      '/cron/session/inspection',
       payload,
     );
 
