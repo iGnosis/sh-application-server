@@ -24,6 +24,10 @@ export class StatsController {
       5: {
         '7d98cd54-0111-4211-82a1-e3ec9e88f76a': 'partiallycompleted',
       },
+      6: {},
+      7: {
+        '6605fd16-477a-4a69-ba53-22318a7262ef': 'completed',
+      },
     };
   }
 
