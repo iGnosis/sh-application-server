@@ -52,6 +52,12 @@ export class StatsController {
   @Get('daily-goals/:day')
   async dailyGoals(@Param('day') day: number) {
     // returns the number of minutes a patient did a session on said day. can be >30min
+
+    // steps:
+    // fetch all the sessions created for the day
+    // fetch all the min and max event for all sessions
+    // return max - min
+
     return {
       dailyMinutesCompleted: 21,
     };
