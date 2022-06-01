@@ -14,6 +14,7 @@ import { JwtService } from './services/jwt/jwt.service';
 import { EmailService } from './services/email/email.service';
 import { SpeechSynthesisModule } from './speechSynthesis/speechSynthesis.module';
 import { CronModule } from './cron/cron.module';
+import { StatsModule } from './patient/stats/stats.module';
 
 @Module({
   imports: [
@@ -21,6 +22,7 @@ import { CronModule } from './cron/cron.module';
     DatabaseModule,
     AnalyticsModule,
     SpeechSynthesisModule,
+    StatsModule,
     CronModule,
     ConfigModule.forRoot({
       isGlobal: true,
