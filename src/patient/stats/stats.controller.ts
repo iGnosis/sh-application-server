@@ -43,11 +43,9 @@ export class StatsController {
       },
     ];
 
-    return monthyGoals;
-
-    // return {
-    //   data: monthyGoals,
-    // };
+    return {
+      data: monthyGoals,
+    };
   }
 
   @HttpCode(200)
