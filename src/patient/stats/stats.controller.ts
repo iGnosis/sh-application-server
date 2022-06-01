@@ -61,6 +61,8 @@ export class StatsController {
   @Get('streak')
   async streak() {
     // returns the number of days a patient did sessions consecutively.
-    return 4;
+    return {
+      streak: 4,
+    };
   }
 }
