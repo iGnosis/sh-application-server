@@ -17,7 +17,7 @@ export class PatientJwtService {
         'x-hasura-default-role': 'patient',
         'x-hasura-user-id': patient.id,
         'x-hasura-provider-id': patient.provider,
-        'x-hasura-careplan-id': patient.activeCareplan
+        'x-hasura-careplan-id': patient.activeCareplan,
       },
     };
     return jwt.sign(payload, key.key);
