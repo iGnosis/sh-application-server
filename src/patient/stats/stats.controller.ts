@@ -96,9 +96,10 @@ export class StatsController {
       return { dailyMinutesCompleted };
     }
 
-    const sessionDurations = results.map((result) => parseInt(result.sessionDurationInMs));
+    const sessionDurations = results.map((result) => parseFloat(result.sessionDurationInMs));
     const totalDailyDuration = sessionDurations.reduce((total, num) => (total += num), 0);
     dailyMinutesCompleted = totalDailyDuration / 1000 / 60;
+    dailyMinutesCompleted = parseFloat(dailyMinutesCompleted.toFixed(2));
     return { dailyMinutesCompleted };
   }
 
