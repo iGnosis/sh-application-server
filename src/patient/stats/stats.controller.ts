@@ -14,15 +14,16 @@ import { Role } from 'src/auth/enums/role.enum';
 import { AuthGuard } from 'src/auth/guards/auth.guard';
 import { RolesGuard } from 'src/auth/guards/roles.guard';
 import { StatsService } from './stats.service';
+
+@Roles(Role.PATIENT)
+@UseGuards(AuthGuard, RolesGuard)
+@ApiBearerAuth('access-token')
 @Controller('patient/stats')
 export class StatsController {
   constructor(private statsService: StatsService) {}
 
   @HttpCode(200)
   @Get('monthly-goals')
-  @Roles(Role.PATIENT)
-  @UseGuards(AuthGuard, RolesGuard)
-  @ApiBearerAuth('access-token')
   async monthyGoals(
     @Query('year') year: number,
     @Query('month') month: number,
@@ -129,9 +130,6 @@ export class StatsController {
 
   @HttpCode(200)
   @Get('daily-goals')
-  @Roles(Role.PATIENT)
-  @UseGuards(AuthGuard, RolesGuard)
-  @ApiBearerAuth('access-token')
   async dailyGoals(@Query('date') date: string, @User() userId: string) {
     // returns the number of minutes a patient did a session on said day. can be >30min
     const dailyGoalDate = new Date(date);
@@ -162,8 +160,6 @@ export class StatsController {
 
   @HttpCode(200)
   @Get('streak')
-  @Roles(Role.PATIENT)
-  @UseGuards(AuthGuard, RolesGuard)
   async streak(@User() userId: string) {
     // returns the number of days a patient did sessions consecutively.
     return {
