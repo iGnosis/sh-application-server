@@ -14,8 +14,12 @@ import { User } from 'src/auth/decorators/user.decorator';
 import { Role } from 'src/auth/enums/role.enum';
 import { AuthGuard } from 'src/auth/guards/auth.guard';
 import { RolesGuard } from 'src/auth/guards/roles.guard';
+import { StatsService } from './stats.service';
 @Controller('patient/stats')
 export class StatsController {
+
+  constructor(private statsService: StatsService) { }
+
   @HttpCode(200)
   @Get('monthly-goals')
   @Roles(Role.PATIENT)
@@ -75,7 +79,7 @@ export class StatsController {
   @ApiBearerAuth('access-token')
   async dailyGoals(@Param('date') date: string, @User() userId: string) {
     // returns the number of minutes a patient did a session on said day. can be >30min
-    const dailyGoalDate = new Date(date);
+    let dailyGoalDate = new Date(date);
     if (dailyGoalDate.toString() === 'Invalid Date') {
       throw new HttpException('Invalid Date', HttpStatus.BAD_REQUEST);
     }
@@ -83,14 +87,20 @@ export class StatsController {
     let oneDayInFuture = new Date(date);
     oneDayInFuture = new Date(oneDayInFuture.setDate(dailyGoalDate.getDate() + 1));
 
-    // steps:
-    // fetch all the sessions created for the day
-    // fetch all the min and max event for all sessions
-    // return max - min
+    console.log('startDateStr:', dailyGoalDate)
+    console.log('endDateStr:', oneDayInFuture)
+    const results = await this.statsService.sessionDuration(userId, dailyGoalDate, oneDayInFuture)
+    console.log(results)
 
-    return {
-      dailyMinutesCompleted: 21,
-    };
+    let dailyMinutesCompleted = 0;
+    if (!results || !Array.isArray(results) || results.length === 0) {
+      return { dailyMinutesCompleted }
+    }
+
+    const sessionDurations = results.map(result => parseInt(result.sessionDurationInMs))
+    const totalDailyDuration = sessionDurations.reduce((total, num) => total += num, 0)
+    dailyMinutesCompleted = totalDailyDuration / 1000 / 60;
+    return { dailyMinutesCompleted };
   }
 
   @HttpCode(200)
