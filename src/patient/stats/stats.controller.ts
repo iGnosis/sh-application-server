@@ -148,7 +148,7 @@ export class StatsController {
     let dailyMinutesCompleted = 0;
     // TODO: remove mock later.
     if (!results || !Array.isArray(results) || results.length === 0) {
-      return { dailyMinutesCompleted };
+      return { dailyMinutesCompleted: 21 };
     }
 
     const sessionDurations = results.map((result) => parseFloat(result.sessionDurationInMs));
