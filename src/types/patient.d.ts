@@ -3,6 +3,7 @@ export class Patient {
   createdAt: Date;
   updatedAt: Date;
   provider: string;
+  activeCareplan: string;
   identifier: string;
   medicalConditions: any;
   preferredGenres: any;

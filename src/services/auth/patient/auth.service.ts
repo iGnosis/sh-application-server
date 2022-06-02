@@ -14,6 +14,8 @@ export class PatientAuthService {
         patient(where: { email: { _eq: $email } }) {
           id
           identifier
+          provider
+          activeCareplan
           email
           careGiverEmail
           phoneCountryCode
