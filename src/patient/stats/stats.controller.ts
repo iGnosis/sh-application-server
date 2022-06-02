@@ -124,7 +124,7 @@ export class StatsController {
       return new Date(a.date).getTime() - new Date(b.date).getTime();
     });
 
-    return response;
+    return { data: response };
   }
 
   @HttpCode(200)
