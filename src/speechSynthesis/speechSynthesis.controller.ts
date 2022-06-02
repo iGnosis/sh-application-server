@@ -7,12 +7,13 @@ import {
   UseGuards,
   Query,
 } from '@nestjs/common';
-import { AuthGuard } from 'src/services/guard/auth.guard';
+import { AuthGuard } from 'src/auth/guards/auth.guard';
 import { PollyService } from 'src/speechSynthesis/polly/polly.service';
 import { SpeechSynthesisDto } from './speechSynthesis.dto';
 
 @Controller('speech')
-@UseGuards(AuthGuard)
+// TODO: Enable Guards later.
+// @UseGuards(AuthGuard)
 export class SpeechSynthesisController {
   constructor(private pollyService: PollyService) {}
 

@@ -1,9 +1,9 @@
 import { Controller, Body, Post, HttpCode, UseGuards } from '@nestjs/common';
-import { AuthGuard } from 'src/services/guard/auth.guard';
+import { AuthGuard } from 'src/auth/guards/auth.guard';
 import { AnalyticsService } from './analytics.service';
-
 @Controller('analytics')
-@UseGuards(AuthGuard)
+// TODO: Enable Guards later.
+// @UseGuards(AuthGuard)
 export class AnalyticsController {
   constructor(private analyticsService: AnalyticsService) {}
 

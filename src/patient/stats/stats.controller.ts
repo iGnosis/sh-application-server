@@ -1,10 +1,17 @@
-import { Controller, Get, HttpCode, Param } from '@nestjs/common';
-
+import { Controller, Get, HttpCode, Param, UseGuards } from '@nestjs/common';
+import { Roles } from 'src/auth/decorators/roles.decorator';
+import { User } from 'src/auth/decorators/user.decorator';
+import { Role } from 'src/auth/enums/role.enum';
+import { AuthGuard } from 'src/auth/guards/auth.guard';
+import { RolesGuard } from 'src/auth/guards/roles.guard';
 @Controller('patient/stats')
 export class StatsController {
   @HttpCode(200)
   @Get('monthly-goals/:month')
-  async monthyGoals(@Param('month') month: number) {
+  @Roles(Role.PATIENT)
+  @UseGuards(AuthGuard, RolesGuard)
+  async monthyGoals(@Param('month') month: number, @User() userId: string) {
+    console.log('userId:', userId);
     const monthyGoals = [
       {
         day: 1,
@@ -50,7 +57,9 @@ export class StatsController {
 
   @HttpCode(200)
   @Get('daily-goals/:day')
-  async dailyGoals(@Param('day') day: number) {
+  @Roles(Role.PATIENT)
+  @UseGuards(AuthGuard, RolesGuard)
+  async dailyGoals(@Param('day') day: number, @User() userId: string) {
     // returns the number of minutes a patient did a session on said day. can be >30min
 
     // steps:
@@ -65,7 +74,9 @@ export class StatsController {
 
   @HttpCode(200)
   @Get('streak')
-  async streak() {
+  @Roles(Role.PATIENT)
+  @UseGuards(AuthGuard, RolesGuard)
+  async streak(@User() userId: string) {
     // returns the number of days a patient did sessions consecutively.
     return {
       streak: 4,

@@ -1,9 +1,10 @@
 import { Body, Controller, HttpCode, Logger, Post, UseGuards } from '@nestjs/common';
-import { AuthGuard } from 'src/services/guard/auth.guard';
+import { AuthGuard } from 'src/auth/guards/auth.guard';
 import { SessionEventTriggerRequestDto, SessionInspectorEvent } from './cron.dto';
 import { CronService } from './cron.service';
 @Controller('cron')
-@UseGuards(AuthGuard)
+// TODO: Enable Guards later.
+// @UseGuards(AuthGuard)
 export class CronController {
   private readonly logger = new Logger(CronController.name);
 
