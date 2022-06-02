@@ -4,13 +4,13 @@ import { GoalsApiResponse } from './stats';
 
 @Injectable()
 export class StatsService {
-  constructor(private databaseService: DatabaseService) { }
+  constructor(private databaseService: DatabaseService) {}
 
   // endDate is exclusive
   async sessionDuration(
     patientId: string,
     startDate: Date,
-    endDate: Date
+    endDate: Date,
   ): Promise<Array<GoalsApiResponse>> {
     const results = await this.databaseService.executeQuery(
       `SELECT
@@ -27,8 +27,8 @@ export class StatsService {
           session."createdAt" < $3
       GROUP BY session.id
       ORDER BY session."createdAt" DESC`,
-      [patientId, startDate, endDate]
-    )
+      [patientId, startDate, endDate],
+    );
     return results;
   }
 }

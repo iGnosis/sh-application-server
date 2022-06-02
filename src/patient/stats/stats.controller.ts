@@ -17,8 +17,7 @@ import { RolesGuard } from 'src/auth/guards/roles.guard';
 import { StatsService } from './stats.service';
 @Controller('patient/stats')
 export class StatsController {
-
-  constructor(private statsService: StatsService) { }
+  constructor(private statsService: StatsService) {}
 
   @HttpCode(200)
   @Get('monthly-goals')
@@ -79,7 +78,7 @@ export class StatsController {
   @ApiBearerAuth('access-token')
   async dailyGoals(@Param('date') date: string, @User() userId: string) {
     // returns the number of minutes a patient did a session on said day. can be >30min
-    let dailyGoalDate = new Date(date);
+    const dailyGoalDate = new Date(date);
     if (dailyGoalDate.toString() === 'Invalid Date') {
       throw new HttpException('Invalid Date', HttpStatus.BAD_REQUEST);
     }
@@ -87,18 +86,18 @@ export class StatsController {
     let oneDayInFuture = new Date(date);
     oneDayInFuture = new Date(oneDayInFuture.setDate(dailyGoalDate.getDate() + 1));
 
-    console.log('startDateStr:', dailyGoalDate)
-    console.log('endDateStr:', oneDayInFuture)
-    const results = await this.statsService.sessionDuration(userId, dailyGoalDate, oneDayInFuture)
-    console.log(results)
+    console.log('startDateStr:', dailyGoalDate);
+    console.log('endDateStr:', oneDayInFuture);
+    const results = await this.statsService.sessionDuration(userId, dailyGoalDate, oneDayInFuture);
+    console.log(results);
 
     let dailyMinutesCompleted = 0;
     if (!results || !Array.isArray(results) || results.length === 0) {
-      return { dailyMinutesCompleted }
+      return { dailyMinutesCompleted };
     }
 
-    const sessionDurations = results.map(result => parseInt(result.sessionDurationInMs))
-    const totalDailyDuration = sessionDurations.reduce((total, num) => total += num, 0)
+    const sessionDurations = results.map((result) => parseInt(result.sessionDurationInMs));
+    const totalDailyDuration = sessionDurations.reduce((total, num) => (total += num), 0);
     dailyMinutesCompleted = totalDailyDuration / 1000 / 60;
     return { dailyMinutesCompleted };
   }
