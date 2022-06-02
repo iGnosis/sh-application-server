@@ -5,6 +5,7 @@ import {
   HttpException,
   HttpStatus,
   Param,
+  Query,
   UseGuards,
 } from '@nestjs/common';
 import { ApiBearerAuth } from '@nestjs/swagger';
@@ -16,11 +17,15 @@ import { RolesGuard } from 'src/auth/guards/roles.guard';
 @Controller('patient/stats')
 export class StatsController {
   @HttpCode(200)
-  @Get('monthly-goals/:month')
+  @Get('monthly-goals')
   @Roles(Role.PATIENT)
   @UseGuards(AuthGuard, RolesGuard)
   @ApiBearerAuth('access-token')
-  async monthyGoals(@Param('month') month: number, @User() userId: string) {
+  async monthyGoals(
+    @Query('year') year: number,
+    @Query('month') month: number,
+    @User() userId: string,
+  ) {
     console.log('userId:', userId);
 
     const monthyGoals = [
