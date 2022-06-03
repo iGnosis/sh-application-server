@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { DatabaseService } from 'src/database/database.service';
-import { GoalsApiResponse, GroupGoalsByDate } from './stats';
+import { GoalsApiResponse, GroupGoalsByDate } from '../../types/stats';
 
 @Injectable()
 export class StatsService {
