@@ -173,6 +173,11 @@ export class StatsController {
         break;
       }
 
+      // sort in reverse cronological order.
+      groupResultsByDate.sort((a, b) => {
+        return new Date(b.date).getTime() - new Date(a.date).getTime()
+      })
+
       const streakCount = this.statsService.workOutStreak(groupResultsByDate);
       streak += streakCount;
 
