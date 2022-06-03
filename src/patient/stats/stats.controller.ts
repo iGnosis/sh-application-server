@@ -31,9 +31,12 @@ export class StatsController {
   ) {
     console.log('userId:', userId);
 
-    // month ranges: 0-11 (inclusive)
+    // input month ranges: 0-11 (inclusive)
+    // add one to have in in the range 1-12
     month = month + 1;
 
+    // prepend '0' if it's just a single digit.
+    // ex. '2' -> '02'
     let monthStr = month.toString();
     if (monthStr.length == 1) {
       monthStr = `0${monthStr}`;
@@ -59,7 +62,7 @@ export class StatsController {
     const results = await this.statsService.sessionDuration(userId, startDate, endDate);
     console.log('results:', results);
 
-    const monthyGoals = [
+    const mockMonthyGoals = [
       {
         date: '2022-05-01',
         totalSessionDurationInMin: 30,
@@ -96,31 +99,12 @@ export class StatsController {
 
     // TODO: remove mock later.
     if (!results || !Array.isArray(results) || results.length === 0) {
-      return { data: monthyGoals };
+      return { data: mockMonthyGoals };
     }
 
-    const temp = {};
-    for (let i = 0; i < results.length; i++) {
-      const date = results[i].createdAt.toISOString().split('T')[0];
-      const duration = parseFloat(results[i].sessionDurationInMs);
+    const response = this.statsService.groupByDate(results);
 
-      if (date in temp) {
-        temp[date] += duration;
-      } else {
-        temp[date] = duration;
-      }
-    }
-
-    const response = [];
-    for (const [key, value] of Object.entries(temp)) {
-      if (typeof value === 'number') {
-        response.push({
-          date: key,
-          totalSessionDurationInMin: parseFloat((value / 1000 / 60).toFixed(2)),
-        });
-      }
-    }
-
+    // sort cronologically - ascending sort w.r.t dates.
     response.sort((a, b) => {
       return new Date(a.date).getTime() - new Date(b.date).getTime();
     });
@@ -145,25 +129,62 @@ export class StatsController {
     const results = await this.statsService.sessionDuration(userId, dailyGoalDate, oneDayInFuture);
     console.log(results);
 
-    let dailyMinutesCompleted = 0;
     // TODO: remove mock later.
     if (!results || !Array.isArray(results) || results.length === 0) {
       return { dailyMinutesCompleted: 21 };
     }
 
-    const sessionDurations = results.map((result) => parseFloat(result.sessionDurationInMs));
+    const sessionDurations = results.map((result) => result.sessionDurationInMin);
     const totalDailyDuration = sessionDurations.reduce((total, num) => (total += num), 0);
-    dailyMinutesCompleted = totalDailyDuration / 1000 / 60;
-    dailyMinutesCompleted = parseFloat(dailyMinutesCompleted.toFixed(2));
-    return { dailyMinutesCompleted };
+    return { dailyMinutesCompleted: totalDailyDuration };
   }
 
   @HttpCode(200)
   @Get('streak')
   async streak(@User() userId: string) {
     // returns the number of days a patient did sessions consecutively.
-    return {
-      streak: 4,
-    };
+
+    // Read session for past 30 days each time.
+    let days = 30;
+
+    // start date is inclusive - end date is exclusive.
+    const now = new Date();
+    let startDate = new Date(new Date().setDate(now.getDate() - days));
+    let endDate = new Date(new Date().setDate(now.getDate() + 1));
+
+    let streak = 0;
+
+    while (true) {
+      const results = await this.statsService.sessionDuration(userId, startDate, endDate);
+      if (!results || !Array.isArray(results) || results.length === 0) {
+        break;
+      }
+
+      let groupResultsByDate = this.statsService.groupByDate(results);
+
+      // only consider sessions which lasted for 30 or >= 30mins.
+      groupResultsByDate = groupResultsByDate.filter((value) => {
+        if (value.totalSessionDurationInMin >= 30) {
+          return true;
+        }
+      });
+
+      if (!groupResultsByDate || groupResultsByDate.length === 0) {
+        break;
+      }
+
+      const streakCount = this.statsService.workOutStreak(groupResultsByDate);
+      streak += streakCount;
+
+      // only continue if streakCount is 30 for the current batch of sessions.
+      if (streakCount !== 30) {
+        break;
+      }
+
+      endDate = startDate;
+      days += 30;
+      startDate = new Date(new Date().setDate(now.getDate() - days));
+    }
+    return { streak };
   }
 }

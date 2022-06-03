@@ -1,5 +1,10 @@
 export class GoalsApiResponse {
   id: string;
   createdAt: Date;
-  sessionDurationInMs: string;
+  sessionDurationInMin: number;
+}
+
+export class GroupGoalsByDate {
+  date: Date;
+  totalSessionDurationInMin: number;
 }
