@@ -82,4 +82,12 @@ export class StatsService {
     }
     return streak;
   }
+
+  getFutureDate(currentDate: Date, numOfDaysInFuture: number) {
+    return new Date(currentDate.getTime() + 86400000 * numOfDaysInFuture);
+  }
+
+  getPastDate(currentDate: Date, numOfDaysInPast: number) {
+    return new Date(currentDate.getTime() - 86400000 * numOfDaysInPast);
+  }
 }

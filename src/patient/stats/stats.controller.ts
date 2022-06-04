@@ -52,11 +52,10 @@ export class StatsController {
       throw new HttpException('Invalid Date', HttpStatus.BAD_REQUEST);
     }
 
-    const numOfDaysInAMonth = new Date(year, month, 0).getDate();
+    const numOfDaysInAMonth = new Date(year, month, 1).getUTCDate();
     console.log('numOfDaysInAMonth:', numOfDaysInAMonth);
 
-    let endDate = new Date(startDate);
-    endDate = new Date(endDate.setDate(startDate.getDate() + numOfDaysInAMonth));
+    const endDate = this.statsService.getFutureDate(startDate, numOfDaysInAMonth);
     console.log('endDate:', endDate);
 
     const results = await this.statsService.sessionDuration(userId, startDate, endDate);
@@ -121,8 +120,7 @@ export class StatsController {
       throw new HttpException('Invalid Date', HttpStatus.BAD_REQUEST);
     }
 
-    let oneDayInFuture = new Date(date);
-    oneDayInFuture = new Date(oneDayInFuture.setDate(dailyGoalDate.getDate() + 1));
+    const oneDayInFuture = this.statsService.getFutureDate(dailyGoalDate, 1);
 
     console.log('startDateStr:', dailyGoalDate);
     console.log('endDateStr:', oneDayInFuture);
@@ -149,9 +147,8 @@ export class StatsController {
 
     // start date is inclusive - end date is exclusive.
     const now = new Date();
-    let startDate = new Date(new Date().setDate(now.getDate() - days));
-    let endDate = new Date(new Date().setDate(now.getDate() + 1));
-
+    let startDate = this.statsService.getPastDate(now, days);
+    let endDate = this.statsService.getFutureDate(now, 1);
     let streak = 0;
 
     while (true) {
@@ -188,7 +185,7 @@ export class StatsController {
 
       endDate = startDate;
       days += 30;
-      startDate = new Date(new Date().setDate(now.getDate() - days));
+      startDate = this.statsService.getPastDate(now, days);
     }
     return { streak };
   }
