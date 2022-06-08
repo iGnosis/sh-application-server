@@ -1,13 +1,4 @@
-import {
-  Controller,
-  HttpCode,
-  Get,
-  Response,
-  StreamableFile,
-  UseGuards,
-  Query,
-} from '@nestjs/common';
-import { AuthGuard } from 'src/auth/guards/auth.guard';
+import { Controller, HttpCode, Get, Response, StreamableFile, Query } from '@nestjs/common';
 import { PollyService } from 'src/speechSynthesis/polly/polly.service';
 import { SpeechSynthesisDto } from './speechSynthesis.dto';
 
