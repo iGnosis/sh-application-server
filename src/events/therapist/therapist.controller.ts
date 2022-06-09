@@ -1,6 +1,5 @@
 import { Body, Controller, HttpCode, Post } from '@nestjs/common';
 import { EventsService } from '../events.service';
-import { v4 as uuidv4 } from 'uuid';
 import { NewTherapistDto, TherapistAddedFirstPatientDto } from './therapist.dto';
 import { GqlService } from 'src/services/gql/gql.service';
 import { gql } from 'graphql-request';
@@ -13,7 +12,6 @@ export class TherapistController {
   @Post('new')
   async newTherapist(@Body() body: NewTherapistDto) {
     const { id: therapistId, email, firstName, lastName, type } = body;
-    const endpointId = uuidv4();
 
     if (type && type === 'therapist') {
       try {
@@ -23,7 +21,7 @@ export class TherapistController {
             emailAddress: email,
             identifier: `${firstName} ${lastName}`,
           },
-          endpointId,
+          therapistId,
           'therapist',
         );
         return response;

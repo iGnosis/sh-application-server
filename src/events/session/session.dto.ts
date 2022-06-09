@@ -5,18 +5,8 @@ export class SessionEventTriggerDto {
   sessionId: string;
 
   @IsNotEmpty()
-  createdAt: Date;
+  endedAt: Date;
 
   @IsNotEmpty()
   patientId: string;
-}
-
-export class SessionEndEventDto {
-  @IsNotEmpty()
-  payload: {
-    sessionId: string;
-    createdAt: Date;
-    patientId: string;
-  };
-  comment: string;
 }

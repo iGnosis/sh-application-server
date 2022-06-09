@@ -1,4 +1,4 @@
-import { EndpointResponse, EventsRequest, Pinpoint } from '@aws-sdk/client-pinpoint';
+import { EventsRequest, Pinpoint } from '@aws-sdk/client-pinpoint';
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 
@@ -116,16 +116,8 @@ export class EventsService {
 
   async startSessionCompleteJourney(id: string, sessionDuration: number) {
     try {
-      const endpoints = await this.pinpoint.getUserEndpoints({
-        ApplicationId: this.projectId,
-        UserId: id,
-      });
-      const endpointsList = endpoints.EndpointsResponse.Item;
-
-      const endpointId = this.getWorkingEndpointId(endpointsList);
-
       this.eventsRequest = { BatchItem: {} };
-      this.eventsRequest.BatchItem[endpointId] = {
+      this.eventsRequest.BatchItem[id] = {
         Endpoint: {
           ChannelType: 'EMAIL',
           Metrics: {
@@ -152,15 +144,8 @@ export class EventsService {
 
   async startAddedFirstPatientJourney(id: string, patientName: string) {
     try {
-      const endpoints = await this.pinpoint.getUserEndpoints({
-        ApplicationId: this.projectId,
-        UserId: id,
-      });
-      const endpointsList = endpoints.EndpointsResponse.Item;
-      const endpointId = this.getWorkingEndpointId(endpointsList);
-
       this.eventsRequest = { BatchItem: {} };
-      this.eventsRequest.BatchItem[endpointId] = {
+      this.eventsRequest.BatchItem[id] = {
         Endpoint: {
           ChannelType: 'EMAIL',
           Attributes: {
@@ -182,14 +167,6 @@ export class EventsService {
       return response;
     } catch (err) {
       console.log('Error', err);
-    }
-  }
-
-  getWorkingEndpointId(endpoints: EndpointResponse[]) {
-    for (let i = 0; i < endpoints.length; i++) {
-      if (endpoints[i].EndpointStatus === 'ACTIVE') {
-        return endpoints[i].Id;
-      }
     }
   }
 }
