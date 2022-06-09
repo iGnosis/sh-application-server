@@ -1,5 +1,4 @@
-import { Body, Controller, HttpCode, Logger, Post, UseGuards } from '@nestjs/common';
-import { AuthGuard } from 'src/auth/guards/auth.guard';
+import { Body, Controller, HttpCode, Logger, Post } from '@nestjs/common';
 import { SessionEventTriggerRequestDto, SessionInspectorEvent } from './cron.dto';
 import { CronService } from './cron.service';
 @Controller('cron')

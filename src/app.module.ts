@@ -15,6 +15,7 @@ import { EmailService } from './services/email/email.service';
 import { SpeechSynthesisModule } from './speechSynthesis/speechSynthesis.module';
 import { CronModule } from './cron/cron.module';
 import { StatsModule } from './patient/stats/stats.module';
+import { EventsModule } from './events/events.module';
 
 @Module({
   imports: [
@@ -27,6 +28,7 @@ import { StatsModule } from './patient/stats/stats.module';
     ConfigModule.forRoot({
       isGlobal: true,
     }),
+    EventsModule,
   ],
   controllers: [AppController],
   providers: [AppService, GqlService, AuthService, JwtService, EmailService],

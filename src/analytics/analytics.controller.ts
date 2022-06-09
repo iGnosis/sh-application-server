@@ -1,5 +1,4 @@
-import { Controller, Body, Post, HttpCode, UseGuards } from '@nestjs/common';
-import { AuthGuard } from 'src/auth/guards/auth.guard';
+import { Controller, Body, Post, HttpCode } from '@nestjs/common';
 import { AnalyticsService } from './analytics.service';
 @Controller('analytics')
 // TODO: Enable Guards later.

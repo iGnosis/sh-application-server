@@ -4,7 +4,7 @@ import { GraphQLClient } from 'graphql-request';
 
 @Injectable()
 export class GqlService {
-  public client;
+  public client: GraphQLClient;
   constructor(private config: ConfigService) {
     this.client = new GraphQLClient(this.config.get('GQL_API_ENDPOINT'), {
       headers: {
