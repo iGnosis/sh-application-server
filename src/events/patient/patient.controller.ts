@@ -11,20 +11,15 @@ export class PatientController {
   @Post('new')
   async newPatient(@Body() body: NewPatientDto) {
     const { id: patientId, email, identifier } = body;
-    console.log('patient-id: ', patientId);
-    console.log('email-id: ', email);
-    console.log('identifier: ', identifier);
     const endpointId = uuidv4();
 
     try {
-      console.log('endpointId: ', endpointId);
-      const resp = await this.eventsService.updateEndpoint(
+      const response = await this.eventsService.updateEndpoint(
         { id: patientId, emailAddress: email, identifier },
         endpointId,
         'patient',
       );
-      console.log(resp);
-      return resp;
+      return response;
     } catch (err) {
       console.log('Error', err);
     }

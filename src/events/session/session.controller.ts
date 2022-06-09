@@ -31,8 +31,6 @@ export class SessionController {
       '/events/session/complete',
       payload,
     );
-
-    console.log('patient-id: ');
   }
 
   @HttpCode(200)

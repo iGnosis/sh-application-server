@@ -1,4 +1,4 @@
-import { EventsRequest, Pinpoint } from '@aws-sdk/client-pinpoint';
+import { EndpointResponse, EventsRequest, Pinpoint } from '@aws-sdk/client-pinpoint';
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 
@@ -32,7 +32,7 @@ export class EventsService {
     switch (type) {
       case 'patient':
         try {
-          const data = await this.pinpoint.updateEndpoint({
+          await this.pinpoint.updateEndpoint({
             ApplicationId: this.projectId,
             EndpointId: endpointId,
             EndpointRequest: {
@@ -48,14 +48,34 @@ export class EventsService {
               },
             },
           });
-          return data;
+
+          this.eventsRequest = { BatchItem: {} };
+          this.eventsRequest.BatchItem[endpointId] = {
+            Endpoint: {
+              ChannelType: 'EMAIL',
+            },
+            Events: {
+              patientNew: {
+                EventType: 'patient.new',
+                Timestamp: new Date().toISOString(),
+              },
+            },
+          };
+
+          console.log(this.eventsRequest);
+
+          const response = await this.pinpoint.putEvents({
+            ApplicationId: this.projectId,
+            EventsRequest: this.eventsRequest,
+          });
+          return response;
         } catch (err) {
           console.log('Error', err);
         }
         break;
       case 'therapist':
         try {
-          const data = await this.pinpoint.updateEndpoint({
+          await this.pinpoint.updateEndpoint({
             ApplicationId: this.projectId,
             EndpointId: endpointId,
             EndpointRequest: {
@@ -71,7 +91,23 @@ export class EventsService {
               },
             },
           });
-          return data;
+          this.eventsRequest = { BatchItem: {} };
+          this.eventsRequest.BatchItem[endpointId] = {
+            Endpoint: {
+              ChannelType: 'EMAIL',
+            },
+            Events: {
+              therapistNew: {
+                EventType: 'therapist.new',
+                Timestamp: new Date().toISOString(),
+              },
+            },
+          };
+          const response = await this.pinpoint.putEvents({
+            ApplicationId: this.projectId,
+            EventsRequest: this.eventsRequest,
+          });
+          return response;
         } catch (err) {
           console.log('Error', err);
         }
@@ -79,50 +115,81 @@ export class EventsService {
   }
 
   async startSessionCompleteJourney(id: string, sessionDuration: number) {
-    this.eventsRequest = { BatchItem: {} };
-    this.eventsRequest.BatchItem[id] = {
-      Endpoint: {
-        ChannelType: 'EMAIL',
-        Metrics: {
-          sessionDuration: sessionDuration,
-        },
-      },
-      Events: {
-        sessionComplete: {
-          EventType: 'session.complete',
-          Timestamp: new Date().toISOString(),
-        },
-      },
-    };
+    try {
+      const endpoints = await this.pinpoint.getUserEndpoints({
+        ApplicationId: this.projectId,
+        UserId: id,
+      });
+      const endpointsList = endpoints.EndpointsResponse.Item;
 
-    const response = await this.pinpoint.putEvents({
-      ApplicationId: this.projectId,
-      EventsRequest: this.eventsRequest,
-    });
-    console.log(response);
+      const endpointId = this.getWorkingEndpointId(endpointsList);
+
+      this.eventsRequest = { BatchItem: {} };
+      this.eventsRequest.BatchItem[endpointId] = {
+        Endpoint: {
+          ChannelType: 'EMAIL',
+          Metrics: {
+            sessionDuration: sessionDuration,
+          },
+        },
+        Events: {
+          sessionComplete: {
+            EventType: 'session.complete',
+            Timestamp: new Date().toISOString(),
+          },
+        },
+      };
+
+      const response = await this.pinpoint.putEvents({
+        ApplicationId: this.projectId,
+        EventsRequest: this.eventsRequest,
+      });
+      return response;
+    } catch (err) {
+      console.log('Error', err);
+    }
   }
 
   async startAddedFirstPatientJourney(id: string, patientName: string) {
-    this.eventsRequest = { BatchItem: {} };
-    this.eventsRequest.BatchItem[id] = {
-      Endpoint: {
-        ChannelType: 'EMAIL',
-        Attributes: {
-          patientName: [patientName],
-        },
-      },
-      Events: {
-        sessionComplete: {
-          EventType: 'therapist.addedFirstPatient',
-          Timestamp: new Date().toISOString(),
-        },
-      },
-    };
+    try {
+      const endpoints = await this.pinpoint.getUserEndpoints({
+        ApplicationId: this.projectId,
+        UserId: id,
+      });
+      const endpointsList = endpoints.EndpointsResponse.Item;
+      const endpointId = this.getWorkingEndpointId(endpointsList);
 
-    const response = await this.pinpoint.putEvents({
-      ApplicationId: this.projectId,
-      EventsRequest: this.eventsRequest,
-    });
-    console.log(response);
+      this.eventsRequest = { BatchItem: {} };
+      this.eventsRequest.BatchItem[endpointId] = {
+        Endpoint: {
+          ChannelType: 'EMAIL',
+          Attributes: {
+            patientName: [patientName],
+          },
+        },
+        Events: {
+          addedFirstPatient: {
+            EventType: 'therapist.addedFirstPatient',
+            Timestamp: new Date().toISOString(),
+          },
+        },
+      };
+
+      const response = await this.pinpoint.putEvents({
+        ApplicationId: this.projectId,
+        EventsRequest: this.eventsRequest,
+      });
+      return response;
+    } catch (err) {
+      console.log('Error', err);
+    }
+  }
+
+  getWorkingEndpointId(endpoints: EndpointResponse[]) {
+    for (let i = 0; i < endpoints.length; i++) {
+      if (endpoints[i].EndpointStatus === 'ACTIVE') {
+        return endpoints[i].Id;
+      }
+    }
   }
 }

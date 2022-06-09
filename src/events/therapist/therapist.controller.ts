@@ -13,14 +13,11 @@ export class TherapistController {
   @Post('new')
   async newTherapist(@Body() body: NewTherapistDto) {
     const { id: therapistId, email, firstName, lastName, type } = body;
-    console.log('new Therapist');
-    console.log('therapist-id: ', therapistId);
     const endpointId = uuidv4();
 
     if (type && type === 'therapist') {
       try {
-        console.log('endpointId: ', endpointId);
-        const resp = await this.eventsService.updateEndpoint(
+        const response = await this.eventsService.updateEndpoint(
           {
             id: therapistId,
             emailAddress: email,
@@ -29,8 +26,7 @@ export class TherapistController {
           endpointId,
           'therapist',
         );
-        console.log(resp);
-        return resp;
+        return response;
       } catch (err) {
         console.log(err);
       }
@@ -40,11 +36,7 @@ export class TherapistController {
   @HttpCode(200)
   @Post('added-first-patient')
   async addPatient(@Body() body: TherapistAddedFirstPatientDto) {
-    const { id: patientId, identifier, primaryTherapist: therapistId } = body;
-    console.log('identifier', identifier);
-    console.log('therapist-id: ', therapistId);
-    console.log('patient-id: ', patientId);
-
+    const { identifier, primaryTherapist: therapistId } = body;
     const fetchTherapistPatientCount = gql`
       query CountTherapistPatients($therapistId: uuid = "") {
         patient_aggregate(where: { primaryTherapist: { _eq: $therapistId } }) {
@@ -60,7 +52,11 @@ export class TherapistController {
         therapistId,
       });
       if (response && response.patient_aggregate.aggregate.count === 1) {
-        await this.eventsService.startAddedFirstPatientJourney(therapistId, identifier);
+        const putEventsResponse = await this.eventsService.startAddedFirstPatientJourney(
+          therapistId,
+          identifier,
+        );
+        return putEventsResponse;
       }
     } catch (err) {
       console.log('Error', err);
