@@ -17,10 +17,10 @@ export class PatientController {
     url.searchParams.set('email', email);
 
     const signUpUrl = url.href;
-    console.log('signUpUrl:', signUpUrl)
+    console.log('signUpUrl:', signUpUrl);
 
-    const urlPart1 = signUpUrl.slice(0, signUpUrl.length / 2)
-    const urlPart2 = signUpUrl.slice(signUpUrl.length / 2, signUpUrl.length)
+    const urlPart1 = signUpUrl.slice(0, signUpUrl.length / 2);
+    const urlPart2 = signUpUrl.slice(signUpUrl.length / 2, signUpUrl.length);
 
     const response = await this.eventsService.updateEndpoint(
       { id: patientId, emailAddress: email, identifier, urlPart1, urlPart2 },
