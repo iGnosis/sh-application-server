@@ -12,10 +12,11 @@ export class PatientController {
   async newPatient(@Body() body: NewPatientDto) {
     const { id: patientId, email, identifier, onboardingCode } = body;
 
-    const endpoint = `/public/signup/${onboardingCode}`;
-    const patientPortalUrl = this.configService.get('PATIENT_PORTAL_URL');
-    const signUpUrl = new URL(endpoint, patientPortalUrl).href;
+    const url = new URL(this.configService.get('PATIENT_PORTAL_URL'));
+    url.searchParams.set('code', onboardingCode);
+    url.searchParams.set('email', email);
 
+    const signUpUrl = url.href;
     const response = await this.eventsService.updateEndpoint(
       { id: patientId, emailAddress: email, identifier, signUpUrl },
       patientId,
