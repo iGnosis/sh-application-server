@@ -96,9 +96,8 @@ export class StatsController {
       },
     ];
 
-    // TODO: remove mock later.
     if (!results || !Array.isArray(results) || results.length === 0) {
-      return { data: mockMonthyGoals };
+      return { data: [] };
     }
 
     const response = this.statsService.groupByDate(results);
@@ -127,9 +126,8 @@ export class StatsController {
     const results = await this.statsService.sessionDuration(userId, dailyGoalDate, oneDayInFuture);
     console.log(results);
 
-    // TODO: remove mock later.
     if (!results || !Array.isArray(results) || results.length === 0) {
-      return { dailyMinutesCompleted: 21 };
+      return { dailyMinutesCompleted: 0 };
     }
 
     const sessionDurations = results.map((result) => result.sessionDurationInMin);
