@@ -6,7 +6,7 @@ interface Details {
   id: string;
   emailAddress: string;
   identifier: string;
-  onboardingCode: string;
+  onboardingCode?: string;
 }
 
 @Injectable()
