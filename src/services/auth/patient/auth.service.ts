@@ -10,13 +10,14 @@ export class PatientAuthService {
 
   async login(credentials: LoginRequestDto): Promise<Patient> {
     const query = gql`
-      query GetPatient($email: String) {
-        patient(where: { email: { _eq: $email } }) {
+      query GetPatient($email: String, $password: String = "") {
+        patient(where: { email: { _eq: $email }, password: { _eq: $password } }) {
           id
           identifier
           provider
           activeCareplan
           email
+          password
           careGiverEmail
           phoneCountryCode
           phoneNumber
@@ -26,19 +27,15 @@ export class PatientAuthService {
 
     const response = await this.gqlService.client.request(query, {
       email: credentials.email,
+      password: credentials.password,
     });
 
     if (!response || !Array.isArray(response.patient) || !response.patient.length) {
-      console.log('No matching email found');
+      console.log('No matching record found');
       return null;
     }
 
-    // keep password same as email, temporary workaround.
-    if (credentials.email !== credentials.password) {
-      console.log('Invalid credentials.');
-      return null;
-    }
-
+    delete response.patient[0].password;
     return response.patient[0];
   }
 
