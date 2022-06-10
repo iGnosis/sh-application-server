@@ -12,19 +12,15 @@ export class PatientController {
   async newPatient(@Body() body: NewPatientDto) {
     const { id: patientId, email, identifier, onboardingCode } = body;
 
-    try {
-      const signUpUrl = new URL(
-        `/public/signup/${onboardingCode}`,
-        this.configService.get('$PATIENT_PORTAL_URL'),
-      ).href;
-      const response = await this.eventsService.updateEndpoint(
-        { id: patientId, emailAddress: email, identifier, signUpUrl },
-        patientId,
-        'patient',
-      );
-      return response;
-    } catch (err) {
-      console.log('Error', err);
-    }
+    const endpoint = `/public/signup/${onboardingCode}`;
+    const patientPortalUrl = this.configService.get('PATIENT_PORTAL_URL');
+    const signUpUrl = new URL(endpoint, patientPortalUrl).href;
+
+    const response = await this.eventsService.updateEndpoint(
+      { id: patientId, emailAddress: email, identifier, signUpUrl },
+      patientId,
+      'patient',
+    );
+    return response;
   }
 }
