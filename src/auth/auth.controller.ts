@@ -13,7 +13,13 @@ import { AuthService } from 'src/services/auth/auth.service';
 import { JwtService } from 'src/services/jwt/jwt.service';
 import { PatientAuthService } from 'src/services/auth/patient/auth.service';
 import { PatientJwtService } from 'src/services/jwt/patient/jwt.service';
-import { LoginRequestDto, RequestResetPasswordDto, ResetPasswordDto } from './auth.dto';
+import {
+  LoginRequestDto,
+  PatientSignUpDto,
+  RequestResetPasswordDto,
+  ResetPasswordDto,
+} from './auth.dto';
+import { GqlService } from 'src/services/gql/gql.service';
 
 @Controller('auth')
 export class AuthController {
@@ -22,6 +28,7 @@ export class AuthController {
     private jwtService: JwtService,
     private patientAuthService: PatientAuthService,
     private patientJwtServive: PatientJwtService,
+    private gqlService: GqlService,
   ) {}
 
   @Post('login')
@@ -42,6 +49,32 @@ export class AuthController {
     if (!patient) {
       throw new HttpException('Invalid Email Password Combination', HttpStatus.BAD_REQUEST);
     }
+    const token = this.patientJwtServive.generate(patient);
+    return { token, patient };
+  }
+
+  @Post('patient/signup')
+  @HttpCode(200)
+  async patientSignUp(@Body() body: PatientSignUpDto) {
+    const { nickname, email, password, code } = body;
+
+    // verify the code
+    const isVerified = await this.patientAuthService.verifyOnboardingCode(code);
+    if (!isVerified) {
+      throw new HttpException('Invalid Code', HttpStatus.BAD_REQUEST);
+    }
+
+    // if code is valid, update 'nickname' 'email' and 'password' which are provided.
+    const patient = await this.patientAuthService.updatePatientByCode(
+      code,
+      nickname,
+      email,
+      password,
+    );
+    if (!patient) {
+      throw new HttpException('Failed to update patient', HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+
     const token = this.patientJwtServive.generate(patient);
     return { token, patient };
   }

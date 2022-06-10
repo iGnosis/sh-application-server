@@ -36,3 +36,29 @@ export class ResetPasswordDto {
   @IsNotEmpty()
   code: string;
 }
+
+export class PatientSignUpDto {
+  @ApiProperty({
+    description: 'Patient nickname',
+  })
+  @IsNotEmpty()
+  nickname: string;
+
+  @ApiProperty({
+    description: 'Patient email',
+  })
+  @IsEmail()
+  email: string;
+
+  @ApiProperty({
+    description: 'Patient new Password',
+  })
+  @IsNotEmpty()
+  password: string;
+
+  @ApiProperty({
+    description: 'Secret code to set patient password',
+  })
+  @IsNotEmpty()
+  code: string;
+}
