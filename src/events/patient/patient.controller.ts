@@ -9,11 +9,11 @@ export class PatientController {
   @HttpCode(200)
   @Post('new')
   async newPatient(@Body() body: NewPatientDto) {
-    const { id: patientId, email, identifier } = body;
+    const { id: patientId, email, identifier, onboardingCode } = body;
 
     try {
       const response = await this.eventsService.updateEndpoint(
-        { id: patientId, emailAddress: email, identifier },
+        { id: patientId, emailAddress: email, identifier, onboardingCode },
         patientId,
         'patient',
       );
