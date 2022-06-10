@@ -6,7 +6,8 @@ interface Details {
   id: string;
   emailAddress: string;
   identifier: string;
-  signUpUrl?: string;
+  urlPart1?: string;
+  urlPart2?: string;
 }
 
 @Injectable()
@@ -29,7 +30,7 @@ export class EventsService {
   }
 
   async updateEndpoint(details: Details, endpointId: string, type: 'patient' | 'therapist') {
-    const { id, emailAddress, identifier, signUpUrl } = details;
+    const { id, emailAddress, identifier, urlPart1, urlPart2 } = details;
     switch (type) {
       case 'patient':
         try {
@@ -45,7 +46,8 @@ export class EventsService {
                 UserAttributes: {
                   role: ['patient'],
                   identifier: [identifier],
-                  signUpUrl: [signUpUrl],
+                  urlPart1: [urlPart1],
+                  urlPart2: [urlPart2],
                 },
               },
             },
