@@ -12,7 +12,7 @@ export class PatientController {
   async newPatient(@Body() body: NewPatientDto) {
     const { id: patientId, email, identifier, onboardingCode } = body;
 
-    const url = new URL(this.configService.get('PATIENT_PORTAL_URL'));
+    const url = new URL('/public/signup', this.configService.get('PATIENT_PORTAL_URL'));
     url.searchParams.set('code', onboardingCode);
     url.searchParams.set('email', email);
 
