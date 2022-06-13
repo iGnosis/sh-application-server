@@ -61,41 +61,6 @@ export class StatsController {
     const results = await this.statsService.sessionDuration(userId, startDate, endDate);
     console.log('results:', results);
 
-    const mockMonthyGoals = [
-      {
-        date: '2022-05-01',
-        totalSessionDurationInMin: 30,
-      },
-      {
-        date: '2022-05-02',
-        totalSessionDurationInMin: 25,
-      },
-      {
-        date: '2022-05-03',
-        totalSessionDurationInMin: 45,
-      },
-      {
-        date: '2022-05-04',
-        totalSessionDurationInMin: 39,
-      },
-      {
-        date: '2022-05-07',
-        totalSessionDurationInMin: 35,
-      },
-      {
-        date: '2022-05-08',
-        totalSessionDurationInMin: 10,
-      },
-      {
-        date: '2022-05-09',
-        totalSessionDurationInMin: 36,
-      },
-      {
-        date: '2022-05-10',
-        totalSessionDurationInMin: 10,
-      },
-    ];
-
     if (!results || !Array.isArray(results) || results.length === 0) {
       return { data: [] };
     }
