@@ -75,6 +75,9 @@ export class AuthController {
       throw new HttpException('Failed to update patient', HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
+    // expiry onboardingCode
+    await this.patientAuthService.expireOnboardingCode(code);
+
     const token = this.patientJwtServive.generate(patient);
     return { token, patient };
   }

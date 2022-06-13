@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { LoginRequestDto } from 'src/auth/auth.dto';
 import { GqlService } from '../../gql/gql.service';
 import { gql } from 'graphql-request';
@@ -53,6 +53,17 @@ export class PatientAuthService {
     return true;
   }
 
+  async expireOnboardingCode(code: string) {
+    const query = `
+      mutation ExpireOnBoardingCode($code: uuid = "") {
+        update_patient(where: {onboardingCode: {_eq: $code}}, _set: {onboardingCode: null}) {
+          affected_rows
+        }
+      }`;
+    await this.gqlService.client.request(query, { code });
+    return true;
+  }
+
   async updatePatientByCode(code: string, nickname: string, email: string, password: string) {
     const query = `
       mutation UpdatePatient($code: uuid = "", $email: String = "", $password: String = "", $nickname: String = "") {
@@ -67,16 +78,25 @@ export class PatientAuthService {
         }
       }`;
 
-    const response = await this.gqlService.client.request(query, {
-      code,
-      nickname,
-      email,
-      password,
-    });
-
-    if (!response || !response.update_patient || !response.update_patient.affected_rows) {
-      return false;
+    try {
+      const response = await this.gqlService.client.request(query, {
+        code,
+        nickname,
+        email,
+        password,
+      });
+      if (!response || !response.update_patient || !response.update_patient.affected_rows) {
+        return false;
+      }
+      return response.update_patient.returning[0];
+    } catch (error) {
+      const errorMessage = error.response.errors[0].message;
+      if (errorMessage.includes('email') && errorMessage.includes('unique')) {
+        throw new HttpException(
+          'Account with provided email has already been registered',
+          HttpStatus.BAD_REQUEST,
+        );
+      }
     }
-    return response.update_patient.returning[0];
   }
 }
