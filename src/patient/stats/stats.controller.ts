@@ -85,7 +85,7 @@ export class StatsController {
       if (userId === 'd8ca4a7b-3335-49ed-865b-fac5b86622a3') {
         return { data: mockMonthyGoals };
       }
-      return { data: [] }
+      return { data: [] };
     }
 
     const response = this.statsService.groupByDate(results);
