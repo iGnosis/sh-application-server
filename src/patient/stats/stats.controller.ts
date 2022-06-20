@@ -63,41 +63,29 @@ export class StatsController {
 
     const mockMonthyGoals = [
       {
-        date: '2022-05-01',
+        date: '2022-06-17',
+        totalSessionDurationInMin: 19,
+      },
+      {
+        date: '2022-06-16',
+        totalSessionDurationInMin: 34,
+      },
+      {
+        date: '2022-06-15',
         totalSessionDurationInMin: 30,
       },
       {
-        date: '2022-05-02',
+        date: '2022-05-01',
         totalSessionDurationInMin: 25,
-      },
-      {
-        date: '2022-05-03',
-        totalSessionDurationInMin: 45,
-      },
-      {
-        date: '2022-05-04',
-        totalSessionDurationInMin: 39,
-      },
-      {
-        date: '2022-05-07',
-        totalSessionDurationInMin: 35,
-      },
-      {
-        date: '2022-05-08',
-        totalSessionDurationInMin: 10,
-      },
-      {
-        date: '2022-05-09',
-        totalSessionDurationInMin: 36,
-      },
-      {
-        date: '2022-05-10',
-        totalSessionDurationInMin: 10,
       },
     ];
 
     if (!results || !Array.isArray(results) || results.length === 0) {
-      return { data: mockMonthyGoals };
+      // Vignesh's account
+      if (userId === 'd8ca4a7b-3335-49ed-865b-fac5b86622a3') {
+        return { data: mockMonthyGoals };
+      }
+      return { data: [] }
     }
 
     const response = this.statsService.groupByDate(results);
@@ -119,14 +107,17 @@ export class StatsController {
       throw new HttpException('Invalid Date', HttpStatus.BAD_REQUEST);
     }
 
-    if (date === '2022-06-17') {
-      return { dailyMinutesCompleted: 19 };
-    } else if (date === '2022-06-16') {
-      return { dailyMinutesCompleted: 34 };
-    } else if (date === '2022-06-15') {
-      return { dailyMinutesCompleted: 30 };
-    } else if (date === '2022-05-01') {
-      return { dailyMinutesCompleted: 25 };
+    // Vignesh's account
+    if (userId === 'd8ca4a7b-3335-49ed-865b-fac5b86622a3') {
+      if (date === '2022-06-17') {
+        return { dailyMinutesCompleted: 19 };
+      } else if (date === '2022-06-16') {
+        return { dailyMinutesCompleted: 34 };
+      } else if (date === '2022-06-15') {
+        return { dailyMinutesCompleted: 30 };
+      } else if (date === '2022-05-01') {
+        return { dailyMinutesCompleted: 25 };
+      }
     }
 
     const oneDayInFuture = this.statsService.getFutureDate(dailyGoalDate, 1);
