@@ -49,9 +49,9 @@ export class CognitoController {
       console.log('error:', error);
     }
     return {
-      status: "success",
-      data: cognitoResponse
-    }
+      status: 'success',
+      data: cognitoResponse,
+    };
   }
 
   @HttpCode(200)
@@ -61,9 +61,9 @@ export class CognitoController {
     this.cognitoService.loadConfig(user);
     const cognitoResponse = await this.cognitoService.refreshTokens(body.refreshToken);
     return {
-      status: "success",
-      data: cognitoResponse
-    }
+      status: 'success',
+      data: cognitoResponse,
+    };
   }
 
   @HttpCode(200)
@@ -76,8 +76,8 @@ export class CognitoController {
     this.cognitoService.loadConfig(user);
     const cognitoResponse = this.cognitoService.revokeRefreshToken(body.refreshToken);
     return {
-      status: "success",
-      data: cognitoResponse
-    }
+      status: 'success',
+      data: cognitoResponse,
+    };
   }
 }
