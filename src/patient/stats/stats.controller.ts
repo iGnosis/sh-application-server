@@ -16,9 +16,9 @@ import { RolesGuard } from 'src/auth/guards/roles.guard';
 import { StatsService } from './stats.service';
 
 // TODO: Enable guards after Hasura configs are fixed.
-// @Roles(Role.PATIENT)
-// @UseGuards(AuthGuard, RolesGuard)
-// @ApiBearerAuth('access-token')
+@Roles(Role.PATIENT)
+@UseGuards(AuthGuard, RolesGuard)
+@ApiBearerAuth('access-token')
 @Controller('patient/stats')
 export class StatsController {
   constructor(private statsService: StatsService) {}
