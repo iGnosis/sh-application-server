@@ -1,9 +1,9 @@
 import { Injectable, CanActivate, ExecutionContext } from '@nestjs/common';
-import { JwtService } from 'src/services/jwt/jwt.service';
+import { CognitoService } from '../cognito/cognito.service';
 
 @Injectable()
 export class AuthGuard implements CanActivate {
-  constructor(private jwtService: JwtService) {}
+  constructor(private cognitoService: CognitoService) {}
 
   canActivate(context: ExecutionContext): boolean {
     const request = context.switchToHttp().getRequest();
@@ -12,7 +12,8 @@ export class AuthGuard implements CanActivate {
       return false;
     }
 
-    const userDetails = this.jwtService.verify(request.headers.authorization);
+    const token = request.headers.authorization.replace('Bearer ', '');
+    const userDetails = this.cognitoService.verifyIdToken(token);
 
     if (!userDetails) {
       return false;

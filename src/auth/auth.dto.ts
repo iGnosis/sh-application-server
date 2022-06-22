@@ -62,3 +62,19 @@ export class PatientSignUpDto {
   @IsNotEmpty()
   code: string;
 }
+
+export class GetTokensApi {
+  @ApiProperty({
+    description: 'OAuth code to exchange tokens',
+  })
+  @IsNotEmpty()
+  code: string;
+}
+
+export class RefreshTokensApi {
+  @ApiProperty({
+    description: 'Refresh token',
+  })
+  @IsNotEmpty()
+  refreshToken: string;
+}

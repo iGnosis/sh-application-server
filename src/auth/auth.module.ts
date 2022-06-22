@@ -6,9 +6,11 @@ import { JwtService } from 'src/services/jwt/jwt.service';
 import { AuthController } from './auth.controller';
 import { PatientAuthService } from 'src/services/auth/patient/auth.service';
 import { PatientJwtService } from 'src/services/jwt/patient/jwt.service';
+import { CognitoController } from './cognito/cognito.controller';
+import { CognitoService } from './cognito/cognito.service';
 
 @Module({
-  controllers: [AuthController],
+  controllers: [AuthController, CognitoController],
   providers: [
     AuthService,
     GqlService,
@@ -16,6 +18,7 @@ import { PatientJwtService } from 'src/services/jwt/patient/jwt.service';
     EmailService,
     PatientAuthService,
     PatientJwtService,
+    CognitoService,
   ],
 })
 export class AuthModule {}

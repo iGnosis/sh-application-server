@@ -21,7 +21,8 @@ export class RolesGuard implements CanActivate {
     const { user } = context.switchToHttp().getRequest();
     // console.dir(user, { depth: null })
 
-    const userRole = user['https://hasura.io/jwt/claims']['x-hasura-default-role'];
+    const hasuraCliams = JSON.parse(user['https://hasura.io/jwt/claims']);
+    const userRole = hasuraCliams['x-hasura-default-role'];
 
     if (requiredRoles.includes(userRole)) {
       return true;
