@@ -48,7 +48,10 @@ export class CognitoController {
       // fails when patient with email already exists.
       console.log('error:', error);
     }
-    return cognitoResponse;
+    return {
+      status: "success",
+      data: cognitoResponse
+    }
   }
 
   @HttpCode(200)
@@ -56,8 +59,11 @@ export class CognitoController {
   async refreshTokens(@Body() body: RefreshTokensApi, @Headers('x-pointmotion-user') user: string) {
     // load user config
     this.cognitoService.loadConfig(user);
-    const response = await this.cognitoService.refreshTokens(body.refreshToken);
-    return response;
+    const cognitoResponse = await this.cognitoService.refreshTokens(body.refreshToken);
+    return {
+      status: "success",
+      data: cognitoResponse
+    }
   }
 
   @HttpCode(200)
@@ -68,7 +74,10 @@ export class CognitoController {
   ) {
     // load user config
     this.cognitoService.loadConfig(user);
-    const response = this.cognitoService.revokeRefreshToken(body.refreshToken);
-    return response;
+    const cognitoResponse = this.cognitoService.revokeRefreshToken(body.refreshToken);
+    return {
+      status: "success",
+      data: cognitoResponse
+    }
   }
 }
