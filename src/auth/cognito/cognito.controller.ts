@@ -22,7 +22,7 @@ export class CognitoController {
   async login(
     @Body() body: GetTokensApi,
     @Headers('x-pointmotion-user') user: string,
-    @Headers('x-debug') debug: boolean,
+    @Headers('x-pointmotion-debug') debug: boolean,
   ) {
     // load user config
     this.cognitoService.loadConfig(user);
