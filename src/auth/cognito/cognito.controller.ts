@@ -19,9 +19,17 @@ export class CognitoController {
 
   @HttpCode(200)
   @Post('login')
-  async login(@Body() body: GetTokensApi, @Headers('x-pointmotion-user') user: string) {
+  async login(
+    @Body() body: GetTokensApi,
+    @Headers('x-pointmotion-user') user: string,
+    @Headers('x-debug') debug: boolean,
+  ) {
     // load user config
     this.cognitoService.loadConfig(user);
+
+    // override config with debug settings
+    this.cognitoService.overrideConfig(debug);
+
     console.log('config loaded');
     const code = body.code;
     const cognitoResponse = await this.cognitoService.exchangeCode(code);
@@ -59,6 +67,7 @@ export class CognitoController {
   async refreshTokens(@Body() body: RefreshTokensApi, @Headers('x-pointmotion-user') user: string) {
     // load user config
     this.cognitoService.loadConfig(user);
+
     const cognitoResponse = await this.cognitoService.refreshTokens(body.refreshToken);
     return {
       status: 'success',

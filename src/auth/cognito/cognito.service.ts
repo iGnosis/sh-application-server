@@ -87,6 +87,12 @@ export class CognitoService {
     }
   }
 
+  overrideConfig(debug: boolean) {
+    if (debug) {
+      this.cognitoConfig.callbackUrl = this.configService.get('COGNITO_DEBUG_CALLBACK_URL');
+    }
+  }
+
   async exchangeCode(code: string) {
     const tokenExchangeUrl = new URL('/oauth2/token', this.cognitoConfig.cognitoUrl).href;
 
