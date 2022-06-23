@@ -40,18 +40,20 @@ export class CognitoController {
     try {
       const idToken = cognitoResponse.id_token;
       const idTokenPayload = this.cognitoService.parseJwt(idToken);
-      const query = `
+      if (user === 'patient') {
+        const query = `
         mutation InsertPatient($patientId: uuid = "", $email: String = "") {
           insert_patient(objects: {id: $patientId, email: $email}) {
             affected_rows
           }
         }`;
 
-      console.log('Inserting patient after Cognito sign-up...');
-      await this.gqlService.client.request(query, {
-        patientId: idTokenPayload.sub,
-        email: idTokenPayload.email,
-      });
+        console.log('Inserting patient after Cognito sign-up...');
+        await this.gqlService.client.request(query, {
+          patientId: idTokenPayload.sub,
+          email: idTokenPayload.email,
+        });
+      }
     } catch (error) {
       // fails when patient with email already exists.
       console.log('error:', error);
