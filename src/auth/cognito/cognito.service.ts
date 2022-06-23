@@ -139,9 +139,7 @@ export class CognitoService {
       ClientSecret: this.cognitoConfig.clientSecret,
     });
 
-    const data = await this._runAwsCommand(command);
-    console.log('revokeRefreshToken:data', data);
-    return { success: true };
+    await this._runAwsCommand(command);
   }
 
   verifyIdToken(idToken: string) {

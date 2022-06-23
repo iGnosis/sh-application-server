@@ -85,10 +85,10 @@ export class CognitoController {
   ) {
     // load user config
     this.cognitoService.loadConfig(user);
-    const cognitoResponse = this.cognitoService.revokeRefreshToken(body.refreshToken);
+    await this.cognitoService.revokeRefreshToken(body.refreshToken);
     return {
       status: 'success',
-      data: cognitoResponse,
+      data: {},
     };
   }
 }
