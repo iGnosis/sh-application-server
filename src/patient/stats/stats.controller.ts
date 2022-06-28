@@ -53,7 +53,7 @@ export class StatsController {
       throw new HttpException('Invalid Date', HttpStatus.BAD_REQUEST);
     }
 
-    const numOfDaysInAMonth = new Date(year, month, 1).getUTCDate();
+    const numOfDaysInAMonth = new Date(year, month, 0).getDate();
     console.log('numOfDaysInAMonth:', numOfDaysInAMonth);
 
     const endDate = this.statsService.getFutureDate(startDate, numOfDaysInAMonth);
