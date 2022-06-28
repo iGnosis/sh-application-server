@@ -159,9 +159,9 @@ export class StatsController {
 
       let groupResultsByDate = this.statsService.groupByDate(results);
 
-      // only consider sessions which lasted for 30 or >= 30mins.
+      // only consider sessions which lasted for 1 or >= 1mins.
       groupResultsByDate = groupResultsByDate.filter((value) => {
-        if (value.totalSessionDurationInMin >= 30) {
+        if (value.totalSessionDurationInMin >= 1) {
           return true;
         }
       });
