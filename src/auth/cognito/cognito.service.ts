@@ -87,10 +87,8 @@ export class CognitoService {
     }
   }
 
-  overrideConfig(debug: boolean) {
-    if (debug) {
-      this.cognitoConfig.callbackUrl = this.configService.get('COGNITO_DEBUG_CALLBACK_URL');
-    }
+  overrideCallbackUrl(url: string) {
+    this.cognitoConfig.callbackUrl = url;
   }
 
   async exchangeCode(code: string) {

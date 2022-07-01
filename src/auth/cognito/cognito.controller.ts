@@ -1,4 +1,4 @@
-import { Body, Controller, Headers, HttpCode, Post } from '@nestjs/common';
+import { Body, Controller, Head, Headers, HttpCode, Post } from '@nestjs/common';
 import { GqlService } from 'src/services/gql/gql.service';
 import { GetTokensApi, RefreshTokensApi } from '../auth.dto';
 import { CognitoService } from './cognito.service';
@@ -22,13 +22,21 @@ export class CognitoController {
   async login(
     @Body() body: GetTokensApi,
     @Headers('x-pointmotion-user') user: string,
-    @Headers('x-pointmotion-debug') debug: boolean,
+    @Headers('origin') origin: string
   ) {
     // load user config
     this.cognitoService.loadConfig(user);
 
-    // override config with debug settings
-    this.cognitoService.overrideConfig(debug);
+    // Whitelisting callback URLs to make an exception for certain origins.
+    const allowedCallbackUrls = {
+      'http://localhost:4300': 'http://localhost:4300/oauth/callback',
+      'https://app.pointmotion.us': 'https://app.pointmotion.us/oauth/callback'
+    }
+
+    if (origin in allowedCallbackUrls) {
+      console.log(`setting callback url for ${origin}`)
+      this.cognitoService.overrideCallbackUrl(allowedCallbackUrls[origin])
+    }
 
     console.log('config loaded');
     const code = body.code;
