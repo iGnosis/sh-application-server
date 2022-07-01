@@ -24,6 +24,8 @@ export class CognitoController {
     @Headers('x-pointmotion-user') user: string,
     @Headers('origin') origin: string,
   ) {
+    console.log('headers:origin:', origin);
+
     // load user config
     this.cognitoService.loadConfig(user);
 
