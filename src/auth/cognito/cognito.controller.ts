@@ -22,9 +22,11 @@ export class CognitoController {
   async login(
     @Body() body: GetTokensApi,
     @Headers('x-pointmotion-user') user: string,
+    @Headers() headers: string,
     @Headers('origin') origin: string,
   ) {
-    console.log('headers:origin:', origin);
+    console.log('headers:', headers);
+    console.log('headers:origin', origin);
 
     // load user config
     this.cognitoService.loadConfig(user);
