@@ -1,4 +1,4 @@
-import { Body, Controller, Head, Headers, HttpCode, Post } from '@nestjs/common';
+import { Body, Controller, Headers, HttpCode, Post } from '@nestjs/common';
 import { GqlService } from 'src/services/gql/gql.service';
 import { GetTokensApi, RefreshTokensApi } from '../auth.dto';
 import { CognitoService } from './cognito.service';
