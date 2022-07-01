@@ -22,7 +22,7 @@ export class CognitoController {
   async login(
     @Body() body: GetTokensApi,
     @Headers('x-pointmotion-user') user: string,
-    @Headers('origin') origin: string
+    @Headers('origin') origin: string,
   ) {
     // load user config
     this.cognitoService.loadConfig(user);
@@ -30,12 +30,12 @@ export class CognitoController {
     // Whitelisting callback URLs to make an exception for certain origins.
     const allowedCallbackUrls = {
       'http://localhost:4300': 'http://localhost:4300/oauth/callback',
-      'https://app.pointmotion.us': 'https://app.pointmotion.us/oauth/callback'
-    }
+      'https://app.pointmotion.us': 'https://app.pointmotion.us/oauth/callback',
+    };
 
     if (origin in allowedCallbackUrls) {
-      console.log(`setting callback url for ${origin}`)
-      this.cognitoService.overrideCallbackUrl(allowedCallbackUrls[origin])
+      console.log(`setting callback url for ${origin}`);
+      this.cognitoService.overrideCallbackUrl(allowedCallbackUrls[origin]);
     }
 
     console.log('config loaded');
