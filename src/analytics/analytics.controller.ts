@@ -1,8 +1,13 @@
-import { Controller, Body, Post, HttpCode } from '@nestjs/common';
+import { Controller, Body, Post, HttpCode, UseGuards } from '@nestjs/common';
+import { ApiBearerAuth } from '@nestjs/swagger';
+import { Roles } from 'src/auth/decorators/roles.decorator';
+import { Role } from 'src/auth/enums/role.enum';
+import { AuthGuard } from 'src/auth/guards/auth.guard';
 import { AnalyticsService } from './analytics.service';
 @Controller('analytics')
-// TODO: Enable Guards later.
-// @UseGuards(AuthGuard)
+@Roles(Role.THERAPIST)
+@UseGuards(AuthGuard)
+@ApiBearerAuth('access-token')
 export class AnalyticsController {
   constructor(private analyticsService: AnalyticsService) {}
 

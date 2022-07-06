@@ -15,7 +15,6 @@ import { AuthGuard } from 'src/auth/guards/auth.guard';
 import { RolesGuard } from 'src/auth/guards/roles.guard';
 import { StatsService } from './stats.service';
 
-// TODO: Enable guards after Hasura configs are fixed.
 @Roles(Role.PATIENT, Role.PLAYER)
 @UseGuards(AuthGuard, RolesGuard)
 @ApiBearerAuth('access-token')
