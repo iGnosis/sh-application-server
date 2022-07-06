@@ -88,6 +88,11 @@ export class StatsController {
       return { data: [] };
     }
 
+    // CAUTION: Get timezone offset from users, and convert the UTC dates to local
+    // dates before doing aggregation by Date. This function will return incorrect
+    // results otherwise. new Date().getTimezoneOffSet() returns the offset in
+    // minutes, you can then add the minutes to 'results.createdAt' fields,
+    // and proceed to call this function as it is.
     const response = this.statsService.groupByDate(results);
 
     // sort cronologically - ascending sort w.r.t dates.
