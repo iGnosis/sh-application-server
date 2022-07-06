@@ -1,4 +1,12 @@
-import { Controller, HttpCode, Get, Response, StreamableFile, Query, UseGuards } from '@nestjs/common';
+import {
+  Controller,
+  HttpCode,
+  Get,
+  Response,
+  StreamableFile,
+  Query,
+  UseGuards,
+} from '@nestjs/common';
 import { ApiBearerAuth } from '@nestjs/swagger';
 import { Roles } from 'src/auth/decorators/roles.decorator';
 import { Role } from 'src/auth/enums/role.enum';
