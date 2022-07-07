@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { DatabaseService } from 'src/database/database.service';
-import { GoalsApiResponse, GroupGoalsByDate } from '../../types/stats';
+import { GoalsApiResponse, GroupGoalsByDate, MonthlyGoalsApiResponse } from '../../types/stats';
 
 @Injectable()
 export class StatsService {
@@ -35,6 +35,30 @@ export class StatsService {
       result.sessionDurationInMin = parseFloat((result.sessionDurationInMs / 1000 / 60).toFixed(2));
     });
 
+    return results;
+  }
+
+  // endDate is exclusive
+  async getMonthlyGoals(
+    patientId: string,
+    startDate: Date,
+    endDate: Date,
+    dbTimezone: string,
+  ): Promise<Array<MonthlyGoalsApiResponse>> {
+    const results = await this.databaseService.executeQuery(
+      `SELECT
+        count(*) AS "activityEndedCount",
+        DATE_TRUNC('day', timezone($4, to_timestamp(created_at/1000))) AS "createdAtLocaleDay"
+      FROM events
+      WHERE
+        patient = $1 AND
+        to_timestamp(created_at/1000) >= $2 AND
+        to_timestamp(created_at/1000) < $3
+      GROUP BY DATE_TRUNC('day', timezone($4, to_timestamp(created_at/1000))), event_type
+      HAVING event_type = 'activityEnded'
+      ORDER BY DATE_TRUNC('day', timezone($4, to_timestamp(created_at/1000))) DESC`,
+      [patientId, startDate, endDate, dbTimezone],
+    );
     return results;
   }
 

@@ -25,82 +25,28 @@ export class StatsController {
   @HttpCode(200)
   @Get('monthly-goals')
   async monthyGoals(
-    @Query('year') year: number,
-    @Query('month') month: number,
+    @Query('startDate') startDate: Date,
+    @Query('endDate') endDate: Date,
+    @Query('userTimezone') userTimezone: string,
     @User() userId: string,
   ) {
     console.log('userId:', userId);
-
-    // input month ranges: 0-11 (inclusive)
-    // add one to have in in the range 1-12
-    month = month + 1;
-
-    // prepend '0' if it's just a single digit.
-    // ex. '2' -> '02'
-    let monthStr = month.toString();
-    if (monthStr.length == 1) {
-      monthStr = `0${monthStr}`;
-    }
-
-    console.log('year:', year);
-    console.log('monthStr:', monthStr);
-
-    const startDate = new Date(`${year}-${monthStr}-01`);
-    console.log('startDate:', startDate);
-
-    if (startDate.toISOString() === 'Invalid Date') {
-      throw new HttpException('Invalid Date', HttpStatus.BAD_REQUEST);
-    }
-
-    const numOfDaysInAMonth = new Date(year, month, 0).getDate();
-    console.log('numOfDaysInAMonth:', numOfDaysInAMonth);
-
-    const endDate = this.statsService.getFutureDate(startDate, numOfDaysInAMonth);
-    console.log('endDate:', endDate);
-
-    const results = await this.statsService.sessionDuration(userId, startDate, endDate);
-    console.log('results:', results);
-
-    const mockMonthyGoals = [
-      {
-        date: '2022-06-17',
-        totalSessionDurationInMin: 19,
+    const results = await this.statsService.getMonthlyGoals(
+      userId,
+      startDate,
+      endDate,
+      userTimezone,
+    );
+    console.log('monthyGoals:results:', results);
+    const daysCompleted = results.filter((val) => val.activityEndedCount >= 3).length;
+    const response = {
+      status: 'success',
+      data: {
+        daysCompleted,
+        rewardsCountDown: [5, 10, 15],
       },
-      {
-        date: '2022-06-16',
-        totalSessionDurationInMin: 34,
-      },
-      {
-        date: '2022-06-15',
-        totalSessionDurationInMin: 30,
-      },
-      {
-        date: '2022-05-01',
-        totalSessionDurationInMin: 25,
-      },
-    ];
-
-    if (!results || !Array.isArray(results) || results.length === 0) {
-      // Vignesh's account
-      if (userId === 'd8ca4a7b-3335-49ed-865b-fac5b86622a3') {
-        return { data: mockMonthyGoals };
-      }
-      return { data: [] };
-    }
-
-    // CAUTION: Get timezone offset from users, and convert the UTC dates to local
-    // dates before doing aggregation by Date. This function will return incorrect
-    // results otherwise. new Date().getTimezoneOffSet() returns the offset in
-    // minutes, you can then add the minutes to 'results.createdAt' fields,
-    // and proceed to call this function as it is.
-    const response = this.statsService.groupByDate(results);
-
-    // sort cronologically - ascending sort w.r.t dates.
-    response.sort((a, b) => {
-      return new Date(a.date).getTime() - new Date(b.date).getTime();
-    });
-
-    return { data: response };
+    };
+    return response;
   }
 
   @HttpCode(200)

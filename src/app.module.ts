@@ -16,6 +16,7 @@ import { SpeechSynthesisModule } from './speechSynthesis/speechSynthesis.module'
 import { CronModule } from './cron/cron.module';
 import { StatsModule } from './patient/stats/stats.module';
 import { EventsModule } from './events/events.module';
+import { RewardsModule } from './patient/rewards/rewards.module';
 
 @Module({
   imports: [
@@ -29,6 +30,7 @@ import { EventsModule } from './events/events.module';
       isGlobal: true,
     }),
     EventsModule,
+    RewardsModule,
   ],
   controllers: [AppController],
   providers: [AppService, GqlService, AuthService, JwtService, EmailService],
