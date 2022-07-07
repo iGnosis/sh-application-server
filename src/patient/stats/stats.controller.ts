@@ -33,7 +33,7 @@ export class StatsController {
     console.log('userId:', userId);
 
     // since endDate is exclusive, we add one day.
-    const addOneDayToendDate = this.statsService.getFutureDate(endDate, 1)
+    const addOneDayToendDate = this.statsService.getFutureDate(endDate, 1);
 
     const results = await this.statsService.getMonthlyGoals(
       userId,
