@@ -31,13 +31,18 @@ export class StatsController {
     @User() userId: string,
   ) {
     console.log('userId:', userId);
+
+    // since endDate is exclusive, we add one day.
+    const addOneDayToendDate = this.statsService.getFutureDate(endDate, 1)
+
     const results = await this.statsService.getMonthlyGoals(
       userId,
       startDate,
-      endDate,
+      addOneDayToendDate,
       userTimezone,
     );
     console.log('monthyGoals:results:', results);
+
     const daysCompleted = results.filter((val) => val.activityEndedCount >= 3).length;
     const response = {
       status: 'success',
