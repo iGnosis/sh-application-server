@@ -1,6 +1,11 @@
 import { Injectable } from '@nestjs/common';
 import { DatabaseService } from 'src/database/database.service';
-import { GoalsApiResponse, GroupGoalsByDate, MonthlyGoalsApiResponse } from '../../types/stats';
+import {
+  DailyGoalsApiResponse,
+  GoalsApiResponse,
+  GroupGoalsByDate,
+  MonthlyGoalsApiResponse,
+} from '../../types/stats';
 
 @Injectable()
 export class StatsService {
@@ -35,6 +40,27 @@ export class StatsService {
       result.sessionDurationInMin = parseFloat((result.sessionDurationInMs / 1000 / 60).toFixed(2));
     });
 
+    return results;
+  }
+
+  async getDailyGoals(
+    patientId: string,
+    activityIds: Array<string>,
+    startDate: Date,
+    endDate: Date,
+  ): Promise<Array<DailyGoalsApiResponse>> {
+    const results = await this.databaseService.executeQuery(
+      `SELECT DISTINCT
+        activity
+      FROM events
+      WHERE
+        patient = $1 AND
+        activity = ANY($2::uuid[]) AND
+        event_type = 'activityEnded' AND
+        to_timestamp(created_at/1000) >= $3 AND
+        to_timestamp(created_at/1000) < $4`,
+      [patientId, activityIds, startDate, endDate],
+    );
     return results;
   }
 

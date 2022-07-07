@@ -1,18 +1,11 @@
-import {
-  Controller,
-  Get,
-  HttpCode,
-  HttpException,
-  HttpStatus,
-  Query,
-  UseGuards,
-} from '@nestjs/common';
+import { Body, Controller, Get, HttpCode, Post, Query, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth } from '@nestjs/swagger';
 import { Roles } from 'src/auth/decorators/roles.decorator';
 import { User } from 'src/auth/decorators/user.decorator';
 import { Role } from 'src/auth/enums/role.enum';
 import { AuthGuard } from 'src/auth/guards/auth.guard';
 import { RolesGuard } from 'src/auth/guards/roles.guard';
+import { DailyGoalsDto } from './stats.dto';
 import { StatsService } from './stats.service';
 
 @Roles(Role.PATIENT, Role.PLAYER)
@@ -31,10 +24,8 @@ export class StatsController {
     @User() userId: string,
   ) {
     console.log('userId:', userId);
-
     // since endDate is exclusive, we add one day.
     const addOneDayToendDate = this.statsService.getFutureDate(endDate, 1);
-
     const results = await this.statsService.getMonthlyGoals(
       userId,
       startDate,
@@ -42,7 +33,6 @@ export class StatsController {
       userTimezone,
     );
     console.log('monthyGoals:results:', results);
-
     const daysCompleted = results.filter((val) => val.activityEndedCount >= 3).length;
     const response = {
       status: 'success',
@@ -55,41 +45,31 @@ export class StatsController {
   }
 
   @HttpCode(200)
-  @Get('daily-goals')
-  async dailyGoals(@Query('date') date: string, @User() userId: string) {
-    // returns the number of minutes a patient did a session on said day. can be >30min
-    const dailyGoalDate = new Date(date);
-    if (dailyGoalDate.toString() === 'Invalid Date') {
-      throw new HttpException('Invalid Date', HttpStatus.BAD_REQUEST);
+  @Post('daily-goals')
+  async dailyGoals(@Body() inputData: DailyGoalsDto, @User() userId: string) {
+    console.log('userId:', userId);
+    const startDate = inputData.input.date;
+    let activityIds = inputData.input.activityIds;
+    // workaround when there's just single activity ID.
+    if (typeof activityIds === 'string') {
+      activityIds = [activityIds];
     }
-
-    // Vignesh's account
-    if (userId === 'd8ca4a7b-3335-49ed-865b-fac5b86622a3') {
-      if (date === '2022-06-17') {
-        return { dailyMinutesCompleted: 19 };
-      } else if (date === '2022-06-16') {
-        return { dailyMinutesCompleted: 34 };
-      } else if (date === '2022-06-15') {
-        return { dailyMinutesCompleted: 30 };
-      } else if (date === '2022-05-01') {
-        return { dailyMinutesCompleted: 25 };
-      }
-    }
-
-    const oneDayInFuture = this.statsService.getFutureDate(dailyGoalDate, 1);
-
-    console.log('startDateStr:', dailyGoalDate);
-    console.log('endDateStr:', oneDayInFuture);
-    const results = await this.statsService.sessionDuration(userId, dailyGoalDate, oneDayInFuture);
-    console.log(results);
-
-    if (!results || !Array.isArray(results) || results.length === 0) {
-      return { dailyMinutesCompleted: 0 };
-    }
-
-    const sessionDurations = results.map((result) => result.sessionDurationInMin);
-    const totalDailyDuration = sessionDurations.reduce((total, num) => (total += num), 0);
-    return { dailyMinutesCompleted: totalDailyDuration };
+    const endDate = this.statsService.getFutureDate(startDate, 1);
+    const results = await this.statsService.getDailyGoals(userId, activityIds, startDate, endDate);
+    const completedActivityIds = results.map((val) => val.activity);
+    const response = {
+      status: 'success',
+      data: {
+        activities: [],
+      },
+    };
+    activityIds.forEach((reqActivityId) => {
+      response.data.activities.push({
+        id: reqActivityId,
+        isCompleted: completedActivityIds.includes(reqActivityId),
+      });
+    });
+    return response;
   }
 
   @HttpCode(200)

@@ -4,9 +4,13 @@ export class GoalsApiResponse {
   sessionDurationInMin: number;
 }
 
+export class DailyGoalsApiResponse {
+  activity: string;
+}
+
 export class MonthlyGoalsApiResponse {
   createdAtLocaleDate: Date;
-  activityEndedCount: count;
+  activityEndedCount: number;
 }
 
 export class GroupGoalsByDate {
