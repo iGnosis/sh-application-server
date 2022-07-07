@@ -48,7 +48,7 @@ export class StatsController {
   @Post('daily-goals')
   async dailyGoals(@Body() inputData: DailyGoalsDto, @User() userId: string) {
     console.log('userId:', userId);
-    const startDate = inputData.input.date;
+    const startDate = new Date(inputData.input.date);
     let activityIds = inputData.input.activityIds;
     // workaround when there's just single activity ID.
     if (typeof activityIds === 'string') {
