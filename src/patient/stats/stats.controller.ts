@@ -74,6 +74,8 @@ export class StatsController {
 
   @HttpCode(200)
   @Get('streak')
+  // TODO: Implement newer version of streak API.
+  // Atleast 3 activites should be done in a day.
   async streak(@User() userId: string) {
     // returns the number of days a patient did sessions consecutively.
 

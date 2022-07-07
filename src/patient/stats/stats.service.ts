@@ -140,4 +140,8 @@ export class StatsService {
   getPastDate(currentDate: Date, numOfDaysInPast: number) {
     return new Date(currentDate.getTime() - 86400000 * numOfDaysInPast);
   }
+
+  getDays(year: number, month: number) {
+    return new Date(year, month, 0).getDate();
+  }
 }
