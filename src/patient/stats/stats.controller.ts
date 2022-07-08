@@ -74,11 +74,8 @@ export class StatsController {
 
   @HttpCode(200)
   @Get('streak')
-  // TODO: Implement newer version of streak API.
-  // Atleast 3 activites should be done in a day.
-  async streak(@User() userId: string) {
-    // returns the number of days a patient did sessions consecutively.
-
+  // for a day to be active, at least 3 activites must be done.
+  async streak(@Query('userTimezone') userTimezone: string, @User() userId: string) {
     // Read session for past 30 days each time.
     let days = 30;
 
@@ -89,37 +86,18 @@ export class StatsController {
     let streak = 0;
 
     while (true) {
-      const results = await this.statsService.sessionDuration(userId, startDate, endDate);
-      if (!results || !Array.isArray(results) || results.length === 0) {
-        break;
-      }
-
-      let groupResultsByDate = this.statsService.groupByDate(results);
-
-      // only consider sessions which lasted for 1 or >= 1mins.
-      groupResultsByDate = groupResultsByDate.filter((value) => {
-        if (value.totalSessionDurationInMin >= 1) {
-          return true;
-        }
-      });
-
-      if (!groupResultsByDate || groupResultsByDate.length === 0) {
-        break;
-      }
-
-      // sort in reverse cronological order.
-      groupResultsByDate.sort((a, b) => {
-        return new Date(b.date).getTime() - new Date(a.date).getTime();
-      });
-
-      const streakCount = this.statsService.workOutStreak(groupResultsByDate);
+      const results = await this.statsService.getMonthlyGoals(
+        userId,
+        startDate,
+        endDate,
+        userTimezone,
+      );
+      const streakCount = this.statsService.workOutStreak(results);
       streak += streakCount;
-
       // only continue if streakCount is 30 for the current batch of sessions.
       if (streakCount !== 30) {
         break;
       }
-
       endDate = startDate;
       days += 30;
       startDate = this.statsService.getPastDate(now, days);

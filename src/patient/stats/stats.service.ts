@@ -74,7 +74,7 @@ export class StatsService {
     const results = await this.databaseService.executeQuery(
       `SELECT
         count(*) AS "activityEndedCount",
-        DATE_TRUNC('day', timezone($4, to_timestamp(created_at/1000))) AS "createdAtLocaleDay"
+        DATE_TRUNC('day', timezone($4, to_timestamp(created_at/1000))) AS "createdAtLocaleDate"
       FROM events
       WHERE
         patient = $1 AND
@@ -113,22 +113,20 @@ export class StatsService {
     return response;
   }
 
-  workOutStreak(sessions: Array<GroupGoalsByDate>) {
+  workOutStreak(days: Array<MonthlyGoalsApiResponse>) {
     let streak = 0;
-    let prevDate = new Date(new Date().toISOString().split('T')[0]);
+    let mostRecentDate = new Date(new Date().setHours(0, 0, 0, 0));
+    const activeDays = days.filter((day) => day.activityEndedCount >= 3);
 
-    for (let i = 0; i < sessions.length; i++) {
-      const sessionCreatedAt = new Date(sessions[i].date);
-      const diff = prevDate.getTime() - sessionCreatedAt.getTime();
-
-      // diff will be 0 if session/s is done on the same day.
-      // diff will be 86400000 if session/s is done on the previous day.
-      if (diff == 86400000 || diff == 0) {
+    for (let i = 0; i < activeDays.length; i++) {
+      const dayCreatedAt = new Date(activeDays[i].createdAtLocaleDate);
+      const diff = mostRecentDate.getTime() - dayCreatedAt.getTime();
+      if (diff === 0 || diff == 86400000) {
         streak++;
       } else {
         break;
       }
-      prevDate = sessionCreatedAt;
+      mostRecentDate = dayCreatedAt;
     }
     return streak;
   }
