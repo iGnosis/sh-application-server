@@ -3,7 +3,7 @@ type RewardTypes = 'bronze' | 'silver' | 'gold';
 interface Reward {
   tier: RewardTypes;
   isAccessed: boolean;
-  isVisited: boolean;
+  isViewed: boolean;
   isUnlocked: boolean;
   description: string;
   unlockAtDayCompleted: number;

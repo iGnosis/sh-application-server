@@ -79,7 +79,7 @@ export class RewardsController {
     }
     patientRewards.patient_by_pk.rewards.forEach((val) => {
       if (val.tier === body.rewardTier) {
-        val.isVisited = true;
+        val.isViewed = true;
       }
     });
     await this.rewardService.updateRewards(userId, patientRewards.patient_by_pk.rewards);
