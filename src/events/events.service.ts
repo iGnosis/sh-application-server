@@ -10,6 +10,12 @@ interface Details {
   urlPart2?: string;
 }
 
+interface SessionEndedEventMetrics {
+  numOfActivitesCompletedToday: number;
+  numOfActiveDays: number;
+  totalDailyDurationInMin: number;
+}
+
 @Injectable()
 export class EventsService {
   private pinpoint: Pinpoint;
@@ -19,6 +25,8 @@ export class EventsService {
   constructor(private configService: ConfigService) {
     this.REGION = this.configService.get('AWS_DEFAULT_REGION') || 'us-east-1';
 
+    // TODO: remove hardcoded keys. Use IAM roles instead.
+    // TODO: a new pinpoint project per env.
     this.pinpoint = new Pinpoint({
       region: this.REGION,
       endpoint: 'https://pinpoint.us-east-1.amazonaws.com',
@@ -118,34 +126,6 @@ export class EventsService {
     }
   }
 
-  async startSessionCompleteJourney(id: string, sessionDuration: number) {
-    try {
-      this.eventsRequest = { BatchItem: {} };
-      this.eventsRequest.BatchItem[id] = {
-        Endpoint: {
-          ChannelType: 'EMAIL',
-          Metrics: {
-            sessionDuration: sessionDuration,
-          },
-        },
-        Events: {
-          sessionComplete: {
-            EventType: 'session.complete',
-            Timestamp: new Date().toISOString(),
-          },
-        },
-      };
-
-      const response = await this.pinpoint.putEvents({
-        ApplicationId: this.projectId,
-        EventsRequest: this.eventsRequest,
-      });
-      return response;
-    } catch (err) {
-      console.log('Error', err);
-    }
-  }
-
   async startAddedFirstPatientJourney(id: string, patientName: string) {
     try {
       this.eventsRequest = { BatchItem: {} };
@@ -172,5 +152,62 @@ export class EventsService {
     } catch (err) {
       console.log('Error', err);
     }
+  }
+
+  // event sent whenever a session starts
+  async sessionStarted(userId: string) {
+    await this._updateEvents(userId, 'session.started');
+  }
+
+  // event sent whenever a session ends
+  async sessionEndedEvent(userId: string, metrics: SessionEndedEventMetrics) {
+    await this._updateEvents(userId, 'session.complete', {}, metrics);
+  }
+
+  // evet sent when a reward is unlocked.
+  async rewardUnlockedEvent(userId: string, rewardUnlocked: RewardTypes) {
+    await this._updateEvents(userId, 'reward.unlocked', { rewardTier: rewardUnlocked });
+  }
+
+  // event sent when a reward is accessed. (button 'Access Now' is clicked.)
+  async rewardAccessedEvent(userId: string, rewardsAccessed: RewardTypes) {
+    await this._updateEvents(userId, 'reward.accessed', { rewardTier: rewardsAccessed });
+  }
+
+  // event sent when FAQs are accessed.
+  async faqAccessed(userId: string) {
+    await this._updateEvents(userId, 'help_accessed.faq');
+  }
+
+  // event sent when free parkinson resources are accessed.
+  async freeParkinsonResourceAccessed(userId: string) {
+    await this._updateEvents(userId, 'help_accessed.freeParkinsonResource');
+  }
+
+  // event sent when 5% off Extertools coupon is accessed.
+  async freeRewardAccessed(userId: string) {
+    await this._updateEvents(userId, 'help_accessed.exertools', { name: 'Exertools' });
+  }
+
+  // helper function for sending Patient events.
+  async _updateEvents(userId: string, eventType: string, userAttributes?: any, metrics?: any) {
+    this.eventsRequest = { BatchItem: {} };
+    this.eventsRequest.BatchItem[userId] = {
+      Endpoint: {
+        ChannelType: 'EMAIL',
+      },
+      Events: {
+        eventType: {
+          EventType: eventType,
+          Timestamp: new Date().toISOString(),
+          Attributes: userAttributes ? userAttributes : {},
+          Metrics: metrics ? metrics : {},
+        },
+      },
+    };
+    await this.pinpoint.putEvents({
+      ApplicationId: this.projectId,
+      EventsRequest: this.eventsRequest,
+    });
   }
 }

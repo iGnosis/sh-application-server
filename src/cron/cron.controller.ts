@@ -1,4 +1,5 @@
 import { Body, Controller, HttpCode, Logger, Post } from '@nestjs/common';
+import { EventsService } from 'src/events/events.service';
 import { SessionEventTriggerRequestDto, SessionInspectorEvent } from './cron.dto';
 import { CronService } from './cron.service';
 @Controller('cron')
@@ -7,7 +8,7 @@ import { CronService } from './cron.service';
 export class CronController {
   private readonly logger = new Logger(CronController.name);
 
-  constructor(private cronService: CronService) {}
+  constructor(private cronService: CronService, private eventsService: EventsService) {}
 
   @Post('schedule-session-inspector')
   @HttpCode(201)
@@ -15,9 +16,12 @@ export class CronController {
   async scheduleSessionInspector(@Body() body: SessionEventTriggerRequestDto) {
     const now = new Date();
     const fourtyFiveMinsInFuture = new Date(now.getTime() + 1000 * 60 * 45).toISOString();
+    const { sessionId, createdAt, patientId } = body;
+
     const payload = {
-      sessionId: body.sessionId,
-      createdAt: body.createdAt,
+      sessionId,
+      createdAt,
+      patientId,
     };
 
     await this.cronService.scheduleOneOffCron(
@@ -25,6 +29,8 @@ export class CronController {
       '/cron/session/inspection',
       payload,
     );
+
+    await this.eventsService.sessionStarted(patientId);
 
     return {
       success: true,

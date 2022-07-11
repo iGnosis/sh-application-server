@@ -2,12 +2,14 @@ import { Body, Controller, HttpCode, Post, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth } from '@nestjs/swagger';
 import { Roles } from 'src/auth/decorators/roles.decorator';
 import { User } from 'src/auth/decorators/user.decorator';
+import { UserObj } from 'src/auth/decorators/userObj.decorator';
 import { Role } from 'src/auth/enums/role.enum';
 import { AuthGuard } from 'src/auth/guards/auth.guard';
 import { RolesGuard } from 'src/auth/guards/roles.guard';
-import { GqlService } from 'src/services/gql/gql.service';
+import { EventsService } from 'src/events/events.service';
+import { UserObjDecorator } from '../../types/user';
 import { StatsService } from '../stats/stats.service';
-import { MarkRewardAsViewedDto } from './rewards.dto';
+import { MarkRewardAsAccessedDto, MarkRewardAsViewedDto } from './rewards.dto';
 import { RewardsService } from './rewards.service';
 
 @Roles(Role.PATIENT, Role.PLAYER)
@@ -17,8 +19,8 @@ import { RewardsService } from './rewards.service';
 export class RewardsController {
   constructor(
     private statsService: StatsService,
-    private gqlService: GqlService,
     private rewardService: RewardsService,
+    private pinpointEventsService: EventsService,
   ) {}
 
   // Call this API on every activity completion (?)
@@ -52,14 +54,15 @@ export class RewardsController {
     console.log('patientRewards:', patientRewards.patient_by_pk.rewards);
 
     // Update Reward JSON
+    let rewardUnlocked: RewardTypes;
     patientRewards.patient_by_pk.rewards.forEach((reward) => {
-      if (monthlyDaysCompleted >= reward.unlockAtDayCompleted) {
+      if (monthlyDaysCompleted >= reward.unlockAtDayCompleted && !reward.isUnlocked) {
         reward.isUnlocked = true;
+        rewardUnlocked = reward.tier;
       }
     });
-
     await this.rewardService.updateRewards(userId, patientRewards.patient_by_pk.rewards);
-
+    await this.pinpointEventsService.rewardUnlockedEvent(userId, rewardUnlocked);
     return {
       status: 'success',
       data: {},
@@ -83,6 +86,42 @@ export class RewardsController {
       }
     });
     await this.rewardService.updateRewards(userId, patientRewards.patient_by_pk.rewards);
+    return {
+      status: 'success',
+      data: {},
+    };
+  }
+
+  @HttpCode(200)
+  @Post('accessed')
+  async markRewardAsAccessed(
+    @Body() body: MarkRewardAsAccessedDto,
+    @UserObj() userObj: UserObjDecorator,
+  ) {
+    const { rewardTier } = body;
+    const { sub: userId } = userObj;
+
+    const patientRewards = await this.rewardService.getRewards(userId);
+    if (!patientRewards || !patientRewards.patient_by_pk || !patientRewards.patient_by_pk.rewards) {
+      return {
+        status: 'success',
+        message: 'No rewards to update',
+        data: {},
+      };
+    }
+
+    let rewardAccessed: RewardTypes;
+    patientRewards.patient_by_pk.rewards.forEach((reward) => {
+      if (reward.tier === rewardTier && !reward.isAccessed) {
+        reward.isAccessed = true;
+        rewardAccessed = reward.tier;
+      }
+    });
+
+    // update JSONB in Postgres
+    await this.rewardService.updateRewards(userId, patientRewards.patient_by_pk.rewards);
+    await this.pinpointEventsService.rewardAccessedEvent(userId, rewardAccessed);
+
     return {
       status: 'success',
       data: {},

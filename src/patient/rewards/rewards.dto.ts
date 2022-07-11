@@ -8,3 +8,11 @@ export class MarkRewardAsViewedDto {
   @IsNotEmpty()
   rewardTier: RewardTypes;
 }
+
+export class MarkRewardAsAccessedDto {
+  @ApiProperty({
+    description: 'Reward Tier => bronze / gold / silver',
+  })
+  @IsNotEmpty()
+  rewardTier: RewardTypes;
+}

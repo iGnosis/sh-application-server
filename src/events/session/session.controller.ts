@@ -1,17 +1,17 @@
 import { Body, Controller, HttpCode, Post } from '@nestjs/common';
-import { CronService } from 'src/cron/cron.service';
 import { StatsService } from 'src/patient/stats/stats.service';
 import { GqlService } from 'src/services/gql/gql.service';
 import { EventsService } from '../events.service';
 import { SessionEventTriggerDto } from './session.dto';
 
+// console.log(Intl.DateTimeFormat().resolvedOptions().timeZone)
+
 @Controller('events/session')
 export class SessionController {
   constructor(
     private eventsService: EventsService,
-    private gqlService: GqlService,
-    private cronService: CronService,
     private statsService: StatsService,
+    private gqlService: GqlService,
   ) {}
 
   @HttpCode(200)
@@ -22,41 +22,71 @@ export class SessionController {
     if (endedAt === null) {
       return;
     }
-    const dailyGoalDate = new Date(new Date(endedAt).toISOString().split('T')[0]);
-    const oneDayInFuture = this.statsService.getFutureDate(dailyGoalDate, 1);
 
-    console.log('startDateStr:', dailyGoalDate);
-    console.log('endDateStr:', oneDayInFuture);
-    try {
-      const results = await this.statsService.sessionDuration(
-        patientId,
-        dailyGoalDate,
-        oneDayInFuture,
-      );
-
-      const sessionDurations = results.map((result) => result.sessionDurationInMin);
-      const totalDailyDurationInMin = sessionDurations.reduce((total, num) => (total += num), 0);
-
-      if (totalDailyDurationInMin < 30) {
-        const putEventsResponse = await this.eventsService.startSessionCompleteJourney(
-          patientId,
-          totalDailyDurationInMin,
-        );
-        return putEventsResponse;
+    // get patient's timezone
+    const query = `query GetPatientTz($patientId: uuid!) {
+      patient_by_pk(id: $patientId) {
+        timezone
       }
-    } catch (err) {
-      console.log('Error', err);
+    }`;
+
+    const tzResult: {
+      patient_by_pk: {
+        timezone: string;
+      };
+    } = await this.gqlService.client.request(query, { patientId });
+
+    // Workaround until we start storing patient's timezones.
+    let timezone: string;
+    if (!tzResult || !tzResult.patient_by_pk || !tzResult.patient_by_pk.timezone) {
+      timezone = 'Asia/Kolkata';
+    } else {
+      timezone = tzResult.patient_by_pk.timezone;
     }
-  }
 
-  calcIndividualSessionDuration(endedAt: string, createdAt: string) {
-    const diff = new Date(endedAt).getTime() - new Date(createdAt).getTime();
-    return diff;
-  }
+    let endedAtDate = new Date(endedAt);
+    endedAtDate = new Date(endedAtDate.toLocaleString('en-US', { timeZone: timezone }));
 
-  millisToMinutes(millis: number) {
-    const minutes = Math.floor(millis / 60000);
-    // const seconds = parseInt(((millis % 60000) / 1000).toFixed(0));
-    return minutes;
+    let startDate = this.statsService.getPastDate(endedAtDate, endedAtDate.getDate());
+    startDate = new Date(startDate.setUTCHours(24, 0, 0, 0));
+
+    console.log('startDate:', startDate);
+    console.log('endedAtDate:', endedAtDate);
+
+    const monthlyGoalsResult = await this.statsService.getMonthlyGoals(
+      patientId,
+      startDate,
+      endedAtDate,
+      timezone,
+    );
+    console.log('monthlyGoalsResult:', monthlyGoalsResult);
+
+    const monthtlyActiveDays = monthlyGoalsResult.filter(
+      (val) => val.createdAtLocaleDate.getDate() === endedAtDate.getDate(),
+    );
+    let numOfActivitesCompletedToday = 0;
+
+    if (Array.isArray(monthtlyActiveDays) && monthtlyActiveDays.length === 1) {
+      numOfActivitesCompletedToday = monthtlyActiveDays[0].activityEndedCount;
+    }
+
+    const numOfActiveDays = monthlyGoalsResult.filter((val) => val.activityEndedCount >= 3).length;
+
+    console.log('numOfActivitesCompletedToday:', numOfActivitesCompletedToday);
+    console.log('numOfActiveDays:', numOfActiveDays);
+
+    startDate = this.statsService.getPastDate(endedAtDate, 1);
+    startDate = new Date(startDate.setUTCHours(24, 0, 0, 0));
+
+    const results = await this.statsService.sessionDuration(patientId, startDate, endedAtDate);
+    const sessionDurations = results.map((result) => result.sessionDurationInMin);
+    const totalDailyDurationInMin = sessionDurations.reduce((total, num) => (total += num), 0);
+    console.log('totalDailyDurationInMin:', totalDailyDurationInMin);
+
+    await this.eventsService.sessionEndedEvent(patientId, {
+      numOfActivitesCompletedToday,
+      numOfActiveDays,
+      totalDailyDurationInMin,
+    });
   }
 }

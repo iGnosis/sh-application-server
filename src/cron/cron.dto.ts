@@ -13,6 +13,12 @@ export class SessionEventTriggerRequestDto {
   })
   @IsNotEmpty()
   createdAt: Date;
+
+  @ApiProperty({
+    description: 'Patient ID associated with the session.',
+  })
+  @IsNotEmpty()
+  patientId: string;
 }
 
 export class SessionInspectorEvent {
