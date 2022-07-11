@@ -32,3 +32,11 @@ export class SessionInspectorEvent {
   };
   comment: string;
 }
+
+export class ScheduleEmailFeedback {
+  @ApiProperty({
+    description: 'Feedback ID to be scheduled for email delivery',
+  })
+  @IsNotEmpty()
+  feedbackId: string;
+}

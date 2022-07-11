@@ -1,6 +1,7 @@
-import { EventsRequest, Pinpoint } from '@aws-sdk/client-pinpoint';
+import { EventsRequest, Pinpoint, SendMessagesCommandInput } from '@aws-sdk/client-pinpoint';
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { PatientFeedback } from 'src/types/patient';
 
 interface Details {
   id: string;
@@ -209,5 +210,50 @@ export class EventsService {
       ApplicationId: this.projectId,
       EventsRequest: this.eventsRequest,
     });
+  }
+
+  async sendFeedbackEmail(patientFeedback: PatientFeedback) {
+    // const { description, rating, recommendationScore, patientByPatient: { email: patientEmail, nickname } } = patientFeedback;
+
+    // much cleaner this way!
+    const { description, rating, recommendationScore } = patientFeedback;
+    const { email: patientEmail, nickname } = patientFeedback.patientByPatient;
+
+    const input: SendMessagesCommandInput = {
+      ApplicationId: this.projectId,
+      MessageRequest: {
+        MessageConfiguration: {
+          EmailMessage: {
+            // TODO: Replace the sender address.
+            FromAddress: 'bhattdeep38@gmail.com',
+            SimpleEmail: {
+              Subject: {
+                Data: `Feedback from Patient ${nickname}`,
+              },
+              TextPart: {
+                Data: `
+                Patient Email: ${patientEmail}
+                Patient NickName: ${nickname}
+
+                Feedback Received =>
+                  Description: ${description}
+                  Please rate your experience: ${rating}
+                  How likely are you to recommend this product to someone?: ${recommendationScore}`,
+              },
+            },
+          },
+        },
+        // TODO: Replace the receiver address.
+        Addresses: {
+          'bhattdeep38@gmail.com': {
+            ChannelType: 'EMAIL',
+          },
+        },
+      },
+    };
+    await this.pinpoint.sendMessages(input);
+    return {
+      status: 'success',
+    };
   }
 }

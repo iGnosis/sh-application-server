@@ -1,6 +1,10 @@
 import { Body, Controller, HttpCode, Logger, Post } from '@nestjs/common';
 import { EventsService } from 'src/events/events.service';
-import { SessionEventTriggerRequestDto, SessionInspectorEvent } from './cron.dto';
+import {
+  ScheduleEmailFeedback,
+  SessionEventTriggerRequestDto,
+  SessionInspectorEvent,
+} from './cron.dto';
 import { CronService } from './cron.service';
 @Controller('cron')
 // TODO: Enable Guards later.
@@ -30,10 +34,11 @@ export class CronController {
       payload,
     );
 
+    // send Pinpoint event
     await this.eventsService.sessionStarted(patientId);
 
     return {
-      success: true,
+      status: 'success',
     };
   }
 
@@ -62,7 +67,23 @@ export class CronController {
     await this.cronService.inspectSession(sessionId);
 
     return {
-      success: true,
+      status: 'success',
+    };
+  }
+
+  @Post('email-patient-feedback')
+  async scheduleEmailFeedback(@Body() body: ScheduleEmailFeedback) {
+    const { feedbackId } = body;
+    const now = new Date();
+    const FiveMinsInFuture = new Date(now.getTime() + 1000 * 60 * 5).toISOString();
+    const payload = { feedbackId };
+    await this.cronService.scheduleOneOffCron(
+      FiveMinsInFuture,
+      '/events/patient/feedback-received',
+      payload,
+    );
+    return {
+      status: 'success',
     };
   }
 }

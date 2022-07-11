@@ -5,6 +5,7 @@ export class Patient {
   provider: string;
   activeCareplan: string;
   identifier: string;
+  nickname: string;
   medicalConditions: any;
   preferredGenres: any;
   primaryTherapist: string;
@@ -13,4 +14,13 @@ export class Patient {
   careGiverEmail: string;
   phoneCountryCode: string;
   phoneNumber: string;
+}
+
+export class PatientFeedback {
+  patientByPatient: Patient;
+  createdAt: Date;
+  updatedAt: Date;
+  description: string;
+  rating: number;
+  recommendationScore: number;
 }

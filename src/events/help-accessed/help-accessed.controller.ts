@@ -13,7 +13,7 @@ import { EventsService } from '../events.service';
 @ApiBearerAuth('access-token')
 @Controller('events/help-accessed')
 export class HelpAccessedController {
-  constructor(private eventsService: EventsService) { }
+  constructor(private eventsService: EventsService) {}
 
   @Post('soundhealth-faq')
   async soundHealthFaqAccessed(@UserObj() userObj: UserObjDecorator) {

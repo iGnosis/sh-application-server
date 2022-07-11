@@ -26,3 +26,14 @@ export class NewPatientDto {
   @IsNotEmpty()
   onboardingCode: string;
 }
+
+export class FeedbackReceivedEvent {
+  @ApiProperty({
+    description: 'Feedback event to send an email.',
+  })
+  @IsNotEmpty()
+  payload: {
+    feedbackId: string;
+  };
+  comment: string;
+}
