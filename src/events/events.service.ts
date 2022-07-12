@@ -6,9 +6,6 @@ import { PatientFeedback } from 'src/types/patient';
 interface Details {
   id: string;
   emailAddress: string;
-  identifier: string;
-  urlPart1?: string;
-  urlPart2?: string;
 }
 
 interface SessionEndedEventMetrics {
@@ -39,91 +36,41 @@ export class EventsService {
   }
 
   async updateEndpoint(details: Details, endpointId: string, type: 'patient' | 'therapist') {
-    const { id, emailAddress, identifier, urlPart1, urlPart2 } = details;
+    const { id, emailAddress } = details;
     switch (type) {
       case 'patient':
-        try {
-          await this.pinpoint.updateEndpoint({
-            ApplicationId: this.projectId,
-            EndpointId: endpointId,
-            EndpointRequest: {
-              ChannelType: 'EMAIL',
-              Address: emailAddress,
-              EndpointStatus: 'ACTIVE',
-              User: {
-                UserId: id,
-                UserAttributes: {
-                  role: ['patient'],
-                  identifier: [identifier],
-                  urlPart1: [urlPart1],
-                  urlPart2: [urlPart2],
-                },
+        await this.pinpoint.updateEndpoint({
+          ApplicationId: this.projectId,
+          EndpointId: endpointId,
+          EndpointRequest: {
+            ChannelType: 'EMAIL',
+            Address: emailAddress,
+            EndpointStatus: 'ACTIVE',
+            User: {
+              UserId: id,
+              UserAttributes: {
+                role: ['patient'],
               },
             },
-          });
-
-          this.eventsRequest = { BatchItem: {} };
-          this.eventsRequest.BatchItem[endpointId] = {
-            Endpoint: {
-              ChannelType: 'EMAIL',
-            },
-            Events: {
-              patientNew: {
-                EventType: 'patient.new',
-                Timestamp: new Date().toISOString(),
-              },
-            },
-          };
-
-          console.log(this.eventsRequest);
-
-          const response = await this.pinpoint.putEvents({
-            ApplicationId: this.projectId,
-            EventsRequest: this.eventsRequest,
-          });
-          return response;
-        } catch (err) {
-          console.log('Error', err);
-        }
+          },
+        });
         break;
       case 'therapist':
-        try {
-          await this.pinpoint.updateEndpoint({
-            ApplicationId: this.projectId,
-            EndpointId: endpointId,
-            EndpointRequest: {
-              ChannelType: 'EMAIL',
-              Address: emailAddress,
-              EndpointStatus: 'ACTIVE',
-              User: {
-                UserId: id,
-                UserAttributes: {
-                  role: ['therapist'],
-                  identifier: [identifier],
-                },
+        await this.pinpoint.updateEndpoint({
+          ApplicationId: this.projectId,
+          EndpointId: endpointId,
+          EndpointRequest: {
+            ChannelType: 'EMAIL',
+            Address: emailAddress,
+            EndpointStatus: 'ACTIVE',
+            User: {
+              UserId: id,
+              UserAttributes: {
+                role: ['therapist'],
               },
             },
-          });
-          this.eventsRequest = { BatchItem: {} };
-          this.eventsRequest.BatchItem[endpointId] = {
-            Endpoint: {
-              ChannelType: 'EMAIL',
-            },
-            Events: {
-              therapistNew: {
-                EventType: 'therapist.new',
-                Timestamp: new Date().toISOString(),
-              },
-            },
-          };
-          const response = await this.pinpoint.putEvents({
-            ApplicationId: this.projectId,
-            EventsRequest: this.eventsRequest,
-          });
-          return response;
-        } catch (err) {
-          console.log('Error', err);
-        }
+          },
+        });
     }
   }
 
@@ -206,10 +153,11 @@ export class EventsService {
         },
       },
     };
-    await this.pinpoint.putEvents({
+    const res = await this.pinpoint.putEvents({
       ApplicationId: this.projectId,
       EventsRequest: this.eventsRequest,
     });
+    console.log(res);
   }
 
   async sendFeedbackEmail(patientFeedback: PatientFeedback) {

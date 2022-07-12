@@ -19,7 +19,6 @@ export class TherapistController {
           {
             id: therapistId,
             emailAddress: email,
-            identifier: `${firstName} ${lastName}`,
           },
           therapistId,
           'therapist',

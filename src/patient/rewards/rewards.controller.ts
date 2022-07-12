@@ -51,18 +51,23 @@ export class RewardsController {
         data: {},
       };
     }
-    console.log('patientRewards:', patientRewards.patient_by_pk.rewards);
 
-    // Update Reward JSON
-    let rewardUnlocked: RewardTypes;
-    patientRewards.patient_by_pk.rewards.forEach((reward) => {
-      if (monthlyDaysCompleted >= reward.unlockAtDayCompleted && !reward.isUnlocked) {
-        reward.isUnlocked = true;
-        rewardUnlocked = reward.tier;
+    for (let i = 0; i < patientRewards.patient_by_pk.rewards.length; i++) {
+      if (
+        monthlyDaysCompleted >= patientRewards.patient_by_pk.rewards[i].unlockAtDayCompleted &&
+        !patientRewards.patient_by_pk.rewards[i].isUnlocked
+      ) {
+        patientRewards.patient_by_pk.rewards[i].isUnlocked = true;
+        await this.pinpointEventsService.rewardUnlockedEvent(
+          userId,
+          patientRewards.patient_by_pk.rewards[i].tier,
+        );
       }
-    });
+    }
+    // update Hasura JSONB
     await this.rewardService.updateRewards(userId, patientRewards.patient_by_pk.rewards);
-    await this.pinpointEventsService.rewardUnlockedEvent(userId, rewardUnlocked);
+    console.log('updated:patientRewards:', patientRewards.patient_by_pk.rewards);
+
     return {
       status: 'success',
       data: {},

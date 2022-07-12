@@ -8,6 +8,7 @@ import { PatientAuthService } from 'src/services/auth/patient/auth.service';
 import { PatientJwtService } from 'src/services/jwt/patient/jwt.service';
 import { CognitoController } from './cognito/cognito.controller';
 import { CognitoService } from './cognito/cognito.service';
+import { EventsService } from 'src/events/events.service';
 
 @Module({
   controllers: [AuthController, CognitoController],
@@ -19,6 +20,7 @@ import { CognitoService } from './cognito/cognito.service';
     PatientAuthService,
     PatientJwtService,
     CognitoService,
+    EventsService,
   ],
 })
 export class AuthModule {}

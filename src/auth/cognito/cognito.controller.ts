@@ -1,11 +1,16 @@
 import { Body, Controller, Headers, HttpCode, Post } from '@nestjs/common';
+import { EventsService } from 'src/events/events.service';
 import { GqlService } from 'src/services/gql/gql.service';
 import { GetTokensApi, RefreshTokensApi } from '../auth.dto';
 import { CognitoService } from './cognito.service';
 
 @Controller('cognito')
 export class CognitoController {
-  constructor(private cognitoService: CognitoService, private gqlService: GqlService) {}
+  constructor(
+    private cognitoService: CognitoService,
+    private gqlService: GqlService,
+    private eventsService: EventsService,
+  ) {}
 
   /*
   X-Pointmotion-User: patient | therapist
@@ -64,10 +69,17 @@ export class CognitoController {
           email: idTokenPayload.email,
         });
       }
+      // update user endpoint if not exist.
+      await this.eventsService.updateEndpoint(
+        { id: idTokenPayload.sub, emailAddress: idTokenPayload.email },
+        idTokenPayload.sub,
+        'patient',
+      );
     } catch (error) {
       // fails when patient with email already exists.
       console.log('error:', error);
     }
+
     return {
       status: 'success',
       data: cognitoResponse,

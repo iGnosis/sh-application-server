@@ -15,8 +15,9 @@ export class PatientController {
 
   @HttpCode(200)
   @Post('new')
+  // runs when a patient is inserted.
   async newPatient(@Body() body: NewPatientDto) {
-    const { id: patientId, email, identifier, onboardingCode } = body;
+    const { id: patientId, email, onboardingCode } = body;
 
     const url = new URL('/public/signup', this.configService.get('PATIENT_PORTAL_URL'));
     url.searchParams.set('code', onboardingCode);
@@ -29,7 +30,7 @@ export class PatientController {
     const urlPart2 = signUpUrl.slice(signUpUrl.length / 2, signUpUrl.length);
 
     const response = await this.eventsService.updateEndpoint(
-      { id: patientId, emailAddress: email, identifier, urlPart1, urlPart2 },
+      { id: patientId, emailAddress: email },
       patientId,
       'patient',
     );
