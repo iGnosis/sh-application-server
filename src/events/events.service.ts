@@ -224,8 +224,8 @@ export class EventsService {
       MessageRequest: {
         MessageConfiguration: {
           EmailMessage: {
-            // TODO: Replace the sender address.
-            FromAddress: 'bhattdeep38@gmail.com',
+            FromAddress: 'no-reply@pointmotion.us',
+            ReplyToAddresses: ['support@pointmotion.us'],
             SimpleEmail: {
               Subject: {
                 Data: `Feedback from Patient ${nickname}`,
@@ -233,19 +233,18 @@ export class EventsService {
               TextPart: {
                 Data: `
                 Patient Email: ${patientEmail}
-                Patient NickName: ${nickname}
+                Patient Nickname: ${nickname}
 
                 Feedback Received =>
-                  Description: ${description}
+                  Description (optional): ${description}
                   Please rate your experience: ${rating}
-                  How likely are you to recommend this product to someone?: ${recommendationScore}`,
+                  How likely are you to recommend this product to someone? (optional): ${recommendationScore}`,
               },
             },
           },
         },
-        // TODO: Replace the receiver address.
         Addresses: {
-          'bhattdeep38@gmail.com': {
+          'support@pointmotion.us': {
             ChannelType: 'EMAIL',
           },
         },
