@@ -114,6 +114,7 @@ export class EventsService {
 
   // evet sent when a reward is unlocked.
   async rewardUnlockedEvent(userId: string, rewardUnlocked: RewardTypes) {
+    console.log('rewardUnlockedEvent:rewardUnlocked:', rewardUnlocked);
     await this._updateEvents(userId, 'reward.unlocked', { rewardTier: rewardUnlocked });
   }
 

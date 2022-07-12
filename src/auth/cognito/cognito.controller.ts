@@ -52,9 +52,10 @@ export class CognitoController {
     // decode the 'id_token'
     // insert patient with id_token.sub = patient.id
     // and id_token.email = patient.email
+    const idToken = cognitoResponse.id_token;
+    const idTokenPayload = this.cognitoService.parseJwt(idToken);
+
     try {
-      const idToken = cognitoResponse.id_token;
-      const idTokenPayload = this.cognitoService.parseJwt(idToken);
       if (user === 'patient') {
         const query = `
         mutation InsertPatient($patientId: uuid = "", $email: String = "") {
@@ -69,16 +70,17 @@ export class CognitoController {
           email: idTokenPayload.email,
         });
       }
-      // update user endpoint if not exist.
-      await this.eventsService.updateEndpoint(
-        { id: idTokenPayload.sub, emailAddress: idTokenPayload.email },
-        idTokenPayload.sub,
-        'patient',
-      );
     } catch (error) {
       // fails when patient with email already exists.
       console.log('error:', error);
     }
+
+    // update user endpoint if not exist.
+    await this.eventsService.updateEndpoint(
+      { id: idTokenPayload.sub, emailAddress: idTokenPayload.email },
+      idTokenPayload.sub,
+      'patient',
+    );
 
     return {
       status: 'success',
