@@ -82,6 +82,9 @@ export class CognitoController {
       'patient',
     );
 
+    // sent user sign in event
+    await this.eventsService.userLogin(idTokenPayload.sub);
+
     return {
       status: 'success',
       data: cognitoResponse,
