@@ -12,6 +12,12 @@ import { StatsService } from '../stats/stats.service';
 import { MarkRewardAsAccessedDto, MarkRewardAsViewedDto } from './rewards.dto';
 import { RewardsService } from './rewards.service';
 
+const couponCodes = {
+  bronze: 'PTMOBR',
+  silver: 'PTMOGU',
+  gold: 'PTMOPE',
+};
+
 @Roles(Role.PATIENT, Role.PLAYER)
 @UseGuards(AuthGuard, RolesGuard)
 @ApiBearerAuth('access-token')
@@ -23,7 +29,7 @@ export class RewardsController {
     private pinpointEventsService: EventsService,
   ) {}
 
-  // Call this API on every activity completion (?)
+  // This API runs on every activity completion.
   @HttpCode(200)
   @Post('update')
   async updateRewards(@User() userId: string) {
@@ -57,7 +63,12 @@ export class RewardsController {
         monthlyDaysCompleted >= patientRewards.patient_by_pk.rewards[i].unlockAtDayCompleted &&
         !patientRewards.patient_by_pk.rewards[i].isUnlocked
       ) {
+        const tier = patientRewards.patient_by_pk.rewards[i].tier;
+        const couponCode = couponCodes[tier];
+
         patientRewards.patient_by_pk.rewards[i].isUnlocked = true;
+        patientRewards.patient_by_pk.rewards[i].couponCode = couponCode;
+
         await this.pinpointEventsService.rewardUnlockedEvent(
           userId,
           patientRewards.patient_by_pk.rewards[i].tier,

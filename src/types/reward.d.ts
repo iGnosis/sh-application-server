@@ -2,9 +2,10 @@ type RewardTypes = 'bronze' | 'silver' | 'gold';
 
 interface Reward {
   tier: RewardTypes;
-  isAccessed: boolean;
   isViewed: boolean;
+  isAccessed: boolean;
   isUnlocked: boolean;
+  couponCode: string;
   description: string;
   unlockAtDayCompleted: number;
 }
