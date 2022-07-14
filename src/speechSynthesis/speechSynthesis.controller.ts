@@ -16,9 +16,9 @@ import { PollyService } from 'src/speechSynthesis/polly/polly.service';
 import { SpeechSynthesisDto } from './speechSynthesis.dto';
 
 @Controller('speech')
-@Roles(Role.PATIENT, Role.PLAYER, Role.THERAPIST)
-@UseGuards(AuthGuard, RolesGuard)
-@ApiBearerAuth('access-token')
+// @Roles(Role.PATIENT, Role.PLAYER, Role.THERAPIST)
+// @UseGuards(AuthGuard, RolesGuard)
+// @ApiBearerAuth('access-token')
 export class SpeechSynthesisController {
   constructor(private pollyService: PollyService) {}
 
