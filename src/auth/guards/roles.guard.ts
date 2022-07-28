@@ -14,10 +14,6 @@ export class RolesGuard implements CanActivate {
       context.getClass(),
     ]);
 
-    // TODO: revert this change
-    // Bypass auth checks until Verifier is ready.
-    return true;
-
     if (!requiredRoles) {
       return true;
     }
@@ -27,6 +23,10 @@ export class RolesGuard implements CanActivate {
 
     const hasuraCliams = JSON.parse(user['https://hasura.io/jwt/claims']);
     const userRole = hasuraCliams['x-hasura-default-role'];
+
+    // TODO: revert this change
+    // Bypass auth checks until Verifier is ready.
+    return true;
 
     if (requiredRoles.includes(userRole)) {
       return true;
