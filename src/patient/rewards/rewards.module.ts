@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+import { Auth0Service } from 'src/auth/auth0/auth0.service';
 import { CognitoService } from 'src/auth/cognito/cognito.service';
 import { DatabaseModule } from 'src/database/database.module';
 import { EventsService } from 'src/events/events.service';
@@ -10,6 +11,13 @@ import { RewardsService } from './rewards.service';
 @Module({
   imports: [DatabaseModule],
   controllers: [RewardsController],
-  providers: [StatsService, CognitoService, GqlService, RewardsService, EventsService],
+  providers: [
+    StatsService,
+    CognitoService,
+    GqlService,
+    RewardsService,
+    EventsService,
+    Auth0Service,
+  ],
 })
 export class RewardsModule {}

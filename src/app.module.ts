@@ -17,6 +17,7 @@ import { CronModule } from './cron/cron.module';
 import { StatsModule } from './patient/stats/stats.module';
 import { EventsModule } from './events/events.module';
 import { RewardsModule } from './patient/rewards/rewards.module';
+import { Auth0Service } from './auth/auth0/auth0.service';
 
 @Module({
   imports: [
@@ -33,6 +34,6 @@ import { RewardsModule } from './patient/rewards/rewards.module';
     RewardsModule,
   ],
   controllers: [AppController],
-  providers: [AppService, GqlService, AuthService, JwtService, EmailService],
+  providers: [AppService, GqlService, AuthService, JwtService, EmailService, Auth0Service],
 })
 export class AppModule {}
