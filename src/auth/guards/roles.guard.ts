@@ -24,10 +24,6 @@ export class RolesGuard implements CanActivate {
     const hasuraCliams = user['https://hasura.io/jwt/claims'];
     const userRole = hasuraCliams['x-hasura-default-role'];
 
-    // TODO: revert this change
-    // Bypass auth checks until Verifier is ready.
-    return true;
-
     if (requiredRoles.includes(userRole)) {
       return true;
     }
