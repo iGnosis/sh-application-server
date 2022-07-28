@@ -110,10 +110,7 @@ export class RewardsController {
 
   @HttpCode(200)
   @Post('accessed')
-  async markRewardAsAccessed(
-    @Body() body: MarkRewardAsAccessedDto,
-    @User() userId: string,
-  ) {
+  async markRewardAsAccessed(@Body() body: MarkRewardAsAccessedDto, @User() userId: string) {
     const { rewardTier } = body;
     const patientRewards = await this.rewardService.getRewards(userId);
     if (!patientRewards || !patientRewards.patient_by_pk || !patientRewards.patient_by_pk.rewards) {
