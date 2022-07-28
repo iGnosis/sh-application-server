@@ -1,6 +1,7 @@
 import { Controller, Post, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth } from '@nestjs/swagger';
 import { Roles } from 'src/auth/decorators/roles.decorator';
+import { User } from 'src/auth/decorators/user.decorator';
 import { UserObj } from 'src/auth/decorators/userObj.decorator';
 import { Role } from 'src/auth/enums/role.enum';
 import { AuthGuard } from 'src/auth/guards/auth.guard';
@@ -16,8 +17,7 @@ export class HelpAccessedController {
   constructor(private eventsService: EventsService) {}
 
   @Post('soundhealth-faq')
-  async soundHealthFaqAccessed(@UserObj() userObj: UserObjDecorator) {
-    const { sub: userId } = userObj;
+  async soundHealthFaqAccessed(@User() userId: string) {
     await this.eventsService.faqAccessed(userId);
     return {
       status: 'success',
@@ -26,8 +26,7 @@ export class HelpAccessedController {
   }
 
   @Post('free-resources')
-  async freeResourcesAccessed(@UserObj() userObj: UserObjDecorator) {
-    const { sub: userId } = userObj;
+  async freeResourcesAccessed(@User() userId: string) {
     await this.eventsService.freeParkinsonResourceAccessed(userId);
     return {
       status: 'success',
@@ -36,8 +35,7 @@ export class HelpAccessedController {
   }
 
   @Post('free-reward-accessed')
-  async freeRewardAccessed(@UserObj() userObj: UserObjDecorator) {
-    const { sub: userId } = userObj;
+  async freeRewardAccessed(@User() userId: string) {
     await this.eventsService.freeRewardAccessed(userId);
     return {
       status: 'success',
