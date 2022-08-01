@@ -1,11 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { groupBy as _groupBy } from 'lodash';
 import { DatabaseService } from 'src/database/database.service';
-import {
-  GoalsApiResponse,
-  GroupGoalsByDate,
-  MonthlyGoalsApiResponse,
-} from '../../types/stats';
+import { GoalsApiResponse, GroupGoalsByDate, MonthlyGoalsApiResponse } from '../../types/stats';
 
 @Injectable()
 export class StatsService {
@@ -96,7 +92,8 @@ export class StatsService {
         DATE_TRUNC('day', timezone($4, "endedAt"))
       HAVING DATE_TRUNC('day', timezone($4, "endedAt")) IS NOT NULL
       ORDER BY DATE_TRUNC('day', timezone($4, "createdAt"))`,
-      [patientId, startDate, endDate, dbTimezone]);
+      [patientId, startDate, endDate, dbTimezone],
+    );
 
     const groupByRes = _groupBy(results, 'createdAtDay');
     console.log('groupByRes:', groupByRes);

@@ -34,8 +34,8 @@ export class StatsController {
       userId,
       startDate,
       addOneDayToendDate,
-      userTimezone
-    )
+      userTimezone,
+    );
     console.log('daysCompleted:', daysCompleted);
 
     const response = {
