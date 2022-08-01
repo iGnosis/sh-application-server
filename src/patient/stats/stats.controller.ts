@@ -26,14 +26,18 @@ export class StatsController {
     console.log('userId:', userId);
     // since endDate is exclusive, we add one day.
     const addOneDayToendDate = this.statsService.getFutureDate(endDate, 1);
-    const results = await this.statsService.getMonthlyGoals(
+
+    console.log('startDate:', startDate);
+    console.log('endDate:', addOneDayToendDate);
+
+    const daysCompleted = await this.statsService.getMonthlyGoalsNew(
       userId,
       startDate,
       addOneDayToendDate,
-      userTimezone,
-    );
-    console.log('monthyGoals:results:', results);
-    const daysCompleted = results.filter((val) => val.activityEndedCount >= 3).length;
+      userTimezone
+    )
+    console.log('daysCompleted:', daysCompleted);
+
     const response = {
       status: 'success',
       data: {
@@ -41,34 +45,6 @@ export class StatsController {
         rewardsCountDown: [5, 10, 15],
       },
     };
-    return response;
-  }
-
-  @HttpCode(200)
-  @Post('daily-goals')
-  async dailyGoals(@Body() inputData: DailyGoalsDto, @User() userId: string) {
-    console.log('userId:', userId);
-    const startDate = new Date(inputData.input.date);
-    let activityIds = inputData.input.activityIds;
-    // workaround when there's just single activity ID.
-    if (typeof activityIds === 'string') {
-      activityIds = [activityIds];
-    }
-    const endDate = this.statsService.getFutureDate(startDate, 1);
-    const results = await this.statsService.getDailyGoals(userId, activityIds, startDate, endDate);
-    const completedActivityIds = results.map((val) => val.activity);
-    const response = {
-      status: 'success',
-      data: {
-        activities: [],
-      },
-    };
-    activityIds.forEach((reqActivityId) => {
-      response.data.activities.push({
-        id: reqActivityId,
-        isCompleted: completedActivityIds.includes(reqActivityId),
-      });
-    });
     return response;
   }
 

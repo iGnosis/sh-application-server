@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
+import { groupBy as _groupBy } from 'lodash';
 import { DatabaseService } from 'src/database/database.service';
 import {
-  DailyGoalsApiResponse,
   GoalsApiResponse,
   GroupGoalsByDate,
   MonthlyGoalsApiResponse,
@@ -9,6 +9,8 @@ import {
 
 @Injectable()
 export class StatsService {
+  private dailyGoalsThreshold = 1;
+
   constructor(private databaseService: DatabaseService) {}
 
   // endDate is exclusive
@@ -43,27 +45,6 @@ export class StatsService {
     return results;
   }
 
-  async getDailyGoals(
-    patientId: string,
-    activityIds: Array<string>,
-    startDate: Date,
-    endDate: Date,
-  ): Promise<Array<DailyGoalsApiResponse>> {
-    const results = await this.databaseService.executeQuery(
-      `SELECT DISTINCT
-        activity
-      FROM events
-      WHERE
-        patient = $1 AND
-        activity = ANY($2::uuid[]) AND
-        event_type = 'activityEnded' AND
-        to_timestamp(created_at/1000) >= $3 AND
-        to_timestamp(created_at/1000) < $4`,
-      [patientId, activityIds, startDate, endDate],
-    );
-    return results;
-  }
-
   // endDate is exclusive
   async getMonthlyGoals(
     patientId: string,
@@ -86,6 +67,47 @@ export class StatsService {
       [patientId, startDate, endDate, dbTimezone],
     );
     return results;
+  }
+
+  // TODO: Remove 'old' monthly goals code.
+  async getMonthlyGoalsNew(
+    patientId: string,
+    startDate: Date,
+    endDate: Date,
+    dbTimezone: string,
+  ): Promise<number> {
+    const results: Array<{
+      game: string;
+      createdAtDay: Date;
+      endedAtDay: Date;
+    }> = await this.databaseService.executeQuery(
+      `SELECT
+        game,
+        DATE_TRUNC('day', timezone($4, "createdAt")) "createdAtDay",
+        DATE_TRUNC('day', timezone($4, "endedAt")) "endedAtDay"
+      FROM game
+      WHERE
+        patient = $1 AND
+        game."createdAt" >= $2 AND
+        game."createdAt" < $3
+      GROUP BY
+        game,
+        DATE_TRUNC('day', timezone($4, "createdAt")),
+        DATE_TRUNC('day', timezone($4, "endedAt"))
+      HAVING DATE_TRUNC('day', timezone($4, "endedAt")) IS NOT NULL
+      ORDER BY DATE_TRUNC('day', timezone($4, "createdAt"))`,
+      [patientId, startDate, endDate, dbTimezone]);
+
+    const groupByRes = _groupBy(results, 'createdAtDay');
+    console.log('groupByRes:', groupByRes);
+
+    let daysCompleted = 0;
+    for (const [_, value] of Object.entries(groupByRes)) {
+      if (value.length >= this.dailyGoalsThreshold) {
+        daysCompleted++;
+      }
+    }
+    return daysCompleted;
   }
 
   groupByDate(results: Array<GoalsApiResponse>): Array<GroupGoalsByDate> {

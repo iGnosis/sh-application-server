@@ -24,6 +24,7 @@ export class SessionController {
     }
 
     // get patient's timezone
+    // TODO: update patient timezone in database from Patient Portal.
     const query = `query GetPatientTz($patientId: uuid!) {
       patient_by_pk(id: $patientId) {
         timezone
