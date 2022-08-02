@@ -1,13 +1,11 @@
-import { Body, Controller, HttpCode, Post, UseGuards } from '@nestjs/common';
+import { Body, Controller, HttpCode, Post, Query, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth } from '@nestjs/swagger';
 import { Roles } from 'src/auth/decorators/roles.decorator';
 import { User } from 'src/auth/decorators/user.decorator';
-import { UserObj } from 'src/auth/decorators/userObj.decorator';
 import { Role } from 'src/auth/enums/role.enum';
 import { AuthGuard } from 'src/auth/guards/auth.guard';
 import { RolesGuard } from 'src/auth/guards/roles.guard';
 import { EventsService } from 'src/events/events.service';
-import { UserObjDecorator } from '../../types/user';
 import { StatsService } from '../stats/stats.service';
 import { MarkRewardAsAccessedDto, MarkRewardAsViewedDto } from './rewards.dto';
 import { RewardsService } from './rewards.service';
@@ -29,25 +27,23 @@ export class RewardsController {
     private pinpointEventsService: EventsService,
   ) {}
 
-  // This API runs on every activity completion.
+  // This API is to be run on every activity completion manually.
+  // should be called from activity-exp.
   @HttpCode(200)
   @Post('update')
-  async updateRewards(@User() userId: string) {
-    const date = new Date();
-    const startDateOfMonth = new Date(date.getFullYear(), date.getMonth(), 1);
-    const endDateOfMonth = new Date(date.getFullYear(), date.getMonth() + 1, 0);
-    const addOneDayToendDate = this.statsService.getFutureDate(endDateOfMonth, 1);
-    const dbTimezone = 'Etc/UTC';
-
-    const results = await this.statsService.getMonthlyGoals(
+  async updateRewards(
+    @Body('startDate') startDate: Date,
+    @Body('endDate') endDate: Date,
+    @Body('userTimezone') userTimezone: string,
+    @User() userId: string,
+  ) {
+    const addOneDayToendDate = this.statsService.getFutureDate(endDate, 1);
+    const { daysCompleted } = await this.statsService.getMonthlyGoalsNew(
       userId,
-      startDateOfMonth,
+      startDate,
       addOneDayToendDate,
-      dbTimezone,
+      userTimezone,
     );
-
-    // Days having activityEnded count >= 3 would be considered as Active
-    const monthlyDaysCompleted = results.filter((val) => val.activityEndedCount >= 3).length;
 
     const patientRewards = await this.rewardService.getRewards(userId);
     if (!patientRewards || !patientRewards.patient_by_pk || !patientRewards.patient_by_pk.rewards) {
@@ -60,7 +56,7 @@ export class RewardsController {
 
     for (let i = 0; i < patientRewards.patient_by_pk.rewards.length; i++) {
       if (
-        monthlyDaysCompleted >= patientRewards.patient_by_pk.rewards[i].unlockAtDayCompleted &&
+        daysCompleted >= patientRewards.patient_by_pk.rewards[i].unlockAtDayCompleted &&
         !patientRewards.patient_by_pk.rewards[i].isUnlocked
       ) {
         const tier = patientRewards.patient_by_pk.rewards[i].tier;
