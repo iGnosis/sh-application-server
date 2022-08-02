@@ -61,17 +61,16 @@ export class SessionController {
       timezone,
     );
     console.log('monthlyGoalsResult:', monthlyGoalsResult);
+    const numOfActiveDays = monthlyGoalsResult.filter((val) => val.activityEndedCount >= 3).length;
 
     const monthtlyActiveDays = monthlyGoalsResult.filter(
       (val) => val.createdAtLocaleDate.getDate() === endedAtDate.getDate(),
     );
-    let numOfActivitesCompletedToday = 0;
 
+    let numOfActivitesCompletedToday = 0;
     if (Array.isArray(monthtlyActiveDays) && monthtlyActiveDays.length === 1) {
       numOfActivitesCompletedToday = monthtlyActiveDays[0].activityEndedCount;
     }
-
-    const numOfActiveDays = monthlyGoalsResult.filter((val) => val.activityEndedCount >= 3).length;
 
     console.log('numOfActivitesCompletedToday:', numOfActivitesCompletedToday);
     console.log('numOfActiveDays:', numOfActiveDays);

@@ -1,12 +1,11 @@
 import { Injectable } from '@nestjs/common';
-import { groupBy as _groupBy } from 'lodash';
+import { Dictionary } from 'lodash';
+import { groupBy } from 'lodash';
 import { DatabaseService } from 'src/database/database.service';
-import { GoalsApiResponse, GroupGoalsByDate, MonthlyGoalsApiResponse } from '../../types/stats';
+import { GoalsApiResponse, MonthlyGoalsApiResponse } from '../../types/stats';
 
 @Injectable()
 export class StatsService {
-  private dailyGoalsThreshold = 1;
-
   constructor(private databaseService: DatabaseService) {}
 
   // endDate is exclusive
@@ -42,6 +41,7 @@ export class StatsService {
   }
 
   // endDate is exclusive
+  // TODO: remove this API.
   async getMonthlyGoals(
     patientId: string,
     startDate: Date,
@@ -65,71 +65,68 @@ export class StatsService {
     return results;
   }
 
-  // TODO: Remove 'old' monthly goals code.
   async getMonthlyGoalsNew(
     patientId: string,
     startDate: Date,
     endDate: Date,
     dbTimezone: string,
-  ): Promise<number> {
+  ): Promise<{
+    daysCompleted: number;
+    groupByCreatedAtDayGames: Dictionary<
+      {
+        createdAtDay: Date;
+        game: string;
+      }[]
+    >;
+  }> {
     const results: Array<{
-      game: string;
       createdAtDay: Date;
-      endedAtDay: Date;
+      game: string;
+      durationInSec: number;
     }> = await this.databaseService.executeQuery(
-      `SELECT
+      `SELECT DISTINCT
         game,
         DATE_TRUNC('day', timezone($4, "createdAt")) "createdAtDay",
-        DATE_TRUNC('day', timezone($4, "endedAt")) "endedAtDay"
+        (extract('epoch' from game."endedAt") - extract('epoch' from game."createdAt")) "durationInSec"
       FROM game
       WHERE
         patient = $1 AND
         game."createdAt" >= $2 AND
-        game."createdAt" < $3
-      GROUP BY
-        game,
-        DATE_TRUNC('day', timezone($4, "createdAt")),
-        DATE_TRUNC('day', timezone($4, "endedAt"))
-      HAVING DATE_TRUNC('day', timezone($4, "endedAt")) IS NOT NULL
+        game."createdAt" < $3 AND
+        DATE_TRUNC('day', timezone($4, "endedAt")) IS NOT NULL
       ORDER BY DATE_TRUNC('day', timezone($4, "createdAt"))`,
       [patientId, startDate, endDate, dbTimezone],
     );
 
-    const groupByRes = _groupBy(results, 'createdAtDay');
-    console.log('groupByRes:', groupByRes);
+    console.log('results:', results);
+
+    // grouping by createdAt date.
+    const groupByRes = groupBy(results, 'createdAtDay');
+    // console.log('groupByRes:', groupByRes);
+
+    // TODO: uncomment these once the activites are playable.
+    const gamesAvailable = [
+      'sit_stand_achieve',
+      // 'beat_boxer',
+      // 'sound_slicer'
+    ];
 
     let daysCompleted = 0;
-    for (const [_, value] of Object.entries(groupByRes)) {
-      if (value.length >= this.dailyGoalsThreshold) {
+    for (const [createdAtDay, gamesArr] of Object.entries(groupByRes)) {
+      const seenGames = new Set();
+      gamesArr.forEach((game) => {
+        const isSeen = seenGames.has(game.game);
+        if (!isSeen) {
+          seenGames.add(game.game);
+        }
+      });
+
+      // increment counter only if all the avaiable games were played.
+      if (seenGames.size === gamesAvailable.length) {
         daysCompleted++;
       }
     }
-    return daysCompleted;
-  }
-
-  groupByDate(results: Array<GoalsApiResponse>): Array<GroupGoalsByDate> {
-    const temp = {};
-    for (let i = 0; i < results.length; i++) {
-      const date = results[i].createdAt.toISOString().split('T')[0];
-      const duration = results[i].sessionDurationInMin;
-
-      if (date in temp) {
-        temp[date] += duration;
-      } else {
-        temp[date] = duration;
-      }
-    }
-
-    const response = [];
-    for (const [key, value] of Object.entries(temp)) {
-      if (typeof value === 'number') {
-        response.push({
-          date: key,
-          totalSessionDurationInMin: value,
-        });
-      }
-    }
-    return response;
+    return { daysCompleted, groupByCreatedAtDayGames: groupByRes };
   }
 
   workOutStreak(days: Array<MonthlyGoalsApiResponse>) {
