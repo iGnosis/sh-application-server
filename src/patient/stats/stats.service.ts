@@ -74,8 +74,9 @@ export class StatsService {
     daysCompleted: number;
     groupByCreatedAtDayGames: Dictionary<
       {
-        createdAtDay: Date;
         game: string;
+        createdAtDay: Date;
+        durationInSec: number;
       }[]
     >;
   }> {

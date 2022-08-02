@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
 import { PatientController } from './patient/patient.controller';
-import { SessionController } from './session/session.controller';
+import { GameController } from './game/game.controller';
 import { TherapistController } from './therapist/therapist.controller';
 import { EventsService } from './events.service';
 import { GqlService } from 'src/services/gql/gql.service';
@@ -13,7 +13,7 @@ import { Auth0Service } from 'src/auth/auth0/auth0.service';
 
 @Module({
   imports: [DatabaseModule],
-  controllers: [PatientController, SessionController, TherapistController, HelpAccessedController],
+  controllers: [PatientController, GameController, TherapistController, HelpAccessedController],
   providers: [EventsService, GqlService, CronService, StatsService, CognitoService, Auth0Service],
 })
 export class EventsModule {}

@@ -102,7 +102,6 @@ export class EventsService {
     }
   }
 
-  // event sent whenever a session starts
   async sessionStarted(userId: string) {
     await this._updateEvents(userId, 'session.started');
   }
@@ -137,6 +136,12 @@ export class EventsService {
     await this._updateEvents(userId, 'help_accessed.exertools', { name: 'Exertools' });
   }
 
+  // TODO: called when user completes the 0Auth flow.
+  async userSignIn(userId: string) {
+    return;
+  }
+
+  // TODO: called when user lands on a page for the first time.
   async userLogin(userId: string) {
     await this._updateEvents(userId, 'user.signin');
   }
