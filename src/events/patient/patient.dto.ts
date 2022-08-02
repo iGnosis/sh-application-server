@@ -15,16 +15,10 @@ export class NewPatientDto {
   email: string;
 
   @ApiProperty({
-    description: 'Patient identifier',
+    description: 'Patient nickname',
   })
   @IsNotEmpty()
-  identifier: string;
-
-  @ApiProperty({
-    description: 'Secret code for password reset',
-  })
-  @IsNotEmpty()
-  onboardingCode: string;
+  nickname: string;
 }
 
 export class FeedbackReceivedEvent {

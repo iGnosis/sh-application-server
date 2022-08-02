@@ -6,6 +6,7 @@ import { PatientFeedback } from 'src/types/patient';
 interface Details {
   id: string;
   emailAddress: string;
+  nickname: string;
 }
 
 interface SessionEndedEventMetrics {
@@ -36,7 +37,7 @@ export class EventsService {
   }
 
   async updateEndpoint(details: Details, endpointId: string, type: 'patient' | 'therapist') {
-    const { id, emailAddress } = details;
+    const { id, emailAddress, nickname } = details;
     switch (type) {
       case 'patient':
         await this.pinpoint.updateEndpoint({
@@ -50,6 +51,7 @@ export class EventsService {
               UserId: id,
               UserAttributes: {
                 role: ['patient'],
+                nickname: [nickname],
               },
             },
           },
@@ -67,6 +69,7 @@ export class EventsService {
               UserId: id,
               UserAttributes: {
                 role: ['therapist'],
+                nickname: [nickname],
               },
             },
           },

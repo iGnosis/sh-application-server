@@ -76,11 +76,11 @@ export class CognitoController {
     }
 
     // update user endpoint if not exist.
-    await this.eventsService.updateEndpoint(
-      { id: idTokenPayload.sub, emailAddress: idTokenPayload.email },
-      idTokenPayload.sub,
-      'patient',
-    );
+    // await this.eventsService.updateEndpoint(
+    //   { id: idTokenPayload.sub, emailAddress: idTokenPayload.email },
+    //   idTokenPayload.sub,
+    //   'patient',
+    // );
 
     // sent user sign in event
     await this.eventsService.userLogin(idTokenPayload.sub);

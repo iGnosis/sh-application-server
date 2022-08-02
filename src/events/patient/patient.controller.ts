@@ -17,20 +17,9 @@ export class PatientController {
   @Post('new')
   // runs when a patient is inserted.
   async newPatient(@Body() body: NewPatientDto) {
-    const { id: patientId, email, onboardingCode } = body;
-
-    const url = new URL('/public/signup', this.configService.get('PATIENT_PORTAL_URL'));
-    url.searchParams.set('code', onboardingCode);
-    url.searchParams.set('email', email);
-
-    const signUpUrl = url.href;
-    console.log('signUpUrl:', signUpUrl);
-
-    const urlPart1 = signUpUrl.slice(0, signUpUrl.length / 2);
-    const urlPart2 = signUpUrl.slice(signUpUrl.length / 2, signUpUrl.length);
-
+    const { id: patientId, email, nickname } = body;
     const response = await this.eventsService.updateEndpoint(
-      { id: patientId, emailAddress: email },
+      { id: patientId, emailAddress: email, nickname },
       patientId,
       'patient',
     );

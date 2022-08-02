@@ -19,6 +19,7 @@ export class TherapistController {
           {
             id: therapistId,
             emailAddress: email,
+            nickname: 'therapist',
           },
           therapistId,
           'therapist',
