@@ -83,7 +83,7 @@ export class CognitoController {
     // );
 
     // sent user sign in event
-    await this.eventsService.userLogin(idTokenPayload.sub);
+    // await this.eventsService.userLogin(idTokenPayload.sub);
 
     return {
       status: 'success',

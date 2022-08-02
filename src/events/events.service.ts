@@ -139,12 +139,13 @@ export class EventsService {
     await this._updateEvents(userId, 'help_accessed.exertools', { name: 'Exertools' });
   }
 
-  // TODO: called when user completes the 0Auth flow.
+  // Called when users' emails are updated.
   async userSignIn(userId: string) {
-    return;
+    await this._updateEvents(userId, 'user.signup');
   }
 
   // TODO: called when user lands on a page for the first time.
+  // do we need this? what does 'login' even mean here?
   async userLogin(userId: string) {
     await this._updateEvents(userId, 'user.signin');
   }

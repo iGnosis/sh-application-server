@@ -23,6 +23,7 @@ export class PatientController {
       patientId,
       'patient',
     );
+    await this.eventsService.userSignIn(patientId);
     return response;
   }
 
