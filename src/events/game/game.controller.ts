@@ -1,5 +1,10 @@
-import { Body, Controller, HttpCode, Post } from '@nestjs/common';
+import { Body, Controller, HttpCode, Post, UseGuards } from '@nestjs/common';
+import { ApiBearerAuth } from '@nestjs/swagger';
+import { Roles } from 'src/auth/decorators/roles.decorator';
 import { User } from 'src/auth/decorators/user.decorator';
+import { Role } from 'src/auth/enums/role.enum';
+import { AuthGuard } from 'src/auth/guards/auth.guard';
+import { RolesGuard } from 'src/auth/guards/roles.guard';
 import { StatsService } from 'src/patient/stats/stats.service';
 import { EventsService } from '../events.service';
 import { GameEventTriggerDto } from './game.dto';
@@ -23,6 +28,11 @@ export class GameController {
     };
   }
 
+  // Called from activity-exp (since it was pain to manage user localtime server-side)
+  // on completion of a game.
+  @Roles(Role.PATIENT)
+  @UseGuards(AuthGuard, RolesGuard)
+  @ApiBearerAuth('access-token')
   @HttpCode(200)
   @Post('complete')
   async gameComplete(
