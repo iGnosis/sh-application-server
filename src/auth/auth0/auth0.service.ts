@@ -25,7 +25,7 @@ export class Auth0Service {
       const signingKey = await this.jwksClient.getSigningKey(jwt.header.kid);
       const publicKey = signingKey.getPublicKey();
 
-      console.log('publicKey:: ', publicKey);
+      // console.log('publicKey:: ', publicKey);
 
       return verify(token, publicKey, {
         algorithms: ['RS256'],
@@ -33,7 +33,7 @@ export class Auth0Service {
         issuer: this.configService.get('AUTH0_ISSUER'),
       });
     } catch (error) {
-      console.log('Invalid token:error:', error);
+      // console.log('Invalid token:error:', error);
       throw new HttpException('Invalid Token', HttpStatus.BAD_REQUEST);
     }
   }
