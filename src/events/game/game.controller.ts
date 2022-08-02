@@ -15,9 +15,7 @@ import { GameEventTriggerDto } from './game.dto';
 export class GameController {
   constructor(private eventsService: EventsService, private statsService: StatsService) {}
 
-  // TODO:
-  // create an event for this
-  // called when a 'game' is inserted
+  // called whenever a 'game' is inserted in the table.
   @Post('start')
   async gameStarted(@Body() body: GameEventTriggerDto) {
     const { patientId, createdAt } = body;
