@@ -1,12 +1,11 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import axios from 'axios';
-import { GqlService } from 'src/services/gql/gql.service';
 @Injectable()
 export class CronService {
   private readonly logger = new Logger(CronService.name);
 
-  constructor(private configService: ConfigService, private gqlService: GqlService) {}
+  constructor(private configService: ConfigService) { }
 
   async scheduleOneOffCron(scheduleAt: string, apiEndpoint: string, payload = {}, comment = '') {
     const scheduleEventBody = {
