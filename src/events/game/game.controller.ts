@@ -19,7 +19,7 @@ export class GameController {
   @Post('start')
   async gameStarted(@Body() body: GameEventTriggerDto) {
     const { patientId, createdAt } = body;
-    await this.eventsService.sessionStarted(patientId);
+    await this.eventsService.gameStarted(patientId);
     return {
       status: 'success',
       data: {},
@@ -80,7 +80,7 @@ export class GameController {
 
     const totalDailyDurationInMin = parseFloat((totalDailyDurationInSec / 60).toFixed(2));
 
-    await this.eventsService.sessionEndedEvent(userId, {
+    await this.eventsService.gameEnded(userId, {
       numOfActiveDays: daysCompleted,
       numOfActivitesCompletedToday,
       totalDailyDurationInMin: totalDailyDurationInMin,

@@ -34,9 +34,6 @@ export class CronController {
       payload,
     );
 
-    // send Pinpoint event
-    await this.eventsService.sessionStarted(patientId);
-
     return {
       status: 'success',
     };

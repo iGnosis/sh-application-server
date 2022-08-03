@@ -9,7 +9,7 @@ interface Details {
   nickname: string;
 }
 
-interface SessionEndedEventMetrics {
+interface GameEndedEventMetrics {
   numOfActivitesCompletedToday: number;
   numOfActiveDays: number;
   totalDailyDurationInMin: number;
@@ -105,13 +105,13 @@ export class EventsService {
     }
   }
 
-  async sessionStarted(userId: string) {
-    await this._updateEvents(userId, 'session.started');
+  async gameStarted(userId: string) {
+    await this._updateEvents(userId, 'game.started');
   }
 
   // event sent whenever a session ends
-  async sessionEndedEvent(userId: string, metrics: SessionEndedEventMetrics) {
-    await this._updateEvents(userId, 'session.complete', {}, metrics);
+  async gameEnded(userId: string, metrics: GameEndedEventMetrics) {
+    await this._updateEvents(userId, 'game.complete', {}, metrics);
   }
 
   // evet sent when a reward is unlocked.
