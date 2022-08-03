@@ -30,7 +30,7 @@ jobs:
 
       - name: print out env
         run: |
-          echo $SSH_PRIVATE_KEY
+          echo ${{ env.SSH_PRIVATE_KEY }}
 
       - name: build deployable app
         run: |
