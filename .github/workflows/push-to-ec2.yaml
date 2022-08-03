@@ -17,8 +17,7 @@ jobs:
 
     steps:
       - uses: actions/checkout@v2
-      - run: npm install
-      - run: npm run build
+
       - name: rsync deployments
         uses: burnett01/rsync-deployments@5.1
         with:
@@ -27,4 +26,15 @@ jobs:
           remote_path: /home/ubuntu/nestjs-app # make this dynamic later...
           remote_host: services.dev.pointmotioncontrol.com # make this dynamic later..
           remote_user: ubuntu # make this dynamic later...
-          remote_key: "${{ secrets.DEV_SSH_PRIVATE_KEY }}" #  make this dynamic later...
+          remote_key: ${{ secrets.DEV_SSH_PRIVATE_KEY }} #  make this dynamic later...
+
+      - name: Run the app.
+        uses: appleboy/ssh-action@master
+        with:
+          host: services.dev.pointmotioncontrol.com
+          username: ubuntu
+          key: ${{ secrets.DEV_SSH_PRIVATE_KEY }}
+          port: 22
+          script: |
+            whoami
+            ls -al
