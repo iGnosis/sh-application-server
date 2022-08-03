@@ -8,12 +8,11 @@ import { CronService } from 'src/cron/cron.service';
 import { StatsService } from 'src/patient/stats/stats.service';
 import { DatabaseModule } from 'src/database/database.module';
 import { HelpAccessedController } from './help-accessed/help-accessed.controller';
-import { CognitoService } from 'src/auth/cognito/cognito.service';
 import { Auth0Service } from 'src/auth/auth0/auth0.service';
 
 @Module({
   imports: [DatabaseModule],
   controllers: [PatientController, GameController, TherapistController, HelpAccessedController],
-  providers: [EventsService, GqlService, CronService, StatsService, CognitoService, Auth0Service],
+  providers: [EventsService, GqlService, CronService, StatsService, Auth0Service],
 })
 export class EventsModule {}
