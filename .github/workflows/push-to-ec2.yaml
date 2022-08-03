@@ -28,6 +28,8 @@ jobs:
           echo "SSH_HOST=services.dev.pointmotioncontrol.com" >> $GITHUB_ENV
           echo "SSH_USER=ubuntu" >> $GITHUB_ENV
           echo SSH_PRIVATE_KEY=$(echo "${SSH_KEY}") >> $GITHUB_ENV
+          echo ${{ secrets.DEV_SSH_PRIVATE_KEY_B64ENCODED }} | base64 -d >> ~/ssh_key.pem
+          chmod 400 ~/ssh_key.pem
 
       - uses: actions/checkout@v2
       - name: Setup upterm session
