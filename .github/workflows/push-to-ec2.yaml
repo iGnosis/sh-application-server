@@ -28,7 +28,7 @@ jobs:
           echo "SSH_HOST=services.dev.pointmotioncontrol.com" >> $GITHUB_ENV
           echo "SSH_USER=ubuntu" >> $GITHUB_ENV
 
-          echo "SSH_PRIVATE_KEY<EOF" >> $GITHUB_ENV
+          echo "SSH_PRIVATE_KEY<<EOF" >> $GITHUB_ENV
           echo $SSH_PRIVATE_KEY_B64ENCODED | base64 -d >> $GITHUB_ENV
           echo "EOF" >> $GITHUB_ENV
 
