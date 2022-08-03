@@ -41,7 +41,7 @@ jobs:
           remote_path: $SSH_REMOTE_PATH
           remote_host: $SSH_HOST
           remote_user: $SSH_USER
-          remote_key: ${{ secrets.DEV_SSH_PRIVATE_KEY }}
+          remote_key: "$SSH_PRIVATE_KEY"
 
       - name: Run the app.
         uses: appleboy/ssh-action@master
