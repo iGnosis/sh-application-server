@@ -21,7 +21,7 @@ jobs:
       - name: build deployable app
         run: |
          npm install
-         npm build
+         npm run build
 
       - name: rsync deployments
         uses: burnett01/rsync-deployments@5.1
