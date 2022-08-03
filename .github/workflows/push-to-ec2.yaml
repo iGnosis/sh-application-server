@@ -21,12 +21,13 @@ jobs:
       - name: Set env to development
         if: endsWith(github.ref, '/dev')
         env:
-          SSH_PRIVATE_KEY: ${{ secrets.DEV_SSH_PRIVATE_KEY }}
+          SSH_PRIVATE_KEY_B64ENCODED: ${{ secrets.DEV_SSH_PRIVATE_KEY_B64ENCODED }}
         run: |
           echo "ENVIRONMENT=development" >> $GITHUB_ENV
           echo "SSH_REMOTE_PATH=/home/ubuntu/nestjs-app" >> $GITHUB_ENV
           echo "SSH_HOST=services.dev.pointmotioncontrol.com" >> $GITHUB_ENV
           echo "SSH_USER=ubuntu" >> $GITHUB_ENV
+          echo "SSH_PRIVATE_KEY=$(echo $SSH_PRIVATE_KEY_B64ENCODED | base64 -d)" >> $GITHUB_ENV
 
       - name: build deployable app
         run: |
@@ -41,14 +42,14 @@ jobs:
           remote_path: $SSH_REMOTE_PATH
           remote_host: $SSH_HOST
           remote_user: $SSH_USER
-          remote_key: ${{ env.SSH_PRIVATE_KEY }}
+          remote_key: $SSH_PRIVATE_KEY
 
       - name: Run the app.
         uses: appleboy/ssh-action@master
         with:
           host: services.dev.pointmotioncontrol.com
           username: ubuntu
-          key: ${{ env.SSH_PRIVATE_KEY }}
+          key: $SSH_PRIVATE_KEY
           port: 22
           script: |
             whoami
