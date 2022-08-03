@@ -1,0 +1,30 @@
+name: Push to EC2
+
+# Controls when the workflow will run
+on:
+  # Triggers the workflow on push or pull request events but only for the main branch
+  push:
+    branches: [ main, dev, stage ]
+  pull_request:
+    branches: [ main, dev, stage ]
+
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+      - run: npm install
+      - run: npm run build
+      - name: rsync deployments
+        uses: burnett01/rsync-deployments@5.1
+        with:
+          switches: -avzr --delete
+          path: ./*
+          remote_path: /home/ubuntu/nestjs-app # make this dynamic later...
+          remote_host: services.dev.pointmotioncontrol.com # make this dynamic later..
+          remote_user: ubuntu # make this dynamic later...
+          remote_key: "${{ secrets.DEV_SSH_PRIVATE_KEY }}" #  make this dynamic later...
