@@ -20,7 +20,7 @@ jobs:
 
       - name: Set env to development
         if: endsWith(github.ref, '/dev')
-        with:
+        env:
           SSH_PRIVATE_KEY: ${{ secrets.DEV_SSH_PRIVATE_KEY }}
         run: |
           echo "ENVIRONMENT=development" >> $GITHUB_ENV
@@ -41,14 +41,14 @@ jobs:
           remote_path: $SSH_REMOTE_PATH
           remote_host: $SSH_HOST
           remote_user: $SSH_USER
-          remote_key: $SSH_PRIVATE_KEY
+          remote_key: ${{ env.SSH_PRIVATE_KEY }}
 
       - name: Run the app.
         uses: appleboy/ssh-action@master
         with:
           host: services.dev.pointmotioncontrol.com
           username: ubuntu
-          key: ${{ secrets.DEV_SSH_PRIVATE_KEY }}
+          key: ${{ env.SSH_PRIVATE_KEY }}
           port: 22
           script: |
             whoami
