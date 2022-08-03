@@ -40,6 +40,7 @@ jobs:
          npm install
          npm run build
 
+      # Using rsync / scp natively
       - name: rsync deployments
         uses: burnett01/rsync-deployments@5.1
         with:
@@ -50,6 +51,7 @@ jobs:
           remote_user: $SSH_USER
           remote_key: $(cat ~/ssh_key.pem)
 
+      # using SSH natively & execute commands.
       - name: Run the app.
         uses: appleboy/ssh-action@master
         with:
