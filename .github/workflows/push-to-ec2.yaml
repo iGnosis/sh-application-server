@@ -33,26 +33,15 @@ jobs:
          npm install
          npm run build
 
-      - name: Deploy to Server
-        uses: easingthemes/ssh-deploy@main
-        env:
-            SSH_PRIVATE_KEY: $SSH_PRIVATE_KEY
-            ARGS: "-rltgoDzvO --delete"
-            SOURCE: "dist/"
-            REMOTE_HOST: $SSH_HOST
-            REMOTE_USER: $SSH_USER
-            TARGET: $SSH_REMOTE_PATH
-            EXCLUDE: "/dist/, /node_modules/"
-
-      # - name: rsync deployments
-      #   uses: burnett01/rsync-deployments@5.1
-      #   with:
-      #     switches: -avzr --delete
-      #     path: ./*
-      #     remote_path: $SSH_REMOTE_PATH
-      #     remote_host: $SSH_HOST
-      #     remote_user: $SSH_USER
-      #     remote_key: "$SSH_PRIVATE_KEY\n"
+      - name: rsync deployments
+        uses: burnett01/rsync-deployments@5.1
+        with:
+          switches: -avzr --delete
+          path: ./*
+          remote_path: $SSH_REMOTE_PATH
+          remote_host: $SSH_HOST
+          remote_user: $SSH_USER
+          remote_key: ${{ secrets.DEV_SSH_PRIVATE_KEY }}
 
       - name: Run the app.
         uses: appleboy/ssh-action@master
