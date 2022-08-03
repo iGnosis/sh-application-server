@@ -27,7 +27,7 @@ jobs:
           echo "SSH_REMOTE_PATH=/home/ubuntu/nestjs-app" >> $GITHUB_ENV
           echo "SSH_HOST=services.dev.pointmotioncontrol.com" >> $GITHUB_ENV
           echo "SSH_USER=ubuntu" >> $GITHUB_ENV
-          echo "SSH_PRIVATE_KEY=$(echo $SSH_KEY)" >> $GITHUB_ENV
+          echo "SSH_PRIVATE_KEY=$SSH_KEY" >> $GITHUB_ENV
 
       - name: print out env
         run: |
