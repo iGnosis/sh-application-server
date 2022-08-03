@@ -48,14 +48,14 @@ jobs:
           remote_path: $SSH_REMOTE_PATH
           remote_host: $SSH_HOST
           remote_user: $SSH_USER
-          remote_key: $SSH_PRIVATE_KEY
+          remote_key: $(cat ~/ssh_key.pem)
 
       - name: Run the app.
         uses: appleboy/ssh-action@master
         with:
           host: services.dev.pointmotioncontrol.com
           username: ubuntu
-          key: $SSH_PRIVATE_KEY
+          key: $(cat ~/ssh_key.pem)
           port: 22
           script: |
             whoami
