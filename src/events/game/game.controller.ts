@@ -35,8 +35,8 @@ export class GameController {
   async appAccessed(@User() userId: string) {
     await this.eventsService.appAccessed(userId);
     return {
-      status: 'success'
-    }
+      status: 'success',
+    };
   }
 
   // Called from activity-exp (since it was pain to manage user localtime server-side)
