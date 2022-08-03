@@ -42,6 +42,7 @@ jobs:
             REMOTE_HOST: $SSH_HOST
             REMOTE_USER: $SSH_USER
             TARGET: $SSH_REMOTE_PATH
+            EXCLUDE: "/dist/, /node_modules/"
 
       # - name: rsync deployments
       #   uses: burnett01/rsync-deployments@5.1
