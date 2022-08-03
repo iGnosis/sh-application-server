@@ -18,6 +18,11 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
+      - name: build deployable app
+        run: |
+         npm install
+         npm build
+
       - name: rsync deployments
         uses: burnett01/rsync-deployments@5.1
         with:
@@ -37,4 +42,7 @@ jobs:
           port: 22
           script: |
             whoami
-            ls -al
+            # Killing node proesses
+            pkill -15 node
+            # Starting server...
+            (. ~/.pmc-secrets;cd /home/ubuntu/app-server;nohup npx npm run start:prod >> /tmp/app-server.log 2>&1 &)
