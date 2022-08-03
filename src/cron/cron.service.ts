@@ -5,7 +5,7 @@ import axios from 'axios';
 export class CronService {
   private readonly logger = new Logger(CronService.name);
 
-  constructor(private configService: ConfigService) { }
+  constructor(private configService: ConfigService) {}
 
   async scheduleOneOffCron(scheduleAt: string, apiEndpoint: string, payload = {}, comment = '') {
     const scheduleEventBody = {
