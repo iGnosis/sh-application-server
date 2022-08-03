@@ -45,4 +45,4 @@ jobs:
             # Killing node proesses
             pkill -15 node
             # Starting server...
-            (. ~/.pmc-secrets;cd /home/ubuntu/app-server;nohup npx npm run start:prod >> /tmp/app-server.log 2>&1 &)
+            (. ~/.pmc-secrets;cd /home/ubuntu/nestjs-app;nohup npx npm run start:prod >> /tmp/app-server.log 2>&1 &)
