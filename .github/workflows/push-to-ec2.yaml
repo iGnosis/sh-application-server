@@ -22,10 +22,10 @@ jobs:
         if: endsWith(github.ref, '/dev')
         run: |
           echo "ENVIRONMENT=development" >> $GITHUB_ENV
-          echo "SSH_REMOTE_PATH=/home/ubuntu/nestjs-app" >> $GITHUB_ENV
-          echo "SSH_HOST=services.dev.pointmotioncontrol.com" >> $GITHUB_ENV
-          echo "SSH_USER=ubuntu" >> $GITHUB_ENV
-          echo "SSH_PRIVATE_KEY=${{ secrets.DEV_SSH_PRIVATE_KEY }}" >> $GITHUB_ENV
+          # echo "SSH_REMOTE_PATH=/home/ubuntu/nestjs-app" >> $GITHUB_ENV
+          # echo "SSH_HOST=services.dev.pointmotioncontrol.com" >> $GITHUB_ENV
+          # echo "SSH_USER=ubuntu" >> $GITHUB_ENV
+          # echo "SSH_PRIVATE_KEY=${{ secrets.DEV_SSH_PRIVATE_KEY }}" >> $GITHUB_ENV
 
       - name: build deployable app
         run: |
