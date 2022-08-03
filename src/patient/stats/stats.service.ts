@@ -108,7 +108,7 @@ export class StatsService {
     // TODO: uncomment these once the activites are playable.
     const gamesAvailable = [
       'sit_stand_achieve',
-      // 'beat_boxer',
+      'beat_boxer',
       // 'sound_slicer'
     ];
 
