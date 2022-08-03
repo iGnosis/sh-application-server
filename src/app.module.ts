@@ -8,7 +8,6 @@ import { AuthModule } from './auth/auth.module';
 import { DatabaseModule } from './database/database.module';
 import { AnalyticsModule } from './analytics/analytics.module';
 
-import { AuthService } from './services/auth/auth.service';
 import { GqlService } from './services/gql/gql.service';
 import { JwtService } from './services/jwt/jwt.service';
 import { EmailService } from './services/email/email.service';
@@ -34,6 +33,6 @@ import { Auth0Service } from './auth/auth0/auth0.service';
     RewardsModule,
   ],
   controllers: [AppController],
-  providers: [AppService, GqlService, AuthService, JwtService, EmailService, Auth0Service],
+  providers: [AppService, GqlService, JwtService, EmailService, Auth0Service],
 })
 export class AppModule {}
