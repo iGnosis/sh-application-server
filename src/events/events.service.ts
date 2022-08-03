@@ -144,8 +144,7 @@ export class EventsService {
     await this._updateEvents(userId, 'user.signup');
   }
 
-  // TODO: called when user lands on a page for the first time.
-  // do we need this? what does 'login' even mean here?
+  // Called whenever App is accessed.
   async appAccessed(userId: string) {
     await this._updateEvents(userId, 'user.app.accessed');
   }
