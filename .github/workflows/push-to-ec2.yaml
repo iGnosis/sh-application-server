@@ -34,12 +34,13 @@ jobs:
       - name: Setup SSH Agent
         run: |
           chmod 400 ~/ssh_key.pem
+          ssh-keygen -R $SSH_HOST
           eval $(ssh-agent -s)
           ssh-add ~/ssh_key.pem
 
-      - uses: actions/checkout@v2
-      - name: Setup upterm session
-        uses: lhotari/action-upterm@v1
+      # - uses: actions/checkout@v2
+      # - name: Setup upterm session
+      #   uses: lhotari/action-upterm@v1
 
       - name: Build Deployable App
         run: |
