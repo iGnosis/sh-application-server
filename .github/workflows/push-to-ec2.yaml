@@ -37,9 +37,9 @@ jobs:
           eval $(ssh-agent -s)
           ssh-add ~/ssh_key.pem
 
-      - uses: actions/checkout@v2
-      - name: Setup upterm session
-        uses: lhotari/action-upterm@v1
+      # - uses: actions/checkout@v2
+      # - name: Setup upterm session
+      #   uses: lhotari/action-upterm@v1
 
       - name: build deployable app
         run: |
