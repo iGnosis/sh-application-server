@@ -18,7 +18,7 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
-      - name: Set development environments
+      - name: Set development environment variables
         if: endsWith(github.ref, '/dev')
         run: |
           echo "ENVIRONMENT=development" >> $GITHUB_ENV
@@ -26,6 +26,15 @@ jobs:
           echo "SSH_HOST=services.dev.pointmotioncontrol.com" >> $GITHUB_ENV
           echo "SSH_USER=ubuntu" >> $GITHUB_ENV
           echo ${{ secrets.DEV_SSH_PRIVATE_KEY_B64ENCODED }} | base64 -d >> ~/ssh_key
+
+      - name: Set staging environment variables
+        if: endsWith(github.ref, '/stage')
+        run: |
+          echo "ENVIRONMENT=staging" >> $GITHUB_ENV
+          echo "SSH_REMOTE_PATH=/home/ec2-user/nestjs-app" >> $GITHUB_ENV
+          echo "SSH_HOST=services.stage.pointmotioncontrol.com" >> $GITHUB_ENV
+          echo "SSH_USER=ec2-user" >> $GITHUB_ENV
+          echo ${{ secrets.STAGE_SSH_PRIVATE_KEY_B64ENCODED }} | base64 -d >> ~/ssh_key
 
       - name: Setup SSH Files permissions
         run: |
