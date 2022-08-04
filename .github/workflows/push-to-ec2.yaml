@@ -39,6 +39,15 @@ jobs:
           touch ~/.ssh/known_hosts
           ssh-keyscan -t ed25519 $SSH_HOST >> ~/.ssh/known_hosts
 
+      - name: Setup SSH Config file
+        run: |
+          touch ~/.ssh/config
+          echo "Host $SSH_HOST" >> ~/.ssh/config
+          echo "HostName $SSH_HOST" >> ~/.ssh/config
+          echo "User $SSH_USER" >> ~/.ssh/config
+          echo "IdentityFile ~/ssh_key.pem" >> ~/.ssh/config
+          echo "IdentitiesOnly yes" >> ~/.ssh/config
+
       # - uses: actions/checkout@v2
       # - name: Setup upterm session
       #   uses: lhotari/action-upterm@v1
@@ -49,13 +58,13 @@ jobs:
          npm run build
 
       - name: Testing SSH connection
-        run: ssh -i $HOME/ssh_key.pem $SSH_USER@$SSH_HOST "whoami;id"
+        run: ssh $SSH_USER@$SSH_HOST "whoami;id"
 
       - name: Copy Files Over Remote Server
-        run: rsync -avzr --delete -e "ssh -i $HOME/ssh_key.pem" \
+        run:  rsync -avzr --delete \
          /home/runner/work/sh-application-server/sh-application-server/node_modules \
          /home/runner/work/sh-application-server/sh-application-server/dist/ \
          $SSH_USER@$SSH_HOST:$SSH_REMOTE_PATH
 
       - name: Kill existing node processes and run the app.
-        run: ssh -i $HOME/ssh_key.pem $SSH_USER@$SSH_HOST "pkill -15 node; (. ~/.pmc-secrets;cd $SSH_REMOTE_PATH;nohup node main.js >> /tmp/app-server.log 2>&1 &)"
+        run: ssh $SSH_USER@$SSH_HOST "pkill -15 node; (. ~/.pmc-secrets;cd $SSH_REMOTE_PATH;nohup node main.js >> /tmp/app-server.log 2>&1 &)"
