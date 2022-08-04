@@ -27,15 +27,11 @@ jobs:
           echo "SSH_REMOTE_PATH=/home/ubuntu/nestjs-app" >> $GITHUB_ENV
           echo "SSH_HOST=services.dev.pointmotioncontrol.com" >> $GITHUB_ENV
           echo "SSH_USER=ubuntu" >> $GITHUB_ENV
-          echo SSH_PRIVATE_KEY=$(echo "${SSH_KEY}") >> $GITHUB_ENV
-
           echo ${{ secrets.DEV_SSH_PRIVATE_KEY_B64ENCODED }} | base64 -d >> ~/ssh_key.pem
 
       - name: Setup SSH Agent
         run: |
           chmod 600 ~/ssh_key.pem
-          eval $(ssh-agent -s)
-          ssh-add ~/ssh_key.pem
           ls -la ~
           mkdir ~/.ssh
           chmod 700 ~/.ssh
@@ -55,11 +51,11 @@ jobs:
       - name: Testing SSH connection
         run: ssh -i $HOME/ssh_key.pem $SSH_USER@$SSH_HOST "whoami;id"
 
-      # - name: Copy Files Over Remote Server
-      #   run: rsync -avzr --delete -e "ssh -i $HOME/ssh_key.pem -p22" \
-      #    /home/runner/work/sh-application-server/sh-application-server/node_modules \
-      #    /home/runner/work/sh-application-server/sh-application-server/dist/ \
-      #    $SSH_USER@$SSH_HOST:$SSH_REMOTE_PATH
+      - name: Copy Files Over Remote Server
+        run: rsync -avzr --delete -e "ssh -i $HOME/ssh_key.pem" \
+         /home/runner/work/sh-application-server/sh-application-server/node_modules \
+         /home/runner/work/sh-application-server/sh-application-server/dist/ \
+         $SSH_USER@$SSH_HOST:$SSH_REMOTE_PATH
 
-      # - name: Kill existing node processes and run the app.
-      #   run: ssh -i $HOME/ssh_key.pem $SSH_USER@$SSH_HOST "pkill -15 node; (. ~/.pmc-secrets;cd $SSH_REMOTE_PATH;nohup node main.js >> /tmp/app-server.log 2>&1 &)"
+      - name: Kill existing node processes and run the app.
+        run: ssh -i $HOME/ssh_key.pem $SSH_USER@$SSH_HOST "pkill -15 node; (. ~/.pmc-secrets;cd $SSH_REMOTE_PATH;nohup node main.js >> /tmp/app-server.log 2>&1 &)"
