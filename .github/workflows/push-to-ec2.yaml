@@ -44,7 +44,6 @@ jobs:
          npm run build
 
       - name: copy files over remote server
-      /home/runner/work/sh_patient_client/sh_patient_client/dist/
         run: rsync -avzr --delete \
          /home/runner/work/app-server/app-server/node_modules \
          /home/runner/work/app-server/app-server/dist/ \
