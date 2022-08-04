@@ -37,6 +37,7 @@ jobs:
           eval $(ssh-agent -s)
           ssh-add ~/ssh_key.pem
           ls -la ~
+          mkdir ~/.ssh
           ls -la ~/.ssh
           touch ~/.ssh/known_hosts
           ssh-keyscan -t ed25519 $SSH_HOST >> ~/.ssh/known_hosts
