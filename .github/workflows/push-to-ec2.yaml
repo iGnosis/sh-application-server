@@ -43,9 +43,9 @@ jobs:
           touch ~/.ssh/known_hosts
           ssh-keyscan -t ed25519 $SSH_HOST >> ~/.ssh/known_hosts
 
-      - uses: actions/checkout@v2
-      - name: Setup upterm session
-        uses: lhotari/action-upterm@v1
+      # - uses: actions/checkout@v2
+      # - name: Setup upterm session
+      #   uses: lhotari/action-upterm@v1
 
       - name: Build Deployable App
         run: |
@@ -53,10 +53,10 @@ jobs:
          npm run build
 
       - name: Copy Files Over Remote Server
-        run: rsync -avzr --delete \
+        run: rsync -avzr --delete -e "ssh -i $HOME/ssh_key.pem" \
          /home/runner/work/sh-application-server/sh-application-server/node_modules \
          /home/runner/work/sh-application-server/sh-application-server/dist/ \
          $SSH_USER@$SSH_HOST:$SSH_REMOTE_PATH
 
       - name: Kill existing node processes and run the app.
-        run: ssh $SSH_USER@$SSH_HOST "pkill -15 node; (. ~/.pmc-secrets;cd $SSH_REMOTE_PATH;nohup npx npm run start:prod >> /tmp/app-server.log 2>&1 &)"
+        run: ssh -i $HOME/ssh_key.pem $SSH_USER@$SSH_HOST "pkill -15 node; (. ~/.pmc-secrets;cd $SSH_REMOTE_PATH;nohup node main.js >> /tmp/app-server.log 2>&1 &)"
