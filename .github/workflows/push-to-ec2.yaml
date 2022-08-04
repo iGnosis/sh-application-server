@@ -30,6 +30,9 @@ jobs:
           echo SSH_PRIVATE_KEY=$(echo "${SSH_KEY}") >> $GITHUB_ENV
 
           echo ${{ secrets.DEV_SSH_PRIVATE_KEY_B64ENCODED }} | base64 -d >> ~/ssh_key.pem
+
+      - name: Setup SSH Agent
+        run: |
           chmod 400 ~/ssh_key.pem
           eval $(ssh-agent -s)
           ssh-add ~/ssh_key.pem
@@ -45,21 +48,9 @@ jobs:
 
       - name: copy files over remote server
         run: rsync -avzr --delete \
-         /home/runner/work/app-server/app-server/node_modules \
-         /home/runner/work/app-server/app-server/dist/ \
+         /home/runner/work/sh-application-server/sh-application-server/node_modules \
+         /home/runner/work/sh-application-server/sh-application-server/dist/ \
          $SSH_USER@$SSH_HOST:$SSH_REMOTE_PATH
 
-      # using SSH natively & execute commands.
-      - name: Run the app.
-        uses: appleboy/ssh-action@master
-        with:
-          host: services.dev.pointmotioncontrol.com
-          username: ubuntu
-          key: ${{ secrets.DEV_SSH_PRIVATE_KEY }}
-          port: 22
-          script: |
-            whoami
-            # Killing node proesses
-            pkill -15 node
-            # Starting server...
-            (. ~/.pmc-secrets;cd /home/ubuntu/nestjs-app;nohup npx npm run start:prod >> /tmp/app-server.log 2>&1 &)
+      - name: Kill existing node processes and run the app.
+        run: ssh $SSH_USER@$SSH_HOST "pkill -15 node; (. ~/.pmc-secrets;cd $SSH_REMOTE_PATH;nohup npx npm run start:prod >> /tmp/app-server.log 2>&1 &)"
