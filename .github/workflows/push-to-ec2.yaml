@@ -36,10 +36,11 @@ jobs:
           chmod 400 ~/ssh_key.pem
           eval $(ssh-agent -s)
           ssh-add ~/ssh_key.pem
+          ssh-keyscan -t ed25519 $SSH_HOST >> ~/.ssh/known_hosts
 
-      # - uses: actions/checkout@v2
-      # - name: Setup upterm session
-      #   uses: lhotari/action-upterm@v1
+      - uses: actions/checkout@v2
+      - name: Setup upterm session
+        uses: lhotari/action-upterm@v1
 
       - name: Build Deployable App
         run: |
