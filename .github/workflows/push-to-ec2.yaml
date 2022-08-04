@@ -53,7 +53,7 @@ jobs:
          npm run build
 
       - name: Copy Files Over Remote Server
-        run: rsync -avzr --delete -e "ssh -i $HOME/ssh_key.pem" \
+        run: rsync -avzr --delete -e "ssh -i $HOME/ssh_key.pem -p22" \
          /home/runner/work/sh-application-server/sh-application-server/node_modules \
          /home/runner/work/sh-application-server/sh-application-server/dist/ \
          $SSH_USER@$SSH_HOST:$SSH_REMOTE_PATH
