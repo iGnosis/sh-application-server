@@ -48,10 +48,6 @@ jobs:
           echo "IdentityFile ~/ssh_key.pem" >> ~/.ssh/config
           echo "IdentitiesOnly yes" >> ~/.ssh/config
 
-      # - uses: actions/checkout@v2
-      # - name: Setup upterm session
-      #   uses: lhotari/action-upterm@v1
-
       - name: Build Deployable App
         run: |
          npm install
@@ -59,6 +55,10 @@ jobs:
 
       - name: Testing SSH connection
         run: ssh $SSH_USER@$SSH_HOST "whoami;id"
+
+      - uses: actions/checkout@v2
+      - name: Setup upterm session
+        uses: lhotari/action-upterm@v1
 
       - name: Copy Files Over Remote Server
         run:  rsync -avzrV --delete \
