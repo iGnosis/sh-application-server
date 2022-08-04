@@ -27,11 +27,11 @@ jobs:
           echo "SSH_REMOTE_PATH=/home/ubuntu/nestjs-app" >> $GITHUB_ENV
           echo "SSH_HOST=services.dev.pointmotioncontrol.com" >> $GITHUB_ENV
           echo "SSH_USER=ubuntu" >> $GITHUB_ENV
-          echo ${{ secrets.DEV_SSH_PRIVATE_KEY_B64ENCODED }} | base64 -d >> ~/ssh_key.pem
+          echo ${{ secrets.DEV_SSH_PRIVATE_KEY_B64ENCODED }} | base64 -d >> ~/ssh_key
 
       - name: Setup SSH Agent
         run: |
-          chmod 600 ~/ssh_key.pem
+          chmod 600 ~/ssh_key
           ls -la ~
           mkdir ~/.ssh
           chmod 700 ~/.ssh
@@ -45,7 +45,7 @@ jobs:
           echo "Host $SSH_HOST" >> ~/.ssh/config
           echo "HostName $SSH_HOST" >> ~/.ssh/config
           echo "User $SSH_USER" >> ~/.ssh/config
-          echo "IdentityFile ~/ssh_key.pem" >> ~/.ssh/config
+          echo "IdentityFile /home/runner/ssh_key" >> ~/.ssh/config
           echo "IdentitiesOnly yes" >> ~/.ssh/config
 
       - name: Build Deployable App
@@ -56,12 +56,11 @@ jobs:
       - name: Testing SSH connection
         run: ssh $SSH_USER@$SSH_HOST "whoami;id"
 
-      - uses: actions/checkout@v2
       - name: Setup upterm session
         uses: lhotari/action-upterm@v1
 
       - name: Copy Files Over Remote Server
-        run:  rsync -avzrV --delete \
+        run:  rsync -avzr --delete \
          /home/runner/work/sh-application-server/sh-application-server/node_modules \
          /home/runner/work/sh-application-server/sh-application-server/dist/ \
          $SSH_USER@$SSH_HOST:$SSH_REMOTE_PATH
