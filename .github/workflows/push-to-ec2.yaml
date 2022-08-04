@@ -43,7 +43,7 @@ jobs:
           echo "Host $SSH_HOST" >> ~/.ssh/config
           echo "HostName $SSH_HOST" >> ~/.ssh/config
           echo "User $SSH_USER" >> ~/.ssh/config
-          echo "IdentityFile /home/runner/ssh_key" >> ~/.ssh/config
+          echo "IdentityFile ~/ssh_key" >> ~/.ssh/config
           echo "IdentitiesOnly yes" >> ~/.ssh/config
 
       - name: Build Deployable App
@@ -53,6 +53,7 @@ jobs:
          npm install
          npm run build
 
+      # Uncomment this if you want to debug Github action using SSH.
       # - name: Setup upterm session
       #   uses: lhotari/action-upterm@v1
 
