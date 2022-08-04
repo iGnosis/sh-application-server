@@ -34,19 +34,20 @@ jobs:
       - name: Setup SSH Agent
         run: |
           chmod 400 ~/ssh_key.pem
+          ssh-keygen -R hostname
           eval $(ssh-agent -s)
           ssh-add ~/ssh_key.pem
 
-      # - uses: actions/checkout@v2
-      # - name: Setup upterm session
-      #   uses: lhotari/action-upterm@v1
+      - uses: actions/checkout@v2
+      - name: Setup upterm session
+        uses: lhotari/action-upterm@v1
 
-      - name: build deployable app
+      - name: Build Deployable App
         run: |
          npm install
          npm run build
 
-      - name: copy files over remote server
+      - name: Copy Files Over Remote Server
         run: rsync -avzr --delete \
          /home/runner/work/sh-application-server/sh-application-server/node_modules \
          /home/runner/work/sh-application-server/sh-application-server/dist/ \
