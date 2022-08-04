@@ -58,7 +58,10 @@ jobs:
       #   uses: lhotari/action-upterm@v1
 
       - name: Copy Files Over Remote Server
-        run:  rsync -e "ssh -p 22 -i /home/runner/ssh_key" -avzr --delete /home/runner/work/sh-application-server/sh-application-server/dist/ $SSH_USER@$SSH_HOST:/tmp/nestjs-code
+        run: |
+          rsync -e "ssh -p 22 -i /home/runner/ssh_key" -avzr --delete \
+          /home/runner/work/sh-application-server/sh-application-server/dist/ \
+          $SSH_USER@$SSH_HOST:/tmp/nestjs-code
 
       - name: Kill existing node processes and run the app.
         run: ssh $SSH_USER@$SSH_HOST "pkill -15 node; (. ~/.pmc-secrets;cd $SSH_REMOTE_PATH;nohup node main.js >> /tmp/app-server.log 2>&1 &)"
