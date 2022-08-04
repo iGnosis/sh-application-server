@@ -63,7 +63,7 @@ jobs:
           /home/runner/work/sh-application-server/sh-application-server/dist/ \
           /home/runner/work/sh-application-server/sh-application-server/node_modules \
           /home/runner/work/sh-application-server/sh-application-server/downloads \
-          $SSH_USER@$SSH_HOST:/tmp/nestjs-code
+          $SSH_USER@$SSH_HOST:$SSH_REMOTE_PATH
 
       - name: Kill existing node processes and run the app
         run: |
