@@ -68,4 +68,7 @@ jobs:
       - name: Kill existing node processes and run the app
         run: |
           ssh $SSH_USER@$SSH_HOST \
-          "pkill -15 node; (. ~/.pmc-secrets;cd $SSH_REMOTE_PATH;nohup node main.js >> /tmp/app-server.log 2>&1 &)"
+          "pkill -15 node; \
+          (. ~/.pmc-secrets; \
+          cd $SSH_REMOTE_PATH; \
+          nohup node main.js >> /tmp/app-server.log 2>&1 &)"
