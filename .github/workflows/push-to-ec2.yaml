@@ -34,7 +34,6 @@ jobs:
       - name: Setup SSH Agent
         run: |
           chmod 400 ~/ssh_key.pem
-          ssh-keygen -R hostname
           eval $(ssh-agent -s)
           ssh-add ~/ssh_key.pem
 
