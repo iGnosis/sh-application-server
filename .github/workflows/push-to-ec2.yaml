@@ -48,6 +48,8 @@ jobs:
 
       - name: Build Deployable App
         run: |
+         echo "Listing files..."
+         ls -la
          npm install
          npm run build
 
