@@ -18,7 +18,7 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
-      - name: Set env to development
+      - name: Set development environments
         if: endsWith(github.ref, '/dev')
         run: |
           echo "ENVIRONMENT=development" >> $GITHUB_ENV
@@ -27,7 +27,7 @@ jobs:
           echo "SSH_USER=ubuntu" >> $GITHUB_ENV
           echo ${{ secrets.DEV_SSH_PRIVATE_KEY_B64ENCODED }} | base64 -d >> ~/ssh_key
 
-      - name: Setup SSH Agent
+      - name: Setup SSH Files permissions
         run: |
           chmod 600 ~/ssh_key
           ls -la ~
@@ -59,7 +59,7 @@ jobs:
 
       - name: Copy Files Over Remote Server
         run: |
-          rsync -e "ssh -p 22 -i /home/runner/ssh_key" -avzr --delete \
+          rsync -avzr --delete \
           /home/runner/work/sh-application-server/sh-application-server/dist/ \
           /home/runner/work/sh-application-server/sh-application-server/node_modules \
           /home/runner/work/sh-application-server/sh-application-server/downloads \
