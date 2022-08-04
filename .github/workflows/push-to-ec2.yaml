@@ -36,7 +36,10 @@ jobs:
           chmod 400 ~/ssh_key.pem
           eval $(ssh-agent -s)
           ssh-add ~/ssh_key.pem
-          #ssh-keyscan -t ed25519 $SSH_HOST >> ~/.ssh/known_hosts
+          ls -la ~
+          ls -la ~/.ssh
+          touch ~/.ssh/known_hosts
+          ssh-keyscan -t ed25519 $SSH_HOST >> ~/.ssh/known_hosts
 
       - uses: actions/checkout@v2
       - name: Setup upterm session
