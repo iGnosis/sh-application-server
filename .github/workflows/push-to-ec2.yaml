@@ -61,7 +61,7 @@ jobs:
         run: ssh $SSH_USER@$SSH_HOST "whoami;id"
 
       - name: Copy Files Over Remote Server
-        run:  rsync -avzr --delete \
+        run:  rsync -avzrV --delete \
          /home/runner/work/sh-application-server/sh-application-server/node_modules \
          /home/runner/work/sh-application-server/sh-application-server/dist/ \
          $SSH_USER@$SSH_HOST:$SSH_REMOTE_PATH
