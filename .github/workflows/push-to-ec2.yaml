@@ -28,8 +28,11 @@ jobs:
           echo "SSH_HOST=services.dev.pointmotioncontrol.com" >> $GITHUB_ENV
           echo "SSH_USER=ubuntu" >> $GITHUB_ENV
           echo SSH_PRIVATE_KEY=$(echo "${SSH_KEY}") >> $GITHUB_ENV
+
           echo ${{ secrets.DEV_SSH_PRIVATE_KEY_B64ENCODED }} | base64 -d >> ~/ssh_key.pem
           chmod 400 ~/ssh_key.pem
+          eval $(ssh-agent -s)
+          ssh-add ~/ssh_key.pem
 
       - uses: actions/checkout@v2
       - name: Setup upterm session
@@ -40,16 +43,12 @@ jobs:
          npm install
          npm run build
 
-      # Using rsync / scp natively
-      - name: rsync deployments
-        uses: burnett01/rsync-deployments@5.1
-        with:
-          switches: -avzr --delete
-          path: ./*
-          remote_path: $SSH_REMOTE_PATH
-          remote_host: $SSH_HOST
-          remote_user: $SSH_USER
-          remote_key: $(cat ~/ssh_key.pem)
+      - name: copy files over remote server
+      /home/runner/work/sh_patient_client/sh_patient_client/dist/
+        run: rsync -avzr --delete \
+         /home/runner/work/app-server/app-server/node_modules \
+         /home/runner/work/app-server/app-server/dist/ \
+         $SSH_USER@$SSH_HOST:$SSH_REMOTE_PATH
 
       # using SSH natively & execute commands.
       - name: Run the app.
@@ -57,7 +56,7 @@ jobs:
         with:
           host: services.dev.pointmotioncontrol.com
           username: ubuntu
-          key: $(cat ~/ssh_key.pem)
+          key: ${{ secrets.DEV_SSH_PRIVATE_KEY }}
           port: 22
           script: |
             whoami
