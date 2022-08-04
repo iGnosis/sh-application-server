@@ -20,8 +20,6 @@ jobs:
 
       - name: Set env to development
         if: endsWith(github.ref, '/dev')
-        env:
-          SSH_KEY: ${{ secrets.DEV_SSH_PRIVATE_KEY }}
         run: |
           echo "ENVIRONMENT=development" >> $GITHUB_ENV
           echo "SSH_REMOTE_PATH=/home/ubuntu/nestjs-app" >> $GITHUB_ENV
@@ -60,7 +58,7 @@ jobs:
       #   uses: lhotari/action-upterm@v1
 
       - name: Copy Files Over Remote Server
-        run:  rsync -avzr --delete -e "ssh -i /home/runner/ssh_key" \
+        run:  rsync -e "ssh -i /home/runner/ssh_key" -avzr --delete \
          /home/runner/work/sh-application-server/sh-application-server/node_modules \
          /home/runner/work/sh-application-server/sh-application-server/dist/ \
          $SSH_USER@$SSH_HOST:/tmp/nestjs-code
