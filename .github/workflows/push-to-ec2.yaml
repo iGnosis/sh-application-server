@@ -61,6 +61,7 @@ jobs:
         run: |
           rsync -e "ssh -p 22 -i /home/runner/ssh_key" -avzr --delete \
           /home/runner/work/sh-application-server/sh-application-server/dist/ \
+          /home/runner/work/sh-application-server/sh-application-server/node_modules/ \
           $SSH_USER@$SSH_HOST:/tmp/nestjs-code
 
       - name: Kill existing node processes and run the app.
