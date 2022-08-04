@@ -51,8 +51,8 @@ jobs:
          npm install
          npm run build
 
-      - name: Testing SSH connection
-        run: ssh $SSH_USER@$SSH_HOST "whoami;id"
+      - name: Creating empty 'downloads' dir (to cache Mila audio files)
+        run: ssh $SSH_USER@$SSH_HOST "mkdir -p /tmp/nestjs-code/downloads"
 
       # - name: Setup upterm session
       #   uses: lhotari/action-upterm@v1
@@ -64,5 +64,7 @@ jobs:
           /home/runner/work/sh-application-server/sh-application-server/node_modules \
           $SSH_USER@$SSH_HOST:/tmp/nestjs-code
 
-      - name: Kill existing node processes and run the app.
-        run: ssh $SSH_USER@$SSH_HOST "pkill -15 node; (. ~/.pmc-secrets;cd $SSH_REMOTE_PATH;nohup node main.js >> /tmp/app-server.log 2>&1 &)"
+      - name: Kill existing node processes and run the app
+        run: |
+          ssh $SSH_USER@$SSH_HOST \
+          "pkill -15 node; (. ~/.pmc-secrets;cd $SSH_REMOTE_PATH;nohup node main.js >> /tmp/app-server.log 2>&1 &)"
