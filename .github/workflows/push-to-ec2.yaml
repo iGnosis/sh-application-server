@@ -60,7 +60,7 @@ jobs:
       #   uses: lhotari/action-upterm@v1
 
       - name: Copy Files Over Remote Server
-        run:  rsync -avzr --delete \
+        run:  rsync -avzr --delete -e "ssh -i /home/runner/ssh_key" \
          /home/runner/work/sh-application-server/sh-application-server/node_modules \
          /home/runner/work/sh-application-server/sh-application-server/dist/ \
          $SSH_USER@$SSH_HOST:/tmp/nestjs-code
