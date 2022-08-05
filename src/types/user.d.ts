@@ -11,3 +11,22 @@ export class User {
   status: string;
   provider: string;
 }
+
+export interface UserObjDecorator {
+  'https://hasura.io/jwt/claims': HasuraClaims;
+  iss: string;
+  sub: string;
+  aud: string[];
+  iat: number;
+  exp: number;
+  azp: string;
+  scope: string;
+}
+
+interface HasuraClaims {
+  'x-hasura-allowed-roles': Array<string>;
+  'x-hasura-user-id': string;
+  'x-hasura-default-role': string;
+  'x-hasura-provider-id': string;
+  'x-hasura-careplan-id': string;
+}

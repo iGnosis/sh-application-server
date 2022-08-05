@@ -1,0 +1,92 @@
+name: Push to EC2
+
+# Controls when the workflow will run
+on:
+  # Triggers the workflow on push or pull request events but only for the main branch
+  push:
+    branches: [ main, dev, stage ]
+  pull_request:
+    branches: [ main, dev, stage ]
+
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Set production environment variables
+        if: endsWith(github.ref, '/main')
+        run: |
+          echo "ENVIRONMENT=production" >> $GITHUB_ENV
+          echo "SSH_REMOTE_PATH=/home/ubuntu/nestjs-app" >> $GITHUB_ENV
+          echo "SSH_HOST=services.prod.pointmotioncontrol.com" >> $GITHUB_ENV
+          echo "SSH_USER=ubuntu" >> $GITHUB_ENV
+          echo ${{ secrets.PROD_SSH_PRIVATE_KEY_B64ENCODED }} | base64 -d >> ~/ssh_key
+
+      - name: Set development environment variables
+        if: endsWith(github.ref, '/dev')
+        run: |
+          echo "ENVIRONMENT=development" >> $GITHUB_ENV
+          echo "SSH_REMOTE_PATH=/home/ubuntu/nestjs-app" >> $GITHUB_ENV
+          echo "SSH_HOST=services.dev.pointmotioncontrol.com" >> $GITHUB_ENV
+          echo "SSH_USER=ubuntu" >> $GITHUB_ENV
+          echo ${{ secrets.DEV_SSH_PRIVATE_KEY_B64ENCODED }} | base64 -d >> ~/ssh_key
+
+      - name: Set staging environment variables
+        if: endsWith(github.ref, '/stage')
+        run: |
+          echo "ENVIRONMENT=staging" >> $GITHUB_ENV
+          echo "SSH_REMOTE_PATH=/home/ec2-user/nestjs-app" >> $GITHUB_ENV
+          echo "SSH_HOST=services.stage.pointmotioncontrol.com" >> $GITHUB_ENV
+          echo "SSH_USER=ec2-user" >> $GITHUB_ENV
+          echo ${{ secrets.STAGE_SSH_PRIVATE_KEY_B64ENCODED }} | base64 -d >> ~/ssh_key
+
+      - name: Setup SSH Files permissions
+        run: |
+          chmod 600 ~/ssh_key
+          ls -la ~
+          mkdir ~/.ssh
+          chmod 700 ~/.ssh
+          ls -la ~/.ssh
+          touch ~/.ssh/known_hosts
+          ssh-keyscan -t ed25519 $SSH_HOST >> ~/.ssh/known_hosts
+
+      - name: Setup SSH Config file
+        run: |
+          touch ~/.ssh/config
+          echo "Host $SSH_HOST" >> ~/.ssh/config
+          echo "HostName $SSH_HOST" >> ~/.ssh/config
+          echo "User $SSH_USER" >> ~/.ssh/config
+          echo "IdentityFile ~/ssh_key" >> ~/.ssh/config
+          echo "IdentitiesOnly yes" >> ~/.ssh/config
+
+      - name: Build Deployable App
+        run: |
+         echo "Listing files..."
+         ls -la
+         npm install
+         npm run build
+
+      # Uncomment this if you want to debug Github action using SSH.
+      # - name: Setup upterm session
+      #   uses: lhotari/action-upterm@v1
+
+      - name: Copy Files Over Remote Server
+        run: |
+          rsync -avzr --delete \
+          /home/runner/work/sh-application-server/sh-application-server/dist/ \
+          /home/runner/work/sh-application-server/sh-application-server/node_modules \
+          /home/runner/work/sh-application-server/sh-application-server/downloads \
+          $SSH_USER@$SSH_HOST:$SSH_REMOTE_PATH
+
+      - name: Kill existing node processes and run the app
+        run: |
+          ssh $SSH_USER@$SSH_HOST \
+          "pkill -15 node; \
+          (. ~/.pmc-secrets; \
+          cd $SSH_REMOTE_PATH; \
+          nohup node main.js >> /tmp/app-server.log 2>&1 &)"

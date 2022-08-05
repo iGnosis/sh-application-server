@@ -25,7 +25,7 @@ export class JwtService {
     return jwt.sign(payload, key.key);
   }
 
-  verify(header: string) {
+  verify(header: string): any {
     const key = JSON.parse(this.configService.get('JWT_SECRET'));
     const token = header.replace('Bearer ', '');
     return jwt.verify(token, key.key);
