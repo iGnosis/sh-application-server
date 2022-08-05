@@ -1,4 +1,4 @@
-import { CanActivate, ExecutionContext, Injectable } from '@nestjs/common';
+import { CanActivate, ExecutionContext, HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { Observable } from 'rxjs';
 import { ROLES_KEY } from '../decorators/roles.decorator';
@@ -28,6 +28,6 @@ export class RolesGuard implements CanActivate {
       return true;
     }
 
-    return false;
+    throw new HttpException('Insufficient privileges', HttpStatus.FORBIDDEN);
   }
 }
