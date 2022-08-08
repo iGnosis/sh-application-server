@@ -45,6 +45,7 @@ export class EventsService {
           EndpointId: endpointId,
           EndpointRequest: {
             ChannelType: 'EMAIL',
+            OptOut: 'NONE',
             Address: emailAddress,
             EndpointStatus: 'ACTIVE',
             User: {
