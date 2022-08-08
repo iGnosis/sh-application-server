@@ -1,4 +1,10 @@
-import { CanActivate, ExecutionContext, Injectable } from '@nestjs/common';
+import {
+  CanActivate,
+  ExecutionContext,
+  HttpException,
+  HttpStatus,
+  Injectable,
+} from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { Observable } from 'rxjs';
 import { ROLES_KEY } from '../decorators/roles.decorator';
@@ -21,13 +27,13 @@ export class RolesGuard implements CanActivate {
     const { user } = context.switchToHttp().getRequest();
     // console.dir(user, { depth: null })
 
-    const hasuraCliams = JSON.parse(user['https://hasura.io/jwt/claims']);
+    const hasuraCliams = user['https://hasura.io/jwt/claims'];
     const userRole = hasuraCliams['x-hasura-default-role'];
 
     if (requiredRoles.includes(userRole)) {
       return true;
     }
 
-    return false;
+    throw new HttpException('Insufficient privileges', HttpStatus.FORBIDDEN);
   }
 }

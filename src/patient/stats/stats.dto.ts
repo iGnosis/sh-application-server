@@ -1,10 +1,24 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsNotEmpty } from 'class-validator';
+import { IsNotEmpty, ValidateNested } from 'class-validator';
 
-export class Daily {
+export class DailyGoalsInput {
   @ApiProperty({
-    description: 'Day for which to fetch the stats.',
+    description: 'Date for which to fetch the stats.',
   })
   @IsNotEmpty()
-  day: number;
+  date: Date;
+
+  @ApiProperty({
+    description: 'Activity IDs to be evaulated.',
+  })
+  @IsNotEmpty()
+  activityIds: Array<string>;
+}
+
+export class DailyGoalsDto {
+  @ApiProperty({
+    description: 'Hasura input.',
+  })
+  @ValidateNested()
+  input: DailyGoalsInput;
 }

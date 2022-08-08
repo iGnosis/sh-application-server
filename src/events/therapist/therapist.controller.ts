@@ -19,7 +19,7 @@ export class TherapistController {
           {
             id: therapistId,
             emailAddress: email,
-            identifier: `${firstName} ${lastName}`,
+            nickname: 'therapist',
           },
           therapistId,
           'therapist',

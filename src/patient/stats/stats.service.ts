@@ -1,6 +1,8 @@
 import { Injectable } from '@nestjs/common';
+import { Dictionary } from 'lodash';
+import { groupBy } from 'lodash';
 import { DatabaseService } from 'src/database/database.service';
-import { GoalsApiResponse, GroupGoalsByDate } from '../../types/stats';
+import { GoalsApiResponse, MonthlyGoalsApiResponse } from '../../types/stats';
 
 @Injectable()
 export class StatsService {
@@ -38,47 +40,110 @@ export class StatsService {
     return results;
   }
 
-  groupByDate(results: Array<GoalsApiResponse>): Array<GroupGoalsByDate> {
-    const temp = {};
-    for (let i = 0; i < results.length; i++) {
-      const date = results[i].createdAt.toISOString().split('T')[0];
-      const duration = results[i].sessionDurationInMin;
-
-      if (date in temp) {
-        temp[date] += duration;
-      } else {
-        temp[date] = duration;
-      }
-    }
-
-    const response = [];
-    for (const [key, value] of Object.entries(temp)) {
-      if (typeof value === 'number') {
-        response.push({
-          date: key,
-          totalSessionDurationInMin: value,
-        });
-      }
-    }
-    return response;
+  // endDate is exclusive
+  // TODO: remove this API.
+  async getMonthlyGoals(
+    patientId: string,
+    startDate: Date,
+    endDate: Date,
+    dbTimezone: string,
+  ): Promise<Array<MonthlyGoalsApiResponse>> {
+    const results = await this.databaseService.executeQuery(
+      `SELECT
+        count(*) AS "activityEndedCount",
+        DATE_TRUNC('day', timezone($4, to_timestamp(created_at/1000))) AS "createdAtLocaleDate"
+      FROM events
+      WHERE
+        patient = $1 AND
+        to_timestamp(created_at/1000) >= $2 AND
+        to_timestamp(created_at/1000) < $3
+      GROUP BY DATE_TRUNC('day', timezone($4, to_timestamp(created_at/1000))), event_type
+      HAVING event_type = 'activityEnded'
+      ORDER BY DATE_TRUNC('day', timezone($4, to_timestamp(created_at/1000))) DESC`,
+      [patientId, startDate, endDate, dbTimezone],
+    );
+    return results;
   }
 
-  workOutStreak(sessions: Array<GroupGoalsByDate>) {
+  async getMonthlyGoalsNew(
+    patientId: string,
+    startDate: Date,
+    endDate: Date,
+    dbTimezone: string,
+  ): Promise<{
+    daysCompleted: number;
+    groupByCreatedAtDayGames: Dictionary<
+      {
+        game: string;
+        createdAtDay: Date;
+        durationInSec: number;
+      }[]
+    >;
+  }> {
+    const results: Array<{
+      createdAtDay: Date;
+      game: string;
+      durationInSec: number;
+    }> = await this.databaseService.executeQuery(
+      `SELECT DISTINCT
+        game,
+        DATE_TRUNC('day', timezone($4, "createdAt")) "createdAtDay",
+        (extract('epoch' from game."endedAt") - extract('epoch' from game."createdAt")) "durationInSec"
+      FROM game
+      WHERE
+        patient = $1 AND
+        game."createdAt" >= $2 AND
+        game."createdAt" < $3 AND
+        DATE_TRUNC('day', timezone($4, "endedAt")) IS NOT NULL
+      ORDER BY DATE_TRUNC('day', timezone($4, "createdAt"))`,
+      [patientId, startDate, endDate, dbTimezone],
+    );
+
+    console.log('results:', results);
+
+    // grouping by createdAt date.
+    const groupByRes = groupBy(results, 'createdAtDay');
+    // console.log('groupByRes:', groupByRes);
+
+    // TODO: uncomment these once the activites are playable.
+    const gamesAvailable = [
+      'sit_stand_achieve',
+      'beat_boxer',
+      // 'sound_slicer'
+    ];
+
+    let daysCompleted = 0;
+    for (const [createdAtDay, gamesArr] of Object.entries(groupByRes)) {
+      const seenGames = new Set();
+      gamesArr.forEach((game) => {
+        const isSeen = seenGames.has(game.game);
+        if (!isSeen) {
+          seenGames.add(game.game);
+        }
+      });
+
+      // increment counter only if all the avaiable games were played.
+      if (seenGames.size === gamesAvailable.length) {
+        daysCompleted++;
+      }
+    }
+    return { daysCompleted, groupByCreatedAtDayGames: groupByRes };
+  }
+
+  workOutStreak(days: Array<MonthlyGoalsApiResponse>) {
     let streak = 0;
-    let prevDate = new Date(new Date().toISOString().split('T')[0]);
+    let mostRecentDate = new Date(new Date().setHours(0, 0, 0, 0));
+    const activeDays = days.filter((day) => day.activityEndedCount >= 3);
 
-    for (let i = 0; i < sessions.length; i++) {
-      const sessionCreatedAt = new Date(sessions[i].date);
-      const diff = prevDate.getTime() - sessionCreatedAt.getTime();
-
-      // diff will be 0 if session/s is done on the same day.
-      // diff will be 86400000 if session/s is done on the previous day.
-      if (diff == 86400000 || diff == 0) {
+    for (let i = 0; i < activeDays.length; i++) {
+      const dayCreatedAt = new Date(activeDays[i].createdAtLocaleDate);
+      const diff = mostRecentDate.getTime() - dayCreatedAt.getTime();
+      if (diff === 0 || diff == 86400000) {
         streak++;
       } else {
         break;
       }
-      prevDate = sessionCreatedAt;
+      mostRecentDate = dayCreatedAt;
     }
     return streak;
   }
@@ -89,5 +154,9 @@ export class StatsService {
 
   getPastDate(currentDate: Date, numOfDaysInPast: number) {
     return new Date(currentDate.getTime() - 86400000 * numOfDaysInPast);
+  }
+
+  getDaysInMonth(year: number, month: number) {
+    return new Date(year, month, 0).getDate();
   }
 }

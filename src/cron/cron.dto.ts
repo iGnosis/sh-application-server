@@ -1,28 +1,9 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsNotEmpty } from 'class-validator';
-
-export class SessionEventTriggerRequestDto {
+export class ScheduleEmailFeedback {
   @ApiProperty({
-    description: 'Session ID for which to schedule the inspection.',
+    description: 'Feedback ID to be scheduled for email delivery',
   })
   @IsNotEmpty()
-  sessionId: string;
-
-  @ApiProperty({
-    description: 'Session creation date.',
-  })
-  @IsNotEmpty()
-  createdAt: Date;
-}
-
-export class SessionInspectorEvent {
-  @ApiProperty({
-    description: 'Session payload for which to schedule the inspection.',
-  })
-  @IsNotEmpty()
-  payload: {
-    sessionId: string;
-    createdAt: Date;
-  };
-  comment: string;
+  feedbackId: string;
 }

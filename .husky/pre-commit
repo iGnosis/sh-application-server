@@ -3,3 +3,4 @@
 
 echo "Running ESLint"
 npm run lint
+npm run auto-format
