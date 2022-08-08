@@ -56,13 +56,15 @@ jobs:
 
           echo "Setting proper .ssh dir permissions..."
           chmod 700 ~/.ssh
-          ls -la ~/.ssh
+          ls -la ~
 
           echo "Creating known_hosts file..."
           touch ~/.ssh/known_hosts
+          chmod 777 ~/.ssh/known_hosts
+          ls -la ~/.ssh/
 
           echo "Marking EC2 server as a known host..."
-          ssh-keyscan -t ed25519 $SSH_HOST >> ~/.ssh/known_hosts
+          ssh-keyscan -t rsa $SSH_HOST >> ~/.ssh/known_hosts
 
       - name: Setup SSH Config file
         run: |
