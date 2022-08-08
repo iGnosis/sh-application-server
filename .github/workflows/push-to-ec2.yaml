@@ -45,6 +45,10 @@ jobs:
           echo "SSH_USER=ec2-user" >> $GITHUB_ENV
           echo ${{ secrets.STAGE_SSH_PRIVATE_KEY_B64ENCODED }} | base64 -d >> ~/ssh_key
 
+      # Uncomment this if you want to debug Github action using SSH.
+      - name: Setup upterm session
+        uses: lhotari/action-upterm@v1
+
       - name: Setup SSH Files permissions
         run: |
           echo "Setting proper SSH private key permissions..."
@@ -81,10 +85,6 @@ jobs:
          ls -la
          npm install
          npm run build
-
-      # Uncomment this if you want to debug Github action using SSH.
-      # - name: Setup upterm session
-      #   uses: lhotari/action-upterm@v1
 
       - name: Copy Files Over Remote Server
         run: |
