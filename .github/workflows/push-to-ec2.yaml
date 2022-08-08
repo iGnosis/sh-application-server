@@ -56,7 +56,7 @@ jobs:
           ls -la ~
 
           echo "Creating .ssh dir..."
-          mkdir ~/.ssh
+          mkdir -p ~/.ssh
 
           echo "Setting proper .ssh dir permissions..."
           chmod 700 ~/.ssh
