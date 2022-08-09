@@ -156,13 +156,13 @@ export class EventsService {
     this.eventsRequest.BatchItem[userId] = {
       Endpoint: {
         ChannelType: 'EMAIL',
+        Metrics: metrics ? metrics : {},
       },
       Events: {
         eventType: {
           EventType: eventType,
           Timestamp: new Date().toISOString(),
           Attributes: userAttributes ? userAttributes : {},
-          Metrics: metrics ? metrics : {},
         },
       },
     };
@@ -170,7 +170,7 @@ export class EventsService {
       ApplicationId: this.projectId,
       EventsRequest: this.eventsRequest,
     });
-    console.log(res);
+    console.log(`_updateEvents:eventType: ${eventType}`, res);
   }
 
   async sendFeedbackEmail(patientFeedback: PatientFeedback) {
