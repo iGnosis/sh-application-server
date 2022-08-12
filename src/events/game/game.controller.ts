@@ -65,19 +65,17 @@ export class GameController {
       userTimezone,
     );
 
-    let numOfActivitesCompletedToday: number;
-    let totalDailyDurationInSec: number;
+    // console.log('groupByCreatedAtDayGames:', groupByCreatedAtDayGames);
+    const index = Object.keys(groupByCreatedAtDayGames).length - 1;
+    const key = Object.keys(groupByCreatedAtDayGames)[index];
+    const latestGameData = groupByCreatedAtDayGames[key];
 
-    for (const [createdAtDay, gamesArr] of Object.entries(groupByCreatedAtDayGames)) {
-      // if it matches the current day.
-      if (new Date(createdAtDay).getTime() - new Date(currentDate).getTime() === 0) {
-        numOfActivitesCompletedToday = gamesArr.length;
-        gamesArr.forEach((val) => {
-          totalDailyDurationInSec += val.durationInSec;
-        });
-      }
-    }
+    const numOfActivitesCompletedToday = latestGameData.length;
 
+    let totalDailyDurationInSec = 0;
+    latestGameData.forEach((data) => {
+      totalDailyDurationInSec += data.durationInSec;
+    });
     const totalDailyDurationInMin = parseFloat((totalDailyDurationInSec / 60).toFixed(2));
 
     await this.eventsService.gameEnded(userId, {
@@ -85,6 +83,10 @@ export class GameController {
       numOfActivitesCompletedToday,
       totalDailyDurationInMin: totalDailyDurationInMin,
     });
+
+    console.log('numOfActiveDays:', daysCompleted);
+    console.log('numOfActivitesCompletedToday:', numOfActivitesCompletedToday);
+    console.log('totalDailyDurationInMin:', totalDailyDurationInMin);
 
     return {
       status: 'success',
