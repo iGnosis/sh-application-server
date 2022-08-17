@@ -2,11 +2,12 @@ import { Injectable } from '@nestjs/common';
 import { Dictionary } from 'lodash';
 import { groupBy } from 'lodash';
 import { DatabaseService } from 'src/database/database.service';
+import { GqlService } from 'src/services/gql/gql.service';
 import { GoalsApiResponse, MonthlyGoalsApiResponse } from '../../types/stats';
 
 @Injectable()
 export class StatsService {
-  constructor(private databaseService: DatabaseService) {}
+  constructor(private databaseService: DatabaseService, private gqlService: GqlService) {}
 
   // endDate is exclusive
   async sessionDuration(
@@ -105,7 +106,13 @@ export class StatsService {
     const groupByRes = groupBy(results, 'createdAtDay');
     // console.log('groupByRes:', groupByRes);
 
-    const gamesAvailable = ['sit_stand_achieve', 'beat_boxer', 'sound_slicer'];
+    const getGamesQuery = `query GetAllGames {
+      game_name {
+        name
+      }
+    }`;
+    const response = await this.gqlService.client.request(getGamesQuery);
+    const gamesAvailable: string[] = response.map((res) => res.name);
 
     let daysCompleted = 0;
     for (const [createdAtDay, gamesArr] of Object.entries(groupByRes)) {
