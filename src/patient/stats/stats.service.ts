@@ -112,7 +112,7 @@ export class StatsService {
       }
     }`;
     const response = await this.gqlService.client.request(getGamesQuery);
-    const gamesAvailable: string[] = response.map((res) => res.name);
+    const gamesAvailable: string[] = response.game_name.map((data) => data.name);
 
     let daysCompleted = 0;
     for (const [createdAtDay, gamesArr] of Object.entries(groupByRes)) {
