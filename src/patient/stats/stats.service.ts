@@ -105,12 +105,7 @@ export class StatsService {
     const groupByRes = groupBy(results, 'createdAtDay');
     // console.log('groupByRes:', groupByRes);
 
-    // TODO: uncomment these once the activites are playable.
-    const gamesAvailable = [
-      'sit_stand_achieve',
-      'beat_boxer',
-      // 'sound_slicer'
-    ];
+    const gamesAvailable = ['sit_stand_achieve', 'beat_boxer', 'sound_slicer'];
 
     let daysCompleted = 0;
     for (const [createdAtDay, gamesArr] of Object.entries(groupByRes)) {
