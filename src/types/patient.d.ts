@@ -14,6 +14,10 @@ export class Patient {
   careGiverEmail: string;
   phoneCountryCode: string;
   phoneNumber: string;
+  auth: {
+    otp: number;
+    issuedAt: number;
+  };
 }
 
 export class PatientFeedback {
