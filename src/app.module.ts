@@ -9,14 +9,14 @@ import { DatabaseModule } from './database/database.module';
 import { AnalyticsModule } from './analytics/analytics.module';
 
 import { GqlService } from './services/gql/gql.service';
-import { JwtService } from './services/jwt/jwt.service';
 import { EmailService } from './services/email/email.service';
 import { SpeechSynthesisModule } from './speechSynthesis/speechSynthesis.module';
 import { CronModule } from './cron/cron.module';
 import { StatsModule } from './patient/stats/stats.module';
 import { EventsModule } from './events/events.module';
 import { RewardsModule } from './patient/rewards/rewards.module';
-import { Auth0Service } from './auth/auth0/auth0.service';
+import { SmsAuthService } from './auth/sms-auth/sms-auth.service';
+import { SmsService } from './services/sms/sms.service';
 
 @Module({
   imports: [
@@ -33,6 +33,6 @@ import { Auth0Service } from './auth/auth0/auth0.service';
     RewardsModule,
   ],
   controllers: [AppController],
-  providers: [AppService, GqlService, JwtService, EmailService, Auth0Service],
+  providers: [AppService, GqlService, EmailService, SmsAuthService, SmsService],
 })
 export class AppModule {}
