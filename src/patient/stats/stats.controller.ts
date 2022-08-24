@@ -8,7 +8,7 @@ import { RolesGuard } from 'src/auth/guards/roles.guard';
 import { DailyGoalsDto } from './stats.dto';
 import { StatsService } from './stats.service';
 
-@Roles(Role.PATIENT, Role.PLAYER)
+@Roles(Role.PATIENT)
 @UseGuards(AuthGuard, RolesGuard)
 @ApiBearerAuth('access-token')
 @Controller('patient/stats')
