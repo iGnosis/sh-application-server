@@ -17,6 +17,7 @@ import { EventsModule } from './events/events.module';
 import { RewardsModule } from './patient/rewards/rewards.module';
 import { SmsAuthService } from './auth/sms-auth/sms-auth.service';
 import { SmsService } from './services/sms/sms.service';
+import { PoseDataGateway } from './pose-data/pose-data.gateway';
 
 @Module({
   imports: [
@@ -33,6 +34,6 @@ import { SmsService } from './services/sms/sms.service';
     RewardsModule,
   ],
   controllers: [AppController],
-  providers: [AppService, GqlService, EmailService, SmsAuthService, SmsService],
+  providers: [AppService, GqlService, EmailService, SmsAuthService, SmsService, PoseDataGateway],
 })
 export class AppModule {}

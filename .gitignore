@@ -398,4 +398,8 @@ Temporary Items
 dist
 
 
-downloads
+downloads/*
+!downloads/dont_delete
+
+pose-documents/*
+!pose-documents/dont_delete
