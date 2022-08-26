@@ -107,6 +107,7 @@ export class PoseDataGateway implements OnGatewayInit, OnGatewayConnection, OnGa
         StorageClass: 'STANDARD_IA', // infrequent access
       });
       await this.s3Client.client.send(command);
+      console.log('file successfully uploaded to s3');
 
       // clean up the file after upload
       await fs.unlink(filePath);
