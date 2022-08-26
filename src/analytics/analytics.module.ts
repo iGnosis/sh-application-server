@@ -1,13 +1,14 @@
 import { Module } from '@nestjs/common';
-import { Auth0Service } from 'src/auth/auth0/auth0.service';
+import { SmsAuthService } from 'src/auth/sms-auth/sms-auth.service';
 import { DatabaseModule } from 'src/database/database.module';
-import { JwtService } from 'src/services/jwt/jwt.service';
+import { GqlService } from 'src/services/gql/gql.service';
+import { SmsService } from 'src/services/sms/sms.service';
 import { AnalyticsController } from './analytics.controller';
 import { AnalyticsService } from './analytics.service';
 
 @Module({
   imports: [DatabaseModule],
   controllers: [AnalyticsController],
-  providers: [JwtService, AnalyticsService, Auth0Service],
+  providers: [GqlService, AnalyticsService, SmsAuthService, SmsService],
 })
 export class AnalyticsModule {}

@@ -5,11 +5,11 @@ import {
   HttpException,
   HttpStatus,
 } from '@nestjs/common';
-import { Auth0Service } from '../auth0/auth0.service';
+import { SmsAuthService } from '../sms-auth/sms-auth.service';
 
 @Injectable()
 export class AuthGuard implements CanActivate {
-  constructor(private auth0Service: Auth0Service) {}
+  constructor(private smsAuthService: SmsAuthService) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const request = context.switchToHttp().getRequest();
@@ -19,7 +19,7 @@ export class AuthGuard implements CanActivate {
     }
 
     const token = request.headers.authorization.replace('Bearer ', '');
-    const userDetails = await this.auth0Service.verifyToken(token);
+    const userDetails = this.smsAuthService.verifyToken(token);
 
     if (!userDetails) {
       throw new HttpException('User not logged in', HttpStatus.FORBIDDEN);

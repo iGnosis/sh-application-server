@@ -18,11 +18,12 @@ interface GameEndedEventMetrics {
 @Injectable()
 export class EventsService {
   private pinpoint: Pinpoint;
-  private projectId = '4c852bebebf74c0a9050337a0e841fc5';
+  private projectId: string;
   private REGION: string;
   private eventsRequest: EventsRequest;
   constructor(private configService: ConfigService) {
     this.REGION = this.configService.get('AWS_DEFAULT_REGION') || 'us-east-1';
+    this.projectId = this.configService.get('PINPOINT_PROJECT_ID');
 
     // TODO: remove hardcoded keys. Use IAM roles instead.
     // TODO: a new pinpoint project per env.
