@@ -10,6 +10,10 @@ import {
 } from '@nestjs/websockets';
 import * as fs from 'fs/promises';
 import { join } from 'path';
+import { S3Service } from 'src/services/s3/s3.service';
+import { PutObjectCommand } from '@aws-sdk/client-s3';
+import { ConfigService } from '@nestjs/config';
+import { createReadStream } from 'fs';
 
 interface PoseLandmark {
   x: number;
@@ -34,6 +38,11 @@ interface GameEndedBody {
 @WebSocketGateway({ cors: true })
 export class PoseDataGateway implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect {
   private logger: Logger = new Logger('PoseDataGateway');
+  private envName: string;
+
+  constructor(private s3Client: S3Service, private configService: ConfigService) {
+    this.envName = configService.get('ENV_NAME');
+  }
 
   afterInit(server: any) {
     this.logger.log('Gateway Initialized');
@@ -63,6 +72,9 @@ export class PoseDataGateway implements OnGatewayInit, OnGatewayConnection, OnGa
       if (initJsonFile.length === 0) {
         await fs.writeFile(filePath, '[]');
       }
+
+      // TODO:
+      // schedule a cron to remove a file after X minutes.
     }
 
     // read existing data
@@ -85,12 +97,23 @@ export class PoseDataGateway implements OnGatewayInit, OnGatewayConnection, OnGa
     const fileName = `${body.userId}.${body.gameId}.json`;
     const filePath = join(downloadsDir, fileName);
 
-    // TODO: save file to S3 on 'ended' message.
-    // TODO: clean up the file from the server.
+    try {
+      // upload the file to S3
+      const readableStream = createReadStream(filePath, { encoding: 'utf-8' });
+      const command = new PutObjectCommand({
+        Body: readableStream,
+        Bucket: 'soundhealth-pose-data',
+        Key: `${this.envName}/${body.userId}/${body.gameId}.json`,
+        StorageClass: 'STANDARD_IA', // infrequent access
+      });
+      await this.s3Client.client.send(command);
 
-    // create a service for S3 methods
-    // if file exists
-    // upload that file to S3
+      // clean up the file after upload
+      await fs.unlink(filePath);
+    } catch (error) {
+      console.log(error);
+      return { event: 'message', data: 'some unknown error' };
+    }
 
     return { event: 'message', data: 'success' };
   }
