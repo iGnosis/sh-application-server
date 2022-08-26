@@ -1,5 +1,6 @@
 import { Logger } from '@nestjs/common';
 import {
+  ConnectedSocket,
   MessageBody,
   OnGatewayConnection,
   OnGatewayDisconnect,
@@ -34,6 +35,7 @@ interface GameEndedBody {
   gameId: string;
 }
 
+// TODO: Refactor this mess.
 // @WebSocketGateway(9001, { namespace: 'pose-data' })
 @WebSocketGateway({ cors: true })
 export class PoseDataGateway implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect {
@@ -52,15 +54,44 @@ export class PoseDataGateway implements OnGatewayInit, OnGatewayConnection, OnGa
     this.logger.log(`Client connected: ${client.id}`);
   }
 
-  handleDisconnect(client: any) {
+  async handleDisconnect(client: any) {
     this.logger.log(`Client disconnected: ${client.id}`);
+    const downloadsDir = join(process.cwd(), 'pose-documents');
+    const files = (await fs.readdir(downloadsDir)).filter((fn) => fn.startsWith(client.id));
+    // console.log(files);
+
+    for (let i = 0; i < files.length; i++) {
+      const fileName = files[i];
+      const userId = fileName.split('.')[1];
+      const gameId = fileName.split('.')[2];
+      const filePath = join(downloadsDir, fileName);
+
+      try {
+        // upload the file to S3
+        const readableStream = createReadStream(filePath, { encoding: 'utf-8' });
+        const command = new PutObjectCommand({
+          Body: readableStream,
+          Bucket: 'soundhealth-pose-data',
+          Key: `${this.envName}/${userId}/${gameId}.json`,
+          StorageClass: 'STANDARD_IA', // infrequent access
+        });
+        await this.s3Client.client.send(command);
+        console.log('file successfully uploaded to s3');
+        await fs.unlink(filePath);
+      } catch (error) {
+        console.log(error);
+      }
+    }
   }
 
   @SubscribeMessage('message')
-  async handleMessage(@MessageBody() body: PoseDataMessageBody): Promise<WsResponse<string>> {
-    // console.log('[RECV] message', body);
+  async handleMessage(
+    @ConnectedSocket() client: any,
+    @MessageBody() body: PoseDataMessageBody,
+  ): Promise<WsResponse<string>> {
+    // console.log('[RECV] client message', body);
     const downloadsDir = join(process.cwd(), 'pose-documents');
-    const fileName = `${body.u}.${body.g}.json`;
+    const fileName = `${client.id}.${body.u}.${body.g}.json`;
     const filePath = join(downloadsDir, fileName);
     await fs.writeFile(filePath, `${JSON.stringify(body)}\n`, { encoding: 'utf-8', flag: 'a+' });
     return { event: 'message', data: 'success' };
