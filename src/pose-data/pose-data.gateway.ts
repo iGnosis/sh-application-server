@@ -103,30 +103,28 @@ export class PoseDataGateway implements OnGatewayInit, OnGatewayConnection, OnGa
     @MessageBody() body: GameEndedBody,
   ): Promise<WsResponse<string>> {
     console.log('handleEnd:body', body);
+    // const downloadsDir = join(process.cwd(), 'pose-documents');
+    // const fileName = `${client.id}.${body.userId}.${body.gameId}.json`;
+    // const filePath = join(downloadsDir, fileName);
 
-    const downloadsDir = join(process.cwd(), 'pose-documents');
-    const fileName = `${client.id}.${body.userId}.${body.gameId}.json`;
-    const filePath = join(downloadsDir, fileName);
+    // try {
+    //   // upload the file to S3
+    //   const readableStream = createReadStream(filePath, { encoding: 'utf-8' });
+    //   const command = new PutObjectCommand({
+    //     Body: readableStream,
+    //     Bucket: 'soundhealth-pose-data',
+    //     Key: `${this.envName}/${body.userId}/${body.gameId}.json`,
+    //     StorageClass: 'STANDARD_IA', // infrequent access
+    //   });
+    //   await this.s3Client.client.send(command);
+    //   console.log('file successfully uploaded to s3');
 
-    try {
-      // upload the file to S3
-      const readableStream = createReadStream(filePath, { encoding: 'utf-8' });
-      const command = new PutObjectCommand({
-        Body: readableStream,
-        Bucket: 'soundhealth-pose-data',
-        Key: `${this.envName}/${body.userId}/${body.gameId}.json`,
-        StorageClass: 'STANDARD_IA', // infrequent access
-      });
-      await this.s3Client.client.send(command);
-      console.log('file successfully uploaded to s3');
-
-      // clean up the file after upload
-      await fs.unlink(filePath);
-    } catch (error) {
-      console.log(error);
-      return { event: 'message', data: 'some unknown error' };
-    }
-
+    //   // clean up the file after upload
+    //   await fs.unlink(filePath);
+    // } catch (error) {
+    //   console.log(error);
+    //   return { event: 'message', data: 'some unknown error' };
+    // }
     return { event: 'message', data: 'success' };
   }
 }
