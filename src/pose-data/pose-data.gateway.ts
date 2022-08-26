@@ -59,33 +59,10 @@ export class PoseDataGateway implements OnGatewayInit, OnGatewayConnection, OnGa
   @SubscribeMessage('message')
   async handleMessage(@MessageBody() body: PoseDataMessageBody): Promise<WsResponse<string>> {
     // console.log('[RECV] message', body);
-
     const downloadsDir = join(process.cwd(), 'pose-documents');
     const fileName = `${body.u}.${body.g}.json`;
     const filePath = join(downloadsDir, fileName);
-
-    const dirContents = await fs.readdir(downloadsDir);
-    // if file does not exist.
-    if (!dirContents.includes(fileName)) {
-      // open/create the json file in append mode
-      const initJsonFile = await fs.readFile(filePath, { flag: 'a+' });
-      if (initJsonFile.length === 0) {
-        await fs.writeFile(filePath, '[]');
-      }
-
-      // TODO:
-      // schedule a cron to remove a file after X minutes.
-    }
-
-    // read existing data
-    const rawData = await fs.readFile(filePath, 'utf-8');
-    const parsedData = JSON.parse(rawData);
-    parsedData.push(body);
-
-    // save the file
-    const stringifiedData = JSON.stringify(parsedData);
-    await fs.writeFile(filePath, stringifiedData);
-
+    await fs.writeFile(filePath, `${JSON.stringify(body)}\n`, { encoding: 'utf-8', flag: 'a+' });
     return { event: 'message', data: 'success' };
   }
 
