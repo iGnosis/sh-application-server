@@ -98,11 +98,14 @@ export class PoseDataGateway implements OnGatewayInit, OnGatewayConnection, OnGa
   }
 
   @SubscribeMessage('game-end')
-  async handleEnd(@MessageBody() body: GameEndedBody): Promise<WsResponse<string>> {
+  async handleEnd(
+    @ConnectedSocket() client: any,
+    @MessageBody() body: GameEndedBody,
+  ): Promise<WsResponse<string>> {
     console.log('handleEnd:body', body);
 
     const downloadsDir = join(process.cwd(), 'pose-documents');
-    const fileName = `${body.userId}.${body.gameId}.json`;
+    const fileName = `${client.id}.${body.userId}.${body.gameId}.json`;
     const filePath = join(downloadsDir, fileName);
 
     try {
