@@ -1,29 +1,63 @@
 import { Body, Controller, HttpCode, Post, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth } from '@nestjs/swagger';
+import * as fs from 'fs/promises';
+import { join } from 'path';
 import { Roles } from 'src/auth/decorators/roles.decorator';
 import { User } from 'src/auth/decorators/user.decorator';
 import { Role } from 'src/auth/enums/role.enum';
 import { AuthGuard } from 'src/auth/guards/auth.guard';
 import { RolesGuard } from 'src/auth/guards/roles.guard';
 import { StatsService } from 'src/patient/stats/stats.service';
+import { S3Service } from 'src/services/s3/s3.service';
 import { EventsService } from '../events.service';
-import { GameEventTriggerDto } from './game.dto';
+import { GameEnded, GameStarted } from './game.dto';
 
 // console.log(Intl.DateTimeFormat().resolvedOptions().timeZone)
 
 @Controller('events/game')
 export class GameController {
-  constructor(private eventsService: EventsService, private statsService: StatsService) {}
+  constructor(
+    private eventsService: EventsService,
+    private statsService: StatsService,
+    private s3Service: S3Service,
+  ) {}
 
   // called whenever a 'game' is inserted in the table.
   @Post('start')
-  async gameStarted(@Body() body: GameEventTriggerDto) {
+  async gameStarted(@Body() body: GameStarted) {
     const { patientId, createdAt } = body;
     await this.eventsService.gameStarted(patientId);
     return {
       status: 'success',
       data: {},
     };
+  }
+
+  // called whenever `endedAt` is set.
+  @Post('end')
+  async gameEnded(@Body() body: GameEnded) {
+    const { gameId, patientId, endedAt } = body;
+    if (!endedAt) return;
+
+    const downloadsDir = join(process.cwd(), 'pose-documents');
+    const fileName = `${patientId}.${gameId}.json`;
+    const filePath = join(downloadsDir, fileName);
+
+    try {
+      // IFF the file exists.
+      await fs.access(filePath);
+
+      // upload the file `<patientId>.<gameId>` to S3. - Deep
+
+      // this.s3Service.client.send() - Deep
+
+      // run calculations on pose data files & save it to Hasura. - Mohan
+
+      // clean up the file after upload
+      await fs.unlink(filePath);
+    } catch (err) {
+      console.log(err);
+    }
   }
 
   // Call whenever a user lands on Patient Portal.
@@ -39,6 +73,7 @@ export class GameController {
     };
   }
 
+  // For pinpoint.
   // Called from activity-exp (since it was pain to manage user localtime server-side)
   // on completion of a game.
   @Roles(Role.PATIENT)
