@@ -1,5 +1,8 @@
+import { PutObjectCommand } from '@aws-sdk/client-s3';
 import { Body, Controller, HttpCode, Post, UseGuards } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { ApiBearerAuth } from '@nestjs/swagger';
+import { createReadStream } from 'fs';
 import * as fs from 'fs/promises';
 import { join } from 'path';
 import { Roles } from 'src/auth/decorators/roles.decorator';
@@ -16,11 +19,15 @@ import { GameEnded, GameStarted } from './game.dto';
 
 @Controller('events/game')
 export class GameController {
+  private envName: string;
   constructor(
     private eventsService: EventsService,
     private statsService: StatsService,
     private s3Service: S3Service,
-  ) {}
+    private configService: ConfigService,
+  ) {
+    this.envName = configService.get('ENV_NAME');
+  }
 
   // called whenever a 'game' is inserted in the table.
   @Post('start')
@@ -47,9 +54,16 @@ export class GameController {
       // IFF the file exists.
       await fs.access(filePath);
 
-      // upload the file `<patientId>.<gameId>` to S3. - Deep
-
-      // this.s3Service.client.send() - Deep
+      // upload the file to S3
+      const readableStream = createReadStream(filePath, { encoding: 'utf-8' });
+      const command = new PutObjectCommand({
+        Body: readableStream,
+        Bucket: 'soundhealth-pose-data',
+        Key: `${this.envName}/${patientId}/${gameId}.json`,
+        StorageClass: 'STANDARD_IA', // infrequent access
+      });
+      await this.s3Service.client.send(command);
+      console.log('file successfully uploaded to s3');
 
       // run calculations on pose data files & save it to Hasura. - Mohan
 
