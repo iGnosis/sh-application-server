@@ -11,7 +11,9 @@ import { Role } from 'src/auth/enums/role.enum';
 import { AuthGuard } from 'src/auth/guards/auth.guard';
 import { RolesGuard } from 'src/auth/guards/roles.guard';
 import { StatsService } from 'src/patient/stats/stats.service';
+import { AggregateAnalyticsService } from 'src/services/aggregate-analytics/aggregate-analytics.service';
 import { S3Service } from 'src/services/s3/s3.service';
+import { AnalyticsDTO } from 'src/types/analytics';
 import { EventsService } from '../events.service';
 import { GameEnded, GameStarted } from './game.dto';
 
@@ -25,6 +27,7 @@ export class GameController {
     private statsService: StatsService,
     private s3Service: S3Service,
     private configService: ConfigService,
+    private aggregateAnalytics: AggregateAnalyticsService,
   ) {
     this.envName = configService.get('ENV_NAME');
   }
@@ -43,7 +46,7 @@ export class GameController {
   // called whenever `endedAt` is set.
   @Post('end')
   async gameEnded(@Body() body: GameEnded) {
-    const { gameId, patientId, endedAt } = body;
+    const { gameId, patientId, endedAt, analytics } = body;
     if (!endedAt) return;
 
     const downloadsDir = join(process.cwd(), 'pose-documents');
@@ -69,6 +72,14 @@ export class GameController {
 
       // clean up the file after upload
       await fs.unlink(filePath);
+
+      const aggregatedInfo = {
+        aggregatedInfo: {
+          avgAchievementRatio: this.aggregateAnalytics.averageAchievementRatio(analytics),
+          completionTime: this.aggregateAnalytics.averageCompletionRatio(analytics),
+        },
+      };
+      await this.aggregateAnalytics.updateAggreateAnalytics(gameId, aggregatedInfo);
     } catch (err) {
       console.log(err);
     }

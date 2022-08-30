@@ -11,6 +11,7 @@ import { HelpAccessedController } from './help-accessed/help-accessed.controller
 import { SmsAuthService } from 'src/auth/sms-auth/sms-auth.service';
 import { SmsService } from 'src/services/sms/sms.service';
 import { S3Service } from 'src/services/s3/s3.service';
+import { AggregateAnalyticsService } from 'src/services/aggregate-analytics/aggregate-analytics.service';
 
 @Module({
   imports: [DatabaseModule],
@@ -23,6 +24,7 @@ import { S3Service } from 'src/services/s3/s3.service';
     SmsAuthService,
     SmsService,
     S3Service,
+    AggregateAnalyticsService,
   ],
 })
 export class EventsModule {}

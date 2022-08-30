@@ -1,5 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsNotEmpty } from 'class-validator';
+import { AnalyticsDTO } from 'src/types/analytics';
 
 export class GameStarted {
   @ApiProperty({
@@ -27,6 +28,11 @@ export class GameEnded {
   })
   @IsNotEmpty()
   patientId: string;
+
+  @ApiProperty({
+    description: 'Game Analytics.',
+  })
+  analytics: AnalyticsDTO[];
 
   @ApiProperty({
     description: 'Timestamp of when the game was ended.',
