@@ -5,7 +5,7 @@ import { GqlService } from '../gql/gql.service';
 export class AggregateAnalyticsService {
   constructor(private gqlService: GqlService) {}
 
-  // TODO:
+  // TODO: @Deep
   // Implement methods to aggregate achievement ratio and completion time.
 
   async updateAggreateAnalytics(gameId: string, data: object) {
