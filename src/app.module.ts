@@ -19,6 +19,7 @@ import { SmsAuthService } from './auth/sms-auth/sms-auth.service';
 import { SmsService } from './services/sms/sms.service';
 import { PoseDataGateway } from './pose-data/pose-data.gateway';
 import { S3Service } from './services/s3/s3.service';
+import { AggregateAnalyticsService } from './services/aggregate-analytics/aggregate-analytics.service';
 
 @Module({
   imports: [
@@ -43,6 +44,7 @@ import { S3Service } from './services/s3/s3.service';
     SmsService,
     PoseDataGateway,
     S3Service,
+    AggregateAnalyticsService,
   ],
 })
 export class AppModule {}
