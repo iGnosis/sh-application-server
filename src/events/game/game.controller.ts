@@ -98,7 +98,9 @@ export class GameController {
 
       for (const key of Object.keys(jointAngles)) {
         // calculating the median of top 10 angles
-        extractedInfo.angles[key] = this.extractInformationService.median(jointAngles[key], 10);
+        extractedInfo.angles[key] = parseFloat(
+          this.extractInformationService.median(jointAngles[key], 10).toFixed(2),
+        );
       }
       // clean up the file after upload
       await fs.unlink(filePath);
