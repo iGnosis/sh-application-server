@@ -14,6 +14,11 @@ import { StatsService } from 'src/patient/stats/stats.service';
 import { S3Service } from 'src/services/s3/s3.service';
 import { EventsService } from '../events.service';
 import { GameEnded, GameStarted } from './game.dto';
+import * as events from 'events';
+import * as readLine from 'readline';
+import { PoseDataMessageBody } from 'src/pose-data/pose-data.gateway';
+import { ExtractInformationService } from 'src/services/extract-information/extract-information.service';
+import { AggregateAnalyticsService } from 'src/services/aggregate-analytics/aggregate-analytics.service';
 
 // console.log(Intl.DateTimeFormat().resolvedOptions().timeZone)
 
@@ -25,6 +30,8 @@ export class GameController {
     private statsService: StatsService,
     private s3Service: S3Service,
     private configService: ConfigService,
+    private extractInformationService: ExtractInformationService,
+    private aggregateAnalyticsService: AggregateAnalyticsService,
   ) {
     this.envName = configService.get('ENV_NAME');
   }
@@ -65,7 +72,37 @@ export class GameController {
       await this.s3Service.client.send(command);
       console.log('file successfully uploaded to s3');
 
-      // run calculations on pose data files & save it to Hasura. - Mohan
+      // runing calculations on pose data files & saving it to Hasura.
+      const extractedInfo = {
+        angles: {},
+      };
+      const jointAngles: { [key: string]: number[] } = {};
+      const rl = readLine.createInterface({
+        input: readableStream,
+        crlfDelay: Infinity,
+      });
+
+      rl.on('line', (line) => {
+        const data: PoseDataMessageBody = JSON.parse(line);
+        const angles = this.extractInformationService.extractJointAngles(data.p);
+        for (const [key, jointAngle] of Object.entries(angles)) {
+          if (!jointAngles.hasOwnProperty(key)) {
+            jointAngles[key] = [jointAngle];
+          } else {
+            jointAngles[key].push(jointAngle);
+          }
+        }
+      });
+
+      await events.once(rl, 'close');
+
+      for (const key of Object.keys(jointAngles)) {
+        // calculating the median of top 10 angles
+        extractedInfo.angles[key] = this.extractInformationService.median(jointAngles[key], 10);
+      }
+
+      console.log('extracted::Info:', { extractedInfo });
+      this.aggregateAnalyticsService.updateAggregateAnalytics(gameId, { extractedInfo });
 
       // clean up the file after upload
       await fs.unlink(filePath);
