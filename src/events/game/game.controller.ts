@@ -13,7 +13,6 @@ import { RolesGuard } from 'src/auth/guards/roles.guard';
 import { StatsService } from 'src/patient/stats/stats.service';
 import { AggregateAnalyticsService } from 'src/services/aggregate-analytics/aggregate-analytics.service';
 import { S3Service } from 'src/services/s3/s3.service';
-import { AnalyticsDTO } from 'src/types/analytics';
 import { EventsService } from '../events.service';
 import { GameEnded, GameStarted } from './game.dto';
 import * as events from 'events';
@@ -101,18 +100,20 @@ export class GameController {
         // calculating the median of top 10 angles
         extractedInfo.angles[key] = this.extractInformationService.median(jointAngles[key], 10);
       }
-
-      console.log('extracted::Info:', { extractedInfo });
-      this.aggregateAnalyticsService.updateAggregateAnalytics(gameId, { extractedInfo });
-
       // clean up the file after upload
       await fs.unlink(filePath);
 
+      // aggregating analytics for a game.
       const aggregatedInfo = {
         avgAchievementRatio: this.aggregateAnalyticsService.averageAchievementRatio(analytics),
         completionTime: this.aggregateAnalyticsService.averageCompletionRatio(analytics),
       };
-      await this.aggregateAnalyticsService.updateAggregateAnalytics(gameId, { aggregatedInfo });
+
+      console.log('updateAggregateAnalytics::', { extractedInfo, aggregatedInfo });
+      await this.aggregateAnalyticsService.updateAggregateAnalytics(gameId, {
+        aggregatedInfo,
+        extractedInfo,
+      });
     } catch (err) {
       console.log(err);
     }
