@@ -16,14 +16,14 @@ import { PutObjectCommand } from '@aws-sdk/client-s3';
 import { ConfigService } from '@nestjs/config';
 import { createReadStream } from 'fs';
 
-interface PoseLandmark {
+export interface PoseLandmark {
   x: number;
   y: number;
   z: number;
   visibility: number;
 }
 
-interface PoseDataMessageBody {
+export interface PoseDataMessageBody {
   t: number; // unix epoch in ms
   g: string; // game UUID
   u: string; // user UUID

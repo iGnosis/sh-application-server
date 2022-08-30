@@ -11,6 +11,7 @@ import { HelpAccessedController } from './help-accessed/help-accessed.controller
 import { SmsAuthService } from 'src/auth/sms-auth/sms-auth.service';
 import { SmsService } from 'src/services/sms/sms.service';
 import { S3Service } from 'src/services/s3/s3.service';
+import { ExtractInformationService } from 'src/services/extract-information/extract-information.service';
 import { AggregateAnalyticsService } from 'src/services/aggregate-analytics/aggregate-analytics.service';
 
 @Module({
@@ -24,6 +25,7 @@ import { AggregateAnalyticsService } from 'src/services/aggregate-analytics/aggr
     SmsAuthService,
     SmsService,
     S3Service,
+    ExtractInformationService,
     AggregateAnalyticsService,
   ],
 })

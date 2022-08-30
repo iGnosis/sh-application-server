@@ -41,7 +41,7 @@ export class AggregateAnalyticsService {
     };
   }
 
-  async updateAggreateAnalytics(gameId: string, data: object) {
+  async updateAggregateAnalytics(gameId: string, data: object) {
     const query = `mutation UpdateAggregateAnalytics($gameId: uuid!, $aggregateAnalytics: jsonb!) {
       update_game_by_pk(pk_columns: {id: $gameId}, _append: {aggregateAnalytics: $aggregateAnalytics}) {
         id
