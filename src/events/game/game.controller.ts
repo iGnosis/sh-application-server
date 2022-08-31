@@ -62,9 +62,8 @@ export class GameController {
       await fs.access(filePath);
 
       // upload the file to S3
-      const readableStream = createReadStream(filePath, { encoding: 'utf-8' });
       const command = new PutObjectCommand({
-        Body: readableStream,
+        Body: createReadStream(filePath, { encoding: 'utf-8' }),
         Bucket: 'soundhealth-pose-data',
         Key: `${this.envName}/${patientId}/${gameId}.json`,
         StorageClass: 'STANDARD_IA', // infrequent access
@@ -78,8 +77,7 @@ export class GameController {
       };
       const jointAngles: { [key: string]: number[] } = {};
       const rl = readLine.createInterface({
-        input: readableStream,
-        crlfDelay: Infinity,
+        input: createReadStream(filePath, { encoding: 'utf-8' }),
       });
 
       rl.on('line', (line) => {

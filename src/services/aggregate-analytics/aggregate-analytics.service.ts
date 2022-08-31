@@ -11,12 +11,12 @@ export class AggregateAnalyticsService {
 
   averageAchievementRatio(analytics: AnalyticsDTO[]) {
     const correctPromptsCount = analytics.reduce((count, data) => {
-      if (data.result.score === 0) {
+      if (data.result.type === 'success') {
         count++;
       }
       return count;
     }, 0);
-    const avgAchievementRatio = correctPromptsCount / analytics.length;
+    const avgAchievementRatio = parseFloat((correctPromptsCount / analytics.length).toFixed(2));
     return avgAchievementRatio;
   }
 
