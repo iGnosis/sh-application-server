@@ -176,6 +176,8 @@ export class GameController {
     });
     const totalDailyDurationInMin = parseFloat((totalDailyDurationInSec / 60).toFixed(2));
 
+    await this.statsService.updateActiveDays(userId, daysCompleted);
+
     await this.eventsService.gameEnded(userId, {
       numOfActiveDays: daysCompleted,
       numOfActivitesCompletedToday,

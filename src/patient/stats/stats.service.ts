@@ -132,6 +132,15 @@ export class StatsService {
     return { daysCompleted, groupByCreatedAtDayGames: groupByRes };
   }
 
+  async updateActiveDays(patientId: string, activeDays: number) {
+    const updateActiveDaysQuery = `mutation UpdatePatientActiveDays($patientId: uuid!, $activeDays: Int!) {
+      update_patient(where: {id: {_eq: $patientId}}, _set: {activeDays: $activeDays}) {
+        affected_rows
+      }
+    }`;
+    await this.gqlService.client.request(updateActiveDaysQuery, { patientId, activeDays });
+  }
+
   workOutStreak(days: Array<MonthlyGoalsApiResponse>) {
     let streak = 0;
     let mostRecentDate = new Date(new Date().setHours(0, 0, 0, 0));
