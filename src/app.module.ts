@@ -6,11 +6,10 @@ import { AppService } from './app.service';
 
 import { AuthModule } from './auth/auth.module';
 import { DatabaseModule } from './database/database.module';
-import { AnalyticsModule } from './analytics/analytics.module';
 
 import { GqlService } from './services/gql/gql.service';
 import { EmailService } from './services/email/email.service';
-import { SpeechSynthesisModule } from './speechSynthesis/speechSynthesis.module';
+import { SpeechSynthesisModule } from './speech-synthesis/speech-synthesis.module';
 import { CronModule } from './cron/cron.module';
 import { StatsModule } from './patient/stats/stats.module';
 import { EventsModule } from './events/events.module';
@@ -25,7 +24,6 @@ import { AggregateAnalyticsService } from './services/aggregate-analytics/aggreg
   imports: [
     AuthModule,
     DatabaseModule,
-    AnalyticsModule,
     SpeechSynthesisModule,
     StatsModule,
     CronModule,

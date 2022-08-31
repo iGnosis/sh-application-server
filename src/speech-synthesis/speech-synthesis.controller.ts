@@ -14,8 +14,8 @@ import { Roles } from 'src/auth/decorators/roles.decorator';
 import { Role } from 'src/auth/enums/role.enum';
 import { AuthGuard } from 'src/auth/guards/auth.guard';
 import { RolesGuard } from 'src/auth/guards/roles.guard';
-import { PollyService } from 'src/speechSynthesis/polly/polly.service';
-import { SpeechSynthesisDto } from './speechSynthesis.dto';
+import { PollyService } from 'src/speech-synthesis/polly/polly.service';
+import { SpeechSynthesisDto } from './speech-synthesis.dto';
 
 @Controller('speech')
 // @Roles(Role.PATIENT, Role.PLAYER, Role.THERAPIST)

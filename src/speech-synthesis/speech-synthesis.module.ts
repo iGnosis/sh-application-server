@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
-import { PollyService } from 'src/speechSynthesis/polly/polly.service';
-import { SpeechSynthesisController } from './speechSynthesis.controller';
+import { PollyService } from 'src/speech-synthesis/polly/polly.service';
+import { SpeechSynthesisController } from './speech-synthesis.controller';
 
 @Module({
   controllers: [SpeechSynthesisController],
