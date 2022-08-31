@@ -117,6 +117,10 @@ export class GameController {
     } catch (err) {
       console.log(err);
     }
+
+    return {
+      status: 'success',
+    };
   }
 
   // Call whenever a user lands on Patient Portal.
