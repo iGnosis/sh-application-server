@@ -39,3 +39,11 @@ export type SoundExplorerAnalyticsDTO = {
 
 export type BagType = 'heavy-blue' | 'heavy-red' | 'speed-blue' | 'speed-red';
 export type Shape = 'circle' | 'triangle' | 'rectangle' | 'wrong' | 'hexagon';
+
+export type AggregatedObject = {
+  patient: string;
+  game: string;
+  key: string;
+  value: number;
+  noOfSamples?: number;
+};

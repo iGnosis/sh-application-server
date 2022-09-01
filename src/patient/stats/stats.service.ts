@@ -41,31 +41,6 @@ export class StatsService {
     return results;
   }
 
-  // endDate is exclusive
-  // TODO: remove this API.
-  async getMonthlyGoals(
-    patientId: string,
-    startDate: Date,
-    endDate: Date,
-    dbTimezone: string,
-  ): Promise<Array<MonthlyGoalsApiResponse>> {
-    const results = await this.databaseService.executeQuery(
-      `SELECT
-        count(*) AS "activityEndedCount",
-        DATE_TRUNC('day', timezone($4, to_timestamp(created_at/1000))) AS "createdAtLocaleDate"
-      FROM events
-      WHERE
-        patient = $1 AND
-        to_timestamp(created_at/1000) >= $2 AND
-        to_timestamp(created_at/1000) < $3
-      GROUP BY DATE_TRUNC('day', timezone($4, to_timestamp(created_at/1000))), event_type
-      HAVING event_type = 'activityEnded'
-      ORDER BY DATE_TRUNC('day', timezone($4, to_timestamp(created_at/1000))) DESC`,
-      [patientId, startDate, endDate, dbTimezone],
-    );
-    return results;
-  }
-
   async getMonthlyGoalsNew(
     patientId: string,
     startDate: Date,

@@ -59,21 +59,21 @@ export class StatsController {
     const now = new Date();
     let startDate = this.statsService.getPastDate(now, days);
     let endDate = this.statsService.getFutureDate(now, 1);
-    let streak = 0;
+    const streak = 0;
 
-    while (true) {
-      const results = await this.statsService.getMonthlyGoals(
-        userId,
-        startDate,
-        endDate,
-        userTimezone,
-      );
-      const streakCount = this.statsService.workOutStreak(results);
-      streak += streakCount;
-      // only continue if streakCount is 30 for the current batch of sessions.
-      if (streakCount !== 30) {
-        break;
-      }
+    while (false) {
+      // const results = await this.statsService.getMonthlyGoals(
+      //   userId,
+      //   startDate,
+      //   endDate,
+      //   userTimezone,
+      // );
+      // const streakCount = this.statsService.workOutStreak(results);
+      // streak += streakCount;
+      // // only continue if streakCount is 30 for the current batch of sessions.
+      // if (streakCount !== 30) {
+      //   break;
+      // }
       endDate = startDate;
       days += 30;
       startDate = this.statsService.getPastDate(now, days);

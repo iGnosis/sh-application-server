@@ -19,6 +19,9 @@ import { SmsService } from './services/sms/sms.service';
 import { PoseDataGateway } from './pose-data/pose-data.gateway';
 import { S3Service } from './services/s3/s3.service';
 import { AggregateAnalyticsService } from './services/aggregate-analytics/aggregate-analytics.service';
+import { ProviderChartsService } from './services/provider-charts/provider-charts.service';
+import { ProviderChartsController } from './provider-charts/provider-charts.controller';
+import { StatsService } from './patient/stats/stats.service';
 
 @Module({
   imports: [
@@ -33,7 +36,7 @@ import { AggregateAnalyticsService } from './services/aggregate-analytics/aggreg
     EventsModule,
     RewardsModule,
   ],
-  controllers: [AppController],
+  controllers: [AppController, ProviderChartsController],
   providers: [
     AppService,
     GqlService,
@@ -43,6 +46,8 @@ import { AggregateAnalyticsService } from './services/aggregate-analytics/aggreg
     PoseDataGateway,
     S3Service,
     AggregateAnalyticsService,
+    StatsService,
+    ProviderChartsService,
   ],
 })
 export class AppModule {}

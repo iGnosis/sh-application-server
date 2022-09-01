@@ -106,13 +106,13 @@ export class GameController {
       // aggregating analytics for a game.
       const aggregatedInfo = {
         avgAchievementRatio: this.aggregateAnalyticsService.averageAchievementRatio(analytics),
-        completionTime: this.aggregateAnalyticsService.averageCompletionRatio(analytics),
+        avgCompletionTime: this.aggregateAnalyticsService.averageCompletionRatio(analytics),
       };
 
       console.log('updateAggregateAnalytics::', { extractedInfo, aggregatedInfo });
-      await this.aggregateAnalyticsService.updateAggregateAnalytics(gameId, {
-        aggregatedInfo,
-        extractedInfo,
+      await this.aggregateAnalyticsService.insertAggregatedAnalytics(patientId, gameId, {
+        ...aggregatedInfo,
+        ...extractedInfo.angles,
       });
     } catch (err) {
       console.log(err);
