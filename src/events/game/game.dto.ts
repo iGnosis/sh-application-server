@@ -40,3 +40,29 @@ export class GameEnded {
   @IsNotEmpty()
   endedAt: Date;
 }
+
+export class GameCompletedPinpoint {
+  @ApiProperty({
+    description: 'Start date.',
+  })
+  @IsNotEmpty()
+  startDate: Date;
+
+  @ApiProperty({
+    description: 'Current date.',
+  })
+  @IsNotEmpty()
+  currentDate: Date;
+
+  @ApiProperty({
+    description: 'End date.',
+  })
+  @IsNotEmpty()
+  endDate: Date;
+
+  @ApiProperty({
+    description: 'Timezone of the user',
+  })
+  @IsNotEmpty()
+  userTimezone: string;
+}

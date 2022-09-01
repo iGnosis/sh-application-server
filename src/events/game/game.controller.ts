@@ -14,7 +14,7 @@ import { StatsService } from 'src/patient/stats/stats.service';
 import { AggregateAnalyticsService } from 'src/services/aggregate-analytics/aggregate-analytics.service';
 import { S3Service } from 'src/services/s3/s3.service';
 import { EventsService } from '../events.service';
-import { GameEnded, GameStarted } from './game.dto';
+import { GameCompletedPinpoint, GameEnded, GameStarted } from './game.dto';
 import * as events from 'events';
 import * as readLine from 'readline';
 import { PoseDataMessageBody } from 'src/pose-data/pose-data.gateway';
@@ -144,13 +144,13 @@ export class GameController {
   @ApiBearerAuth('access-token')
   @HttpCode(200)
   @Post('complete')
-  async gameComplete(
-    @Body('startDate') startDate: Date,
-    @Body('currentDate') currentDate: Date,
-    @Body('endDate') endDate: Date,
-    @Body('userTimezone') userTimezone: string,
-    @User() userId: string,
-  ) {
+  async gameComplete(@Body() body: GameCompletedPinpoint, @User() userId: string) {
+    const { userTimezone } = body;
+
+    let { startDate, endDate } = body;
+    startDate = new Date(startDate);
+    endDate = new Date(endDate);
+
     const addOneDayToendDate = this.statsService.getFutureDate(endDate, 1);
 
     console.log('startDate:', startDate);
