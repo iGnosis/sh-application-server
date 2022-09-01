@@ -156,14 +156,21 @@ export class GameController {
     console.log('startDate:', startDate);
     console.log('endedAtDate:', endDate);
 
-    const { daysCompleted, groupByCreatedAtDayGames } = await this.statsService.getMonthlyGoalsNew(
+    const results = await this.statsService.getMonthlyGoalsNew(
       userId,
       startDate,
       addOneDayToendDate,
       userTimezone,
     );
 
+    // just a sanity check.
+    if (!results) {
+      return;
+    }
+
+    const { daysCompleted, groupByCreatedAtDayGames } = results;
     // console.log('groupByCreatedAtDayGames:', groupByCreatedAtDayGames);
+
     const index = Object.keys(groupByCreatedAtDayGames).length - 1;
     const key = Object.keys(groupByCreatedAtDayGames)[index];
     const latestGameData = groupByCreatedAtDayGames[key];

@@ -77,6 +77,11 @@ export class StatsService {
 
     console.log('results:', results);
 
+    // just a sanity check.
+    if (!results) {
+      return;
+    }
+
     // grouping by createdAt date.
     const groupByRes = groupBy(results, 'createdAtDay');
     // console.log('groupByRes:', groupByRes);
