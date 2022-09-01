@@ -157,8 +157,7 @@ export class SmsAuthService {
         'x-hasura-default-role': userRole,
         'x-hasura-user-id': user.id,
 
-        // [DEPRECATED] - default careplans & providers.
-        'x-hasura-provider-id': '00000000-0000-0000-0000-000000000000',
+        // [DEPRECATED] - default careplan.
         'x-hasura-careplan-id': '4319023a-a24b-4d19-af82-be92d14f09de',
       },
     };
