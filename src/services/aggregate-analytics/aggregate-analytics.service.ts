@@ -13,8 +13,13 @@ export class AggregateAnalyticsService {
       }
       return count;
     }, 0);
-    const avgAchievementRatio = parseFloat((correctPromptsCount / analytics.length).toFixed(2));
-    return avgAchievementRatio;
+
+    // key, value & noOfSamples are required to store in aggregate_analytics table.
+    return {
+      key: 'avgAchievementRatio',
+      value: parseFloat((correctPromptsCount / analytics.length).toFixed(2)),
+      noOfSamples: analytics.length,
+    };
   }
 
   averageCompletionRatio(analytics: AnalyticsDTO[]) {
