@@ -6,7 +6,11 @@ import { GqlService } from '../gql/gql.service';
 
 @Injectable()
 export class ProviderChartsService {
-  constructor(private statService: StatsService, private gqlService: GqlService) {}
+  numberOfGamesAvailable: number;
+  constructor(private statService: StatsService, private gqlService: GqlService) {
+    // TODO: get activity count dynamically!
+    this.numberOfGamesAvailable = 3;
+  }
 
   getAdheranceChart() {
     throw new Error('Not Yet Implemented.');
@@ -57,7 +61,46 @@ export class ProviderChartsService {
     }
   }
 
-  async getPatientEngagement(patientId: string, startDate: Date, endDate: Date, timezone: string) {
+  async getPatientAvgEngagement(query: PlotChartDTO) {
+    const results = await this.statService.getAvgEngagementRatio(query);
+    let numOfGamesToBePlayed: number;
+
+    if (query.groupBy === 'day') {
+      numOfGamesToBePlayed = this.numberOfGamesAvailable;
+    }
+
+    if (query.groupBy === 'week') {
+      numOfGamesToBePlayed = 7 * this.numberOfGamesAvailable;
+    }
+
+    if (query.groupBy === 'month') {
+      const currentYear = new Date().getUTCFullYear();
+      const currentMonth = new Date().getUTCMonth();
+      numOfGamesToBePlayed =
+        this.statService.getDaysInMonth(currentYear, currentMonth) * this.numberOfGamesAvailable;
+    }
+
+    const engagementResultSet = {};
+    results.forEach((result) => {
+      const key = new Date(result.createdAt).toISOString();
+      engagementResultSet[key] = parseFloat(
+        ((result.gamesPlayedCount / numOfGamesToBePlayed) * 100).toFixed(2),
+      );
+      if (engagementResultSet[result.createdAt] > 100) {
+        engagementResultSet[result.createdAt] = 100;
+      }
+    });
+
+    return engagementResultSet;
+  }
+
+  // TOOD: remove this function
+  async getPatientEngagementTemp(
+    patientId: string,
+    startDate: Date,
+    endDate: Date,
+    timezone: string,
+  ) {
     const engagmentStore = {};
     const results = await this.statService.getMonthlyGoalsNew(
       patientId,

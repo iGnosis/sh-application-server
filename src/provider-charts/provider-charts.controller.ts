@@ -72,7 +72,8 @@ export class ProviderChartsController {
     }
 
     if (chartType === 'avgEngagementRatio') {
-      throw new HttpException('To be implemented.', HttpStatus.NOT_IMPLEMENTED);
+      const results = await this.providerChartsService.getPatientAvgEngagement(query);
+      return { results };
     }
   }
 
@@ -85,7 +86,7 @@ export class ProviderChartsController {
     @Query('userTimezone') userTimezone: string,
     @Query('patientId') patientId: string,
   ) {
-    const results = await this.providerChartsService.getPatientEngagement(
+    const results = await this.providerChartsService.getPatientEngagementTemp(
       patientId,
       startDate,
       endDate,

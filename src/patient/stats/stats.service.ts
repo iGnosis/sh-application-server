@@ -124,6 +124,30 @@ export class StatsService {
     );
   }
 
+  async getAvgEngagementRatio(query: PlotChartDTO): Promise<
+    {
+      createdAt: string;
+      gamesPlayedCount: number;
+    }[]
+  > {
+    const { patientId, startDate, endDate, userTimezone, groupBy } = query;
+    return await this.databaseService.executeQuery(
+      `
+      SELECT
+          DATE_TRUNC($5, timezone($4, game."createdAt")) "createdAt",
+          COUNT(game.game) "gamesPlayedCount"
+      FROM game
+      WHERE
+          patient = $1 AND
+          game."endedAt" IS NOT NULL AND
+          game."createdAt" >= $2 AND
+          game."createdAt" < $3
+      GROUP BY DATE_TRUNC($5, timezone($4, game."createdAt"))
+      ORDER BY DATE_TRUNC($5, timezone($4, game."createdAt")) DESC`,
+      [patientId, startDate, endDate, userTimezone, groupBy],
+    );
+  }
+
   async getMonthlyGoalsNew(
     patientId: string,
     startDate: Date,
