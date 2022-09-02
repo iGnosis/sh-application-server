@@ -6,14 +6,14 @@ export class ExtractInformationService {
   private joints: {
     [key: string]: [number, number, number];
   } = {
-    leftElbow: [11, 13, 15],
-    rightElbow: [12, 14, 16],
-    leftShoulder: [13, 11, 23],
-    rightShoulder: [24, 12, 14],
-    rightHip: [12, 24, 26],
-    leftHip: [11, 23, 25],
-    rightKnee: [24, 26, 28],
-    leftKnee: [23, 25, 27],
+    leftShoulderElbowWrist: [11, 13, 15],
+    rightShoulderElbowWrist: [12, 14, 16],
+    leftElbowShoulderHip: [13, 11, 23],
+    righElbowtShoulderHip: [24, 12, 14],
+    rightShoulderHipKnee: [12, 24, 26],
+    leftShoulderHipKnee: [11, 23, 25],
+    righHiptKneeAnkle: [24, 26, 28],
+    leftHipKneeAnkle: [23, 25, 27],
   };
 
   /**
