@@ -76,7 +76,7 @@ export class ProviderChartsService {
     }
 
     return {
-      labels: Object.keys(engagmentStore),
+      labels: Object.keys(engagmentStore).map((key) => new Date(key)),
       engagementPercentage: Object.values(engagmentStore),
     };
   }
