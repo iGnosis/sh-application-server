@@ -1,44 +1,127 @@
 import { Injectable } from '@nestjs/common';
 import { Dictionary } from 'lodash';
-import { groupBy } from 'lodash';
+import { groupBy as lodashGroupBy } from 'lodash';
 import { DatabaseService } from 'src/database/database.service';
 import { GqlService } from 'src/services/gql/gql.service';
-import { GoalsApiResponse, MonthlyGoalsApiResponse } from '../../types/stats';
+import { PlotChartDTO } from 'src/types/provider-charts';
+import { MonthlyGoalsApiResponse } from '../../types/stats';
 
 @Injectable()
 export class StatsService {
   constructor(private databaseService: DatabaseService, private gqlService: GqlService) {}
 
-  // endDate is exclusive
-  async sessionDuration(
-    patientId: string,
-    startDate: Date,
-    endDate: Date,
-  ): Promise<Array<GoalsApiResponse>> {
-    const results = await this.databaseService.executeQuery(
-      `SELECT
-          session.id,
-          session."createdAt",
-          ((MAX(events.created_at) - MIN(events.created_at))) AS "sessionDurationInMs"
-      FROM session
-      INNER JOIN events
-      ON events.session = session.id
-      WHERE
-          session.patient = $1 AND
-          session.status <> 'trashed' AND
-          session."createdAt" >= $2 AND
-          session."createdAt" < $3
-      GROUP BY session.id
-      ORDER BY session."createdAt" DESC`,
-      [patientId, startDate, endDate],
+  async getAvgCompletionTimeInSecGroupByGames(query: PlotChartDTO): Promise<
+    {
+      createdAt: string;
+      game: string;
+      avgCompletionTimePerRepInSec: number;
+    }[]
+  > {
+    const { patientId, startDate, endDate, userTimezone, groupBy } = query;
+    return await this.databaseService.executeQuery(
+      `
+    SELECT
+        DATE_TRUNC($5, timezone($4, aggregate_analytics."createdAt")) "createdAt",
+        game.game,
+        ROUND(SUM(aggregate_analytics.value * aggregate_analytics."noOfSamples") / SUM(aggregate_analytics."noOfSamples"), 2) "avgCompletionTimePerRepInSec"
+    FROM aggregate_analytics
+    JOIN game
+    ON game.id = aggregate_analytics.game
+    WHERE
+        aggregate_analytics.patient = $1 AND
+        aggregate_analytics."key" = 'avgCompletionTime' AND
+        aggregate_analytics."createdAt" >= $2 AND
+        aggregate_analytics."createdAt" < $3
+    GROUP BY
+        DATE_TRUNC($5, timezone($4, aggregate_analytics."createdAt")),
+        game.game
+    ORDER BY DATE_TRUNC($5, timezone($4, aggregate_analytics."createdAt"))`,
+      [patientId, startDate, endDate, userTimezone, groupBy],
     );
+  }
 
-    results.forEach((result) => {
-      result.sessionDurationInMs = parseFloat(result.sessionDurationInMs);
-      result.sessionDurationInMin = parseFloat((result.sessionDurationInMs / 1000 / 60).toFixed(2));
-    });
+  async getAvgCompletionTimeInSec(query: PlotChartDTO): Promise<
+    {
+      createdAt: string;
+      avgCompletionTimePerRepInSec: number;
+    }[]
+  > {
+    const { patientId, startDate, endDate, userTimezone, groupBy } = query;
+    return await this.databaseService.executeQuery(
+      `
+    SELECT
+        DATE_TRUNC($5, timezone($4, aggregate_analytics."createdAt")) "createdAt",
+        ROUND(SUM(aggregate_analytics.value * aggregate_analytics."noOfSamples") / SUM(aggregate_analytics."noOfSamples"), 2) "avgCompletionTimePerRepInSec"
+    FROM aggregate_analytics
+    JOIN game
+    ON game.id = aggregate_analytics.game
+    WHERE
+        aggregate_analytics.patient = $1 AND
+        aggregate_analytics."key" = 'avgCompletionTime' AND
+        aggregate_analytics."createdAt" >= $2 AND
+        aggregate_analytics."createdAt" < $3
+    GROUP BY
+        DATE_TRUNC($5, timezone($4, aggregate_analytics."createdAt"))
+    ORDER BY DATE_TRUNC($5, timezone($4, aggregate_analytics."createdAt"))`,
+      [patientId, startDate, endDate, userTimezone, groupBy],
+    );
+  }
 
-    return results;
+  async getAvgAchievementPercentageGroupByGames(query: PlotChartDTO): Promise<
+    {
+      createdAt: string;
+      game: string;
+      avgAchievementPercentage: number;
+    }[]
+  > {
+    const { patientId, startDate, endDate, userTimezone, groupBy } = query;
+    return await this.databaseService.executeQuery(
+      `
+      SELECT
+          DATE_TRUNC($5, timezone($4, aggregate_analytics."createdAt")) "createdAt",
+          game.game,
+          ROUND((SUM(aggregate_analytics.value * aggregate_analytics."noOfSamples") / SUM(aggregate_analytics."noOfSamples")) * 100, 2) "avgAchievementPercentage"
+      FROM aggregate_analytics
+      JOIN game
+      ON game.id = aggregate_analytics.game
+      WHERE
+          aggregate_analytics.patient = $1 AND
+          aggregate_analytics."key" = 'avgAchievementRatio' AND
+          aggregate_analytics."createdAt" >= $2 AND
+          aggregate_analytics."createdAt" < $3
+      GROUP BY
+          DATE_TRUNC($5, timezone($4, aggregate_analytics."createdAt")),
+          game.game
+      ORDER BY DATE_TRUNC($5, timezone($4, aggregate_analytics."createdAt"))`,
+      [patientId, startDate, endDate, userTimezone, groupBy],
+    );
+  }
+
+  async getAvgAchievementPercentage(query: PlotChartDTO): Promise<
+    {
+      createdAt: string;
+      avgAchievementPercentage: number;
+    }[]
+  > {
+    const { patientId, startDate, endDate, userTimezone, groupBy } = query;
+    return await this.databaseService.executeQuery(
+      `
+      SELECT
+          DATE_TRUNC($5, timezone($4, aggregate_analytics."createdAt")) "createdAt",
+          ROUND((SUM(aggregate_analytics.value * aggregate_analytics."noOfSamples") / SUM(aggregate_analytics."noOfSamples")) * 100, 2) "avgAchievementPercentage"
+      FROM aggregate_analytics
+      JOIN game
+      ON game.id = aggregate_analytics.game
+      WHERE
+          aggregate_analytics.patient = $1 AND
+          aggregate_analytics."key" = 'avgAchievementRatio' AND
+          aggregate_analytics."createdAt" >= $2 AND
+          aggregate_analytics."createdAt" < $3
+      GROUP BY
+          DATE_TRUNC($5, timezone($4, aggregate_analytics."createdAt"))
+      ORDER BY DATE_TRUNC($5, timezone($4, aggregate_analytics."createdAt"))`,
+      [patientId, startDate, endDate, userTimezone, groupBy],
+    );
   }
 
   async getMonthlyGoalsNew(
@@ -83,7 +166,7 @@ export class StatsService {
     }
 
     // grouping by createdAt date.
-    const groupByRes = groupBy(results, 'createdAtDay');
+    const groupByRes = lodashGroupBy(results, 'createdAtDay');
     // console.log('groupByRes:', groupByRes);
 
     const getGamesQuery = `query GetAllGames {

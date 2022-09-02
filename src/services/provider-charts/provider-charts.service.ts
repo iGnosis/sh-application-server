@@ -1,5 +1,7 @@
 import { Injectable } from '@nestjs/common';
+import { groupBy as lodashGroupBy } from 'lodash';
 import { StatsService } from 'src/patient/stats/stats.service';
+import { PlotChartDTO } from 'src/types/provider-charts';
 import { GqlService } from '../gql/gql.service';
 
 @Injectable()
@@ -39,10 +41,20 @@ export class ProviderChartsService {
     return apiResponse;
   }
 
-  getPatientAchievement(patientId: string, startDate: Date, endDate: Date, timezone: string) {
-    // convert game.createdAt to timezone supplied
-    // get all the patient's games
-    // use lodash to groupby game.createdAt
+  async getPatientAvgCompletionTime(query: PlotChartDTO) {
+    if (query.isGroupByGames) {
+      return await this.statService.getAvgCompletionTimeInSecGroupByGames(query);
+    } else {
+      return await this.statService.getAvgCompletionTimeInSec(query);
+    }
+  }
+
+  async getPatientAvgAchievement(query: PlotChartDTO) {
+    if (query.isGroupByGames) {
+      return await this.statService.getAvgAchievementPercentageGroupByGames(query);
+    } else {
+      return await this.statService.getAvgAchievementPercentage(query);
+    }
   }
 
   async getPatientEngagement(patientId: string, startDate: Date, endDate: Date, timezone: string) {
