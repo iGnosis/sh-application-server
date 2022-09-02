@@ -15,7 +15,7 @@ import { AuthGuard } from 'src/auth/guards/auth.guard';
 import { RolesGuard } from 'src/auth/guards/roles.guard';
 import { TransformResponseInterceptor } from 'src/interceptor/transform-response.interceptor';
 import { ProviderChartsService } from 'src/services/provider-charts/provider-charts.service';
-import { PlotChartDTO } from 'src/types/provider-charts';
+import { ChartType, GroupBy, PlotChartDTO } from 'src/types/provider-charts';
 
 @Roles(Role.THERAPIST)
 @UseGuards(AuthGuard, RolesGuard)
@@ -32,14 +32,17 @@ export class ProviderChartsController {
     @Query('endDate') endDate: Date,
     @Query('userTimezone') userTimezone: string,
     @Query('patientId') patientId: string,
-    @Query('chartType')
-    chartType: 'avgAchievementRatio' | 'avgCompletionTime' | 'avgEngagementRatio',
-    @Query('groupBy') groupBy: 'day' | 'week' | 'month',
+    @Query('chartType') chartType: ChartType,
+    @Query('groupBy') groupBy: GroupBy,
     @Query('isGroupByGames') isGroupByGames: boolean,
   ) {
     // input sanitization
-    const validGroupByValues = ['day', 'week', 'month'];
-    const validChartTypeValues = ['avgAchievementRatio', 'avgCompletionTime', 'avgEngagementRatio'];
+    const validGroupByValues: GroupBy[] = ['day', 'week', 'month'];
+    const validChartTypeValues: ChartType[] = [
+      'avgAchievementRatio',
+      'avgCompletionTime',
+      'avgEngagementRatio',
+    ];
     if (!validGroupByValues.includes(groupBy)) {
       throw new HttpException('Invalid groupBy value', HttpStatus.BAD_REQUEST);
     }

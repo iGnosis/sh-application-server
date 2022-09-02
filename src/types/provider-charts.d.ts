@@ -3,7 +3,10 @@ export type PlotChartDTO = {
   endDate: Date;
   userTimezone: string;
   patientId: string;
-  chartType: 'avgAchievementRatio' | 'avgCompletionTime' | 'avgEngagementRatio';
-  groupBy: 'day' | 'week' | 'month';
+  chartType: ChartType;
+  groupBy: GroupBy;
   isGroupByGames: boolean;
 };
+
+export type ChartType = 'avgAchievementRatio' | 'avgCompletionTime' | 'avgEngagementRatio';
+export type GroupBy = 'day' | 'week' | 'month';
