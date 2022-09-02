@@ -78,7 +78,7 @@ export class StatsService {
     console.log('results:', results);
 
     // just a sanity check.
-    if (!results) {
+    if (!results || !Array.isArray(results) || results.length === 0) {
       return;
     }
 
