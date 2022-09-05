@@ -62,7 +62,6 @@ export class ProviderChartsService {
     if (query.groupBy === 'week') {
       numOfGamesToBePlayed = 7 * this.numberOfGamesAvailable;
     }
-
     const engagementResultSet = {};
     results.forEach((result) => {
       if (query.groupBy === 'month') {

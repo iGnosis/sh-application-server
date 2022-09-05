@@ -71,15 +71,13 @@ export class StatsService {
     );
   }
 
-  async getAvgAchievementPercentageGroupByGames(query: PlotChartDTO): Promise<
-    {
+  async getAvgAchievementPercentageGroupByGames(query: PlotChartDTO) {
+    const { patientId, startDate, endDate, userTimezone, groupBy } = query;
+    const result: {
       createdAt: string;
       game: string;
       avgAchievementPercentage: number;
-    }[]
-  > {
-    const { patientId, startDate, endDate, userTimezone, groupBy } = query;
-    return await this.databaseService.executeQuery(
+    }[] = await this.databaseService.executeQuery(
       `
       SELECT
           DATE_TRUNC($5, timezone($4, aggregate_analytics."createdAt")) "createdAt",
@@ -99,16 +97,18 @@ export class StatsService {
       ORDER BY DATE_TRUNC($5, timezone($4, aggregate_analytics."createdAt"))`,
       [patientId, startDate, endDate, userTimezone, groupBy],
     );
+    result.forEach((val) => {
+      val.avgAchievementPercentage = parseFloat(`${val.avgAchievementPercentage}`);
+    });
+    return result;
   }
 
-  async getAvgAchievementPercentage(query: PlotChartDTO): Promise<
-    {
+  async getAvgAchievementPercentage(query: PlotChartDTO) {
+    const { patientId, startDate, endDate, userTimezone, groupBy } = query;
+    const result: {
       createdAt: string;
       avgAchievementPercentage: number;
-    }[]
-  > {
-    const { patientId, startDate, endDate, userTimezone, groupBy } = query;
-    return await this.databaseService.executeQuery(
+    }[] = await this.databaseService.executeQuery(
       `
       SELECT
           DATE_TRUNC($5, timezone($4, aggregate_analytics."createdAt")) "createdAt",
@@ -126,6 +126,10 @@ export class StatsService {
       ORDER BY DATE_TRUNC($5, timezone($4, aggregate_analytics."createdAt"))`,
       [patientId, startDate, endDate, userTimezone, groupBy],
     );
+    result.forEach((val) => {
+      val.avgAchievementPercentage = parseFloat(`${val.avgAchievementPercentage}`);
+    });
+    return result;
   }
 
   async getAvgEngagementRatio(query: PlotChartDTO): Promise<
