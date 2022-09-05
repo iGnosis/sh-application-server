@@ -1,7 +1,7 @@
-import { Injectable } from '@nestjs/common';
+import { HttpCode, HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { groupBy as lodashGroupBy } from 'lodash';
 import { StatsService } from 'src/patient/stats/stats.service';
-import { PlotChartDTO } from 'src/types/provider-charts';
+import { GroupBy, PlotChartDTO } from 'src/types/provider-charts';
 import { GqlService } from '../gql/gql.service';
 
 @Injectable()
@@ -10,16 +10,6 @@ export class ProviderChartsService {
   constructor(private statService: StatsService, private gqlService: GqlService) {
     // TODO: get activity count dynamically!
     this.numberOfGamesAvailable = 3;
-  }
-
-  getAdheranceChart() {
-    throw new Error('Not Yet Implemented.');
-    const apiResponse = {
-      labels: ['Active Patients', 'Inactive Patients'],
-      pieChartDataset: [11, 4],
-      backgroundColor: ['#ffa2ad', '#2f51ae'],
-    };
-    return apiResponse;
   }
 
   getOverviewChart(startDate: Date, endDate: Date, cache = true) {
@@ -92,6 +82,37 @@ export class ProviderChartsService {
     });
 
     return engagementResultSet;
+  }
+
+  async getAdheranceChart(startDate: Date, endDate: Date, groupBy: GroupBy) {
+    if (groupBy === 'day') {
+      throw new HttpException('Not Implemented', HttpStatus.NOT_IMPLEMENTED);
+    }
+
+    let numOfGamesToBePlayed: number;
+    if (groupBy === 'week') {
+      numOfGamesToBePlayed = 7 * this.numberOfGamesAvailable;
+    }
+
+    if (groupBy === 'month') {
+      const currentYear = new Date().getUTCFullYear();
+      const currentMonth = new Date().getUTCMonth();
+      numOfGamesToBePlayed =
+        this.statService.getDaysInMonth(currentYear, currentMonth) * this.numberOfGamesAvailable;
+    }
+
+    const results = await this.statService.getPatientAdherence(startDate, endDate, groupBy);
+    const filteredPatients = results.filter((val) => val.numOfGamesPlayed >= numOfGamesToBePlayed);
+    return filteredPatients;
+
+    /*
+        const apiResponse = {
+          labels: ['Active Patients', 'Inactive Patients'],
+          pieChartDataset: [11, 4],
+          backgroundColor: ['#ffa2ad', '#2f51ae'],
+        };
+        return apiResponse;
+    */
   }
 
   // TOOD: remove this function

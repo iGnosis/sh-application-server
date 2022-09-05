@@ -16,6 +16,8 @@ import { RolesGuard } from 'src/auth/guards/roles.guard';
 import { TransformResponseInterceptor } from 'src/interceptor/transform-response.interceptor';
 import { ProviderChartsService } from 'src/services/provider-charts/provider-charts.service';
 import { ChartType, GroupBy, PlotChartDTO } from 'src/types/provider-charts';
+import { groupBy as lodashGroupBy } from 'lodash';
+import { StatsService } from 'src/patient/stats/stats.service';
 
 @Roles(Role.THERAPIST)
 @UseGuards(AuthGuard, RolesGuard)
@@ -23,7 +25,10 @@ import { ChartType, GroupBy, PlotChartDTO } from 'src/types/provider-charts';
 @Controller('provider-charts')
 @UseInterceptors(new TransformResponseInterceptor())
 export class ProviderChartsController {
-  constructor(private providerChartsService: ProviderChartsService) {}
+  constructor(
+    private providerChartsService: ProviderChartsService,
+    private statsService: StatsService,
+  ) {}
 
   @HttpCode(200)
   @Get('/')
@@ -64,6 +69,8 @@ export class ProviderChartsController {
     if (chartType === 'avgAchievementRatio') {
       const results = await this.providerChartsService.getPatientAvgAchievement(query);
       return { results };
+      // const groupedByResults = lodashGroupBy(results, 'createdAt');
+      // const labels = Object.keys(groupedByResults).map(val => new Date(val).toISOString())
     }
 
     if (chartType === 'avgCompletionTime') {
@@ -75,6 +82,25 @@ export class ProviderChartsController {
       const results = await this.providerChartsService.getPatientAvgEngagement(query);
       return { results };
     }
+  }
+
+  @HttpCode(200)
+  @Get('patient-overview')
+  async patientOverview() {
+    throw new HttpException('Not Implemented', HttpStatus.NOT_IMPLEMENTED);
+  }
+
+  @HttpCode(200)
+  @Get('patient-adherence')
+  async patientAdherence(
+    @Query('startDate') startDate: Date,
+    @Query('endDate') endDate: Date,
+    @Query('groupBy') groupBy: GroupBy,
+  ) {
+    const results = await this.providerChartsService.getAdheranceChart(startDate, endDate, groupBy);
+    const totalNumOfPatients = await this.statsService.getTotalPatientCount();
+    const activePatientsCount = results.length;
+    return { activePatientsCount, totalNumOfPatients };
   }
 
   // TODO: remove this API, and instead use a generic one.

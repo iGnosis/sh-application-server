@@ -3,7 +3,7 @@ import { Dictionary } from 'lodash';
 import { groupBy as lodashGroupBy } from 'lodash';
 import { DatabaseService } from 'src/database/database.service';
 import { GqlService } from 'src/services/gql/gql.service';
-import { PlotChartDTO } from 'src/types/provider-charts';
+import { GroupBy, PlotChartDTO } from 'src/types/provider-charts';
 import { MonthlyGoalsApiResponse } from '../../types/stats';
 
 @Injectable()
@@ -148,6 +148,45 @@ export class StatsService {
     );
   }
 
+  async getPatientAdherence(
+    startDate: Date,
+    endDate: Date,
+    groupBy: GroupBy,
+  ): Promise<
+    {
+      patient: string;
+      createdAt: Date;
+      numOfGamesPlayed: number;
+    }[]
+  > {
+    return await this.databaseService.executeQuery(
+      `
+      SELECT DISTINCT ON (patient)
+          patient,
+          DATE_TRUNC($3, game."createdAt") "createdAt",
+          COUNT(game.game) "numOfGamesPlayed"
+      FROM game
+      WHERE
+          game."endedAt" IS NOT NULL AND
+          game."createdAt" >= $1 AND
+          game."endedAt" < $2
+      GROUP BY
+          patient,
+          DATE_TRUNC($3, game."createdAt")
+      ORDER BY
+          patient,
+          DATE_TRUNC($3, game."createdAt") DESC`,
+      [startDate, endDate, groupBy],
+    );
+  }
+
+  async getTotalPatientCount(): Promise<number> {
+    const results = await this.databaseService.executeQuery(
+      `SELECT count(*) "totalPatientCount" FROM patient`,
+    );
+    return parseInt(results[0].totalPatientCount);
+  }
+
   async getMonthlyGoalsNew(
     patientId: string,
     startDate: Date,
@@ -255,6 +294,6 @@ export class StatsService {
   }
 
   getDaysInMonth(year: number, month: number) {
-    return new Date(year, month, 0).getDate();
+    return new Date(year, month, 0).getUTCDate();
   }
 }
