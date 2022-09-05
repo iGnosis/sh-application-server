@@ -76,8 +76,8 @@ export class ProviderChartsService {
       engagementResultSet[key] = parseFloat(
         ((result.gamesPlayedCount / numOfGamesToBePlayed) * 100).toFixed(2),
       );
-      if (engagementResultSet[result.createdAt] > 100) {
-        engagementResultSet[result.createdAt] = 100;
+      if (engagementResultSet[key] > 100) {
+        engagementResultSet[key] = 100;
       }
     });
 
