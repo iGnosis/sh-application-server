@@ -73,14 +73,4 @@ export class AggregateAnalyticsService {
     }
     await this.gqlService.client.request(query, { objects });
   }
-
-  // TODO: remove this.
-  // async updateAggregateAnalytics(gameId: string, data: object) {
-  //   const query = `mutation UpdateAggregateAnalytics($gameId: uuid!, $aggregateAnalytics: jsonb!) {
-  //     update_game_by_pk(pk_columns: {id: $gameId}, _append: {aggregateAnalytics: $aggregateAnalytics}) {
-  //       id
-  //     }
-  //   }`;
-  //   await this.gqlService.client.request(query, { gameId, aggregateAnalytics: data });
-  // }
 }
