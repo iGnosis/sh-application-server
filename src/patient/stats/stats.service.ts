@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { Dictionary } from 'lodash';
-import { groupBy as lodashGroupBy } from 'lodash';
+import { groupBy as lodashGroupBy, merge as lodashMerge } from 'lodash';
 import { DatabaseService } from 'src/database/database.service';
 import { GqlService } from 'src/services/gql/gql.service';
 import { GroupBy, PlotChartDTO } from 'src/types/provider-charts';
@@ -8,7 +8,11 @@ import { MonthlyGoalsApiResponse } from '../../types/stats';
 
 @Injectable()
 export class StatsService {
-  constructor(private databaseService: DatabaseService, private gqlService: GqlService) {}
+  numberOfGamesAvailable: number;
+  constructor(private databaseService: DatabaseService, private gqlService: GqlService) {
+    // TODO: get activity count dynamically!
+    this.numberOfGamesAvailable = 3;
+  }
 
   async getAvgCompletionTimeInSecGroupByGames(query: PlotChartDTO): Promise<
     {
@@ -146,6 +150,65 @@ export class StatsService {
       ORDER BY DATE_TRUNC($5, timezone($4, game."createdAt")) DESC`,
       [patientId, startDate, endDate, userTimezone, groupBy],
     );
+  }
+
+  async getPatientOverview(startDate: Date, endDate: Date) {
+    const engagementResults: {
+      patient: string;
+      gamesPlayedCount: number;
+      engagementRatio: number;
+    }[] = await this.databaseService.executeQuery(
+      `
+      SELECT
+        game.patient,
+        COUNT(game.game) "gamesPlayedCount"
+      FROM game
+      WHERE
+        game."endedAt" IS NOT NULL AND
+        game."createdAt" >= $1 AND
+        game."createdAt" < $2
+      GROUP BY
+          game.patient
+      ORDER BY
+          game.patient`,
+      [startDate, endDate],
+    );
+
+    const noOfGamesToPlay = this.getDiffInDays(startDate, endDate) * this.numberOfGamesAvailable;
+    engagementResults.forEach((val) => {
+      val.gamesPlayedCount = parseInt(`${val.gamesPlayedCount}`);
+      val.engagementRatio = parseFloat((val.gamesPlayedCount / noOfGamesToPlay).toFixed(2));
+      if (val.engagementRatio > 100) {
+        val.engagementRatio = 100;
+      }
+    });
+
+    const patientsArr = engagementResults.map((val) => val.patient);
+    const achievementResults: {
+      patient: string;
+      avgAchievementPercentage: number;
+    }[] = await this.databaseService.executeQuery(
+      `
+      SELECT
+          patient,
+          ROUND((SUM(aggregate_analytics.value * aggregate_analytics."noOfSamples") / SUM(aggregate_analytics."noOfSamples")) * 100, 2) "avgAchievementPercentage"
+      FROM aggregate_analytics
+      WHERE
+          patient = ANY($1::uuid[]) AND
+          aggregate_analytics."key" = 'avgAchievementRatio' AND
+          aggregate_analytics."createdAt" >= $2 AND
+          aggregate_analytics."createdAt" < $3
+      GROUP BY patient
+      ORDER BY patient`,
+      [patientsArr, startDate, endDate],
+    );
+
+    achievementResults.forEach((val) => {
+      val.avgAchievementPercentage = parseFloat(`${val.avgAchievementPercentage}`);
+    });
+
+    const mergedObj = lodashMerge(engagementResults, achievementResults);
+    return mergedObj;
   }
 
   async getPatientAdherence(
@@ -295,5 +358,12 @@ export class StatsService {
 
   getDaysInMonth(year: number, month: number) {
     return new Date(year, month, 0).getUTCDate();
+  }
+
+  getDiffInDays(startDate: Date, endDate: Date) {
+    // Take the difference between the dates and divide by milliseconds per day.
+    // Round to nearest whole number to deal with DST.
+    const millisecondsPerDay = 24 * 60 * 60 * 1000;
+    return Math.round((endDate.getTime() - startDate.getTime()) / millisecondsPerDay);
   }
 }

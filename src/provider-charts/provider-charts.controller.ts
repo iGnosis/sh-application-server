@@ -86,8 +86,8 @@ export class ProviderChartsController {
 
   @HttpCode(200)
   @Get('patient-overview')
-  async patientOverview() {
-    throw new HttpException('Not Implemented', HttpStatus.NOT_IMPLEMENTED);
+  async patientOverview(@Query('startDate') startDate: Date, @Query('endDate') endDate: Date) {
+    return this.statsService.getPatientOverview(startDate, endDate);
   }
 
   @HttpCode(200)
