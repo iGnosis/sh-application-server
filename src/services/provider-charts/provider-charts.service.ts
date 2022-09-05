@@ -63,15 +63,15 @@ export class ProviderChartsService {
       numOfGamesToBePlayed = 7 * this.numberOfGamesAvailable;
     }
 
-    if (query.groupBy === 'month') {
-      const currentYear = new Date().getUTCFullYear();
-      const currentMonth = new Date().getUTCMonth();
-      numOfGamesToBePlayed =
-        this.statService.getDaysInMonth(currentYear, currentMonth) * this.numberOfGamesAvailable;
-    }
-
     const engagementResultSet = {};
     results.forEach((result) => {
+      if (query.groupBy === 'month') {
+        const currentYear = new Date(result.createdAt).getUTCFullYear();
+        const currentMonth = new Date(result.createdAt).getUTCMonth();
+        const noOfDays = this.statService.getDaysInMonth(currentYear, currentMonth);
+        numOfGamesToBePlayed = noOfDays * this.numberOfGamesAvailable;
+      }
+
       const key = new Date(result.createdAt).toISOString();
       engagementResultSet[key] = parseFloat(
         ((result.gamesPlayedCount / numOfGamesToBePlayed) * 100).toFixed(2),
