@@ -1,10 +1,11 @@
-import { Injectable } from '@nestjs/common';
+import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { Dictionary } from 'lodash';
 import { groupBy as lodashGroupBy, merge as lodashMerge } from 'lodash';
 import { DatabaseService } from 'src/database/database.service';
 import { GqlService } from 'src/services/gql/gql.service';
 import { GroupBy, PlotChartDTO } from 'src/types/provider-charts';
 import { MonthlyGoalsApiResponse } from '../../types/stats';
+import * as moment from 'moment';
 
 @Injectable()
 export class StatsService {
@@ -369,5 +370,21 @@ export class StatsService {
     // Round to nearest whole number to deal with DST.
     const millisecondsPerDay = 24 * 60 * 60 * 1000;
     return Math.round((endDate.getTime() - startDate.getTime()) / millisecondsPerDay);
+  }
+
+  generateDates(startDate: Date, endDate: Date, offset: GroupBy) {
+    const mStartDate = moment(startDate);
+    const mEndDate = moment(endDate);
+    const generateDates = [];
+
+    if (mEndDate.isBefore(mStartDate)) {
+      throw new HttpException('Something went wrong', HttpStatus.BAD_REQUEST);
+    }
+
+    while (mStartDate.isBefore(mEndDate)) {
+      generateDates.push(mStartDate.toISOString());
+      mStartDate.add(1, offset);
+    }
+    return generateDates;
   }
 }
