@@ -57,27 +57,26 @@ export class ProviderChartsService {
 
       const plottableFormatDs = [];
       const groupedByGames = lodashGroupBy(results, 'game');
+      // console.log('groupedByGames:', groupedByGames);
+
       for (const [gameName, gameArr] of Object.entries(groupedByGames)) {
         const obj = {
           game: gameName,
           avgAchievmentPercentage: [],
         };
-        generatedDates.forEach((generatedDate: string) => {
-          const generatedDateObj = new Date(generatedDate);
-          // console.log('generatedDateObj:', generatedDateObj);
-          gameArr.forEach((game) => {
-            const existingDate = new Date(game.createdAt);
-            // console.log('existingDate:', existingDate);
-            if (generatedDateObj.getTime() - existingDate.getTime() === 0) {
-              obj.avgAchievmentPercentage.push(game.avgAchievementPercentage);
-            } else {
-              obj.avgAchievmentPercentage.push(0);
+        for (let i = 0; i < generatedDates.length; i++) {
+          if (i >= gameArr.length) {
+            obj.avgAchievmentPercentage.push(0);
+          } else {
+            const generatedDate = new Date(generatedDates[i]);
+            const existingDate = new Date(gameArr[i].createdAt);
+            if (generatedDate.getTime() - existingDate.getTime() === 0) {
+              obj.avgAchievmentPercentage.push(gameArr[i].avgAchievementPercentage);
             }
-          });
-        });
+          }
+        }
         plottableFormatDs.push(obj);
       }
-
       return plottableFormatDs;
     } else {
       return await this.statService.getAvgAchievementPercentage(query);
