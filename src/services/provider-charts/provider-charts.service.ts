@@ -46,7 +46,7 @@ export class ProviderChartsService {
   async getPatientAvgAchievement(query: PlotChartDTO) {
     if (query.isGroupByGames) {
       const results = await this.statService.getAvgAchievementPercentageGroupByGames(query);
-      // console.log('results:', results);
+      console.log('results:', results);
 
       const generatedDates = this.statService.generateDates(
         query.startDate,
