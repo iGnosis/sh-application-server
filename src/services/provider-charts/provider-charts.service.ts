@@ -53,30 +53,34 @@ export class ProviderChartsService {
         query.endDate,
         query.groupBy,
       );
-      // console.log('generatedDates:', generatedDates);
+      console.log('generatedDates:', generatedDates);
 
       const plottableFormatDs = [];
       const groupedByGames = lodashGroupBy(results, 'game');
-      // console.log('groupedByGames:', groupedByGames);
+      console.log('groupedByGames:', groupedByGames);
 
       for (const [gameName, gameArr] of Object.entries(groupedByGames)) {
         const obj = {
           game: gameName,
           avgAchievmentPercentage: [],
         };
-        for (let i = 0; i < generatedDates.length; i++) {
-          if (i >= gameArr.length) {
+
+        const existingDates = gameArr.map((val) => new Date(val.createdAt).toISOString());
+
+        generatedDates.forEach((gDate: string) => {
+          if (!existingDates.includes(gDate)) {
             obj.avgAchievmentPercentage.push(0);
           } else {
-            const generatedDate = new Date(generatedDates[i]);
-            const existingDate = new Date(gameArr[i].createdAt);
-            if (generatedDate.getTime() - existingDate.getTime() === 0) {
-              obj.avgAchievmentPercentage.push(gameArr[i].avgAchievementPercentage);
-            }
+            gameArr.forEach((game) => {
+              if (new Date(gDate).getTime() - new Date(game.createdAt).getTime() === 0) {
+                obj.avgAchievmentPercentage.push(game.avgAchievementPercentage);
+              }
+            });
           }
-        }
+        });
         plottableFormatDs.push(obj);
       }
+      console.log('plottableFormatDs:', plottableFormatDs);
       return plottableFormatDs;
     } else {
       return await this.statService.getAvgAchievementPercentage(query);
