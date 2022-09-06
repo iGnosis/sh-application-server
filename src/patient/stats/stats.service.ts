@@ -382,7 +382,7 @@ export class StatsService {
     }
 
     while (mStartDate.isBefore(mEndDate)) {
-      generateDates.push(mStartDate.toISOString());
+      generateDates.push(mStartDate.format('YYYY-MM-DD'));
       mStartDate.add(1, offset);
     }
     return generateDates;

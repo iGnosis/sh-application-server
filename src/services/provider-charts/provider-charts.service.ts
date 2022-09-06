@@ -66,13 +66,15 @@ export class ProviderChartsService {
         };
 
         const existingDates = gameArr.map((val) => new Date(val.createdAt).toISOString());
+        const stripDates = existingDates.map((val) => val.split('T')[0]);
 
         generatedDates.forEach((gDate: string) => {
-          if (!existingDates.includes(gDate)) {
+          if (!stripDates.includes(gDate)) {
             obj.avgAchievmentPercentage.push(0);
           } else {
             gameArr.forEach((game) => {
-              if (new Date(gDate).getTime() - new Date(game.createdAt).getTime() === 0) {
+              const strippedDate = new Date(game.createdAt).toISOString().split('T')[0];
+              if (new Date(gDate).getTime() - new Date(strippedDate).getTime() === 0) {
                 obj.avgAchievmentPercentage.push(game.avgAchievementPercentage);
               }
             });
