@@ -30,19 +30,32 @@ export class StatsController {
     console.log('startDate:', startDate);
     console.log('endDate:', addOneDayToendDate);
 
-    const { daysCompleted, groupByCreatedAtDayGames } = await this.statsService.getMonthlyGoalsNew(
+    const results = await this.statsService.getMonthlyGoalsNew(
       userId,
       startDate,
       addOneDayToendDate,
       userTimezone,
     );
-    console.log('groupByCreatedAtDayGames:', groupByCreatedAtDayGames);
+    const rewardsCountDown = [5, 10, 15];
 
+    if (!results) {
+      const response = {
+        status: 'success',
+        data: {
+          daysCompleted: 0,
+          rewardsCountDown,
+        },
+      };
+      return response;
+    }
+
+    const { daysCompleted, groupByCreatedAtDayGames } = results;
+    console.log('groupByCreatedAtDayGames:', groupByCreatedAtDayGames);
     const response = {
       status: 'success',
       data: {
         daysCompleted,
-        rewardsCountDown: [5, 10, 15],
+        rewardsCountDown,
       },
     };
     return response;
