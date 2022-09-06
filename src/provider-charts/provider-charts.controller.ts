@@ -55,6 +55,9 @@ export class ProviderChartsController {
       throw new HttpException('Invalid chartType value', HttpStatus.BAD_REQUEST);
     }
 
+    // to make endDate inclusive.
+    endDate = this.statsService.getFutureDate(endDate, 1);
+
     // there must be tranformer pipes to do this...
     const query: PlotChartDTO = {
       startDate,
