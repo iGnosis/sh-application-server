@@ -1,6 +1,7 @@
 import { HttpCode, HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { groupBy as lodashGroupBy } from 'lodash';
 import { StatsService } from 'src/patient/stats/stats.service';
+import { AnalyticsDTO } from 'src/types/analytics';
 import { GroupBy, PlotChartDTO } from 'src/types/provider-charts';
 import { GqlService } from '../gql/gql.service';
 
@@ -33,6 +34,30 @@ export class ProviderChartsService {
       ],
     };
     return apiResponse;
+  }
+
+  async getGameAchievementRatio(gameId: string) {
+    const query = `
+      query GetGameAnalytics($gameId: uuid!) {
+        game_by_pk(id: $gameId) {
+          analytics
+        }
+      }`;
+
+    const resp: {
+      game_by_pk: {
+        analytics: AnalyticsDTO[];
+      };
+    } = await this.gqlService.client.request(query, { gameId });
+
+    const gameAnalytics = resp.game_by_pk.analytics;
+    const totalSuccesScore = gameAnalytics.filter((val) => val.result.type === 'success').length;
+    const totalIncorrectScore = gameAnalytics.filter((val) => val.result.type === 'failure').length;
+
+    return {
+      labels: ['Correct', 'Incorrect'],
+      data: [totalSuccesScore, totalIncorrectScore],
+    };
   }
 
   async getPatientAvgCompletionTime(query: PlotChartDTO) {

@@ -88,6 +88,12 @@ export class ProviderChartsController {
   }
 
   @HttpCode(200)
+  @Get('game-achievement-ratio')
+  async gameAchievementRatio(@Query('gameId') gameId: string) {
+    return this.providerChartsService.getGameAchievementRatio(gameId);
+  }
+
+  @HttpCode(200)
   @Get('patient-overview')
   async patientOverview(@Query('startDate') startDate: Date, @Query('endDate') endDate: Date) {
     return this.statsService.getPatientOverview(startDate, endDate);
