@@ -28,6 +28,14 @@ export class SmsAuthController {
 
     const { phoneCountryCode, phoneNumber } = body;
     const otp = this.smsAuthService.generateOtp();
+
+    // only the phone numbers added to the user table should be allowed to enter the provider portal.
+    if (userRole === 'therapist') {
+      await this.smsAuthService.fetchTherapist(phoneCountryCode, phoneNumber).catch(() => {
+        throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
+      });
+    }
+
     await this.smsAuthService.insertUser(userRole, phoneCountryCode, phoneNumber);
     await this.smsAuthService.updateUserOtp(userRole, phoneCountryCode, phoneNumber, otp);
     await this.smsAuthService.sendOtp(phoneCountryCode, phoneNumber, otp);
@@ -43,12 +51,21 @@ export class SmsAuthController {
       throw new HttpException('Invalid Request', HttpStatus.BAD_REQUEST);
 
     const { phoneCountryCode, phoneNumber } = body;
-    const patient = await this.smsAuthService.fetchPatient(phoneCountryCode, phoneNumber);
-    console.log('resendOtp:patient:', patient);
+
+    let user: User | Patient;
+    if (userRole === 'patient') {
+      user = await this.smsAuthService.fetchPatient(phoneCountryCode, phoneNumber);
+    } else if (userRole === 'therapist') {
+      // only the phone numbers added to the user table should be allowed to enter the provider portal.
+      user = await this.smsAuthService.fetchTherapist(phoneCountryCode, phoneNumber).catch(() => {
+        throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
+      });
+    }
+    console.log('resendOtp:patient:', user);
 
     // If OTP is not expired, send the same OTP and update issued at time.
-    const isOtpExpired = this.smsAuthService.isOtpExpired(patient.auth.issuedAt);
-    const otp = isOtpExpired ? this.smsAuthService.generateOtp() : patient.auth.otp;
+    const isOtpExpired = this.smsAuthService.isOtpExpired(user.auth.issuedAt);
+    const otp = isOtpExpired ? this.smsAuthService.generateOtp() : user.auth.otp;
 
     if (isOtpExpired) {
       await this.smsAuthService.updateUserOtp(userRole, phoneCountryCode, phoneNumber, otp);
