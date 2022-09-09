@@ -112,67 +112,114 @@ export class StatsService {
       result = await this.databaseService.executeQuery(
         sortDirection === 'asc'
           ? `
-        SELECT
-            DATE_TRUNC('day', timezone($3, game."createdAt")) "createdAt",
-            COUNT(game.game) AS games_completed,
-            patient.nickname, patient.id
-        FROM game
-        RIGHT JOIN patient
-        ON game.patient = patient.id
-        WHERE
-          game."endedAt" IS NOT NULL AND
-          patient.id IN (SELECT id FROM patient LIMIT $4 OFFSET $5) AND
-          game."createdAt" >= $1 AND
-          game."createdAt" < $2
-        GROUP BY
-              DATE_TRUNC('day', timezone($3, game."createdAt")),
-              patient.id
-        ORDER BY DATE_TRUNC('day', timezone($3, game."createdAt")) ASC`
+          SELECT DISTINCT
+          DATE_TRUNC('day', timezone($3, game."createdAt")) "createdAt",
+          COUNT(*) FILTER(WHERE game."endedAt" IS NOT NULL) "gamesCompleted",
+          patient.nickname,
+          patient.id
+      FROM game
+      JOIN patient
+      ON game.patient = patient.id
+      WHERE
+        game."createdAt" >= $1 AND
+        game."createdAt" < $2 AND
+        patient.id IN (
+          SELECT DISTINCT p1.id
+          FROM patient p1
+          JOIN game g1
+          ON g1.patient = p1.id
+          WHERE g1."endedAt" IS NOT NULL
+          ORDER BY p1.id
+          LIMIT $4
+          OFFSET $5
+        )
+      GROUP BY
+          DATE_TRUNC('day', timezone($3, game."createdAt")),
+          patient.id
+      ORDER BY DATE_TRUNC('day', timezone($3, game."createdAt")) ASC`
           : `
-        SELECT
-            DATE_TRUNC('day', timezone($3, game."createdAt")) "createdAt",
-            COUNT(game.game) AS games_completed,
-            patient.nickname, patient.id
-        FROM game
-        RIGHT JOIN patient
-        ON game.patient = patient.id
-        WHERE
-          game."endedAt" IS NOT NULL AND
-          patient.id IN (SELECT id FROM patient LIMIT $4 OFFSET $5) AND
-          game."createdAt" >= $1 AND
-          game."createdAt" < $2
-        GROUP BY
-              DATE_TRUNC('day', timezone($3, game."createdAt")),
-              patient.id
-        ORDER BY DATE_TRUNC('day', timezone($3, game."createdAt")) DESC`,
+          SELECT DISTINCT
+          DATE_TRUNC('day', timezone($3, game."createdAt")) "createdAt",
+          COUNT(*) FILTER(WHERE game."endedAt" IS NOT NULL) "gamesCompleted",
+          patient.nickname,
+          patient.id
+      FROM game
+      JOIN patient
+      ON game.patient = patient.id
+      WHERE
+        game."createdAt" >= $1 AND
+        game."createdAt" < $2 AND
+        patient.id IN (
+          SELECT DISTINCT p1.id
+          FROM patient p1
+          JOIN game g1
+          ON g1.patient = p1.id
+          WHERE g1."endedAt" IS NOT NULL
+          ORDER BY p1.id
+          LIMIT $4
+          OFFSET $5
+        )
+      GROUP BY
+          DATE_TRUNC('day', timezone($3, game."createdAt")),
+          patient.id
+      ORDER BY DATE_TRUNC('day', timezone($3, game."createdAt")) DESC`,
         [startDate, endDate, userTimezone, limit, offset],
       );
     } else {
       result = await this.databaseService.executeQuery(
         `
-        SELECT
-            DATE_TRUNC('day', timezone($3, game."createdAt")) "createdAt",
-            COUNT(game.game) AS games_completed,
-            patient.nickname, patient.id
-        FROM game
-        RIGHT JOIN patient
-        ON game.patient = patient.id
-        WHERE
-          game."endedAt" IS NOT NULL AND
-          patient.id IN (SELECT id FROM patient LIMIT $4 OFFSET $5) AND
-          game."createdAt" >= $1 AND
-          game."createdAt" < $2
-        GROUP BY
-              DATE_TRUNC('day', timezone($3, game."createdAt")),
-              patient.id
-        ORDER BY patient.id`,
+        SELECT DISTINCT
+          DATE_TRUNC('day', timezone($3, game."createdAt")) "createdAt",
+          COUNT(*) FILTER(WHERE game."endedAt" IS NOT NULL) "gamesCompleted",
+          patient.nickname,
+          patient.id
+      FROM game
+      JOIN patient
+      ON game.patient = patient.id
+      WHERE
+        game."createdAt" >= $1 AND
+        game."createdAt" < $2 AND
+        patient.id IN (
+          SELECT DISTINCT p1.id
+          FROM patient p1
+          JOIN game g1
+          ON g1.patient = p1.id
+          WHERE g1."endedAt" IS NOT NULL
+          ORDER BY p1.id
+          LIMIT $4
+          OFFSET $5
+        )
+      GROUP BY
+          DATE_TRUNC('day', timezone($3, game."createdAt")),
+          patient.id
+      ORDER BY patient.id`,
         [startDate, endDate, userTimezone, limit, offset],
       );
     }
     const pages = await this.databaseService.executeQuery(
       `
-      SELECT CEILING(CEILING(COUNT(*))/$1) FROM patient`,
-      [limit],
+      SELECT CEILING(CEILING(COUNT(DISTINCT patient.id))/$4) AS pages
+      FROM game
+      JOIN patient
+      ON game.patient = patient.id
+      WHERE
+        game."createdAt" >= $1 AND
+        game."createdAt" < $2 AND
+        patient.id IN (
+          SELECT DISTINCT p1.id
+          FROM patient p1
+          JOIN game g1
+          ON g1.patient = p1.id
+          WHERE g1."endedAt" IS NOT NULL
+          ORDER BY p1.id
+          LIMIT $4
+          OFFSET $5
+        )
+      GROUP BY
+          DATE_TRUNC('day', timezone($3, game."createdAt")),
+          patient.id
+      ORDER BY patient.id`,
+      [startDate, endDate, userTimezone, limit, offset],
     );
     let groupedResult = [];
     if (result) {
@@ -209,8 +256,8 @@ export class StatsService {
     const sortByMonthlyCompletion = (a: any, b: any) => {
       const aName = Object.keys(a)[0];
       const bName = Object.keys(b)[0];
-      const aSum = sumArrayOfObjectProperty(a[aName], 'games_completed');
-      const bSum = sumArrayOfObjectProperty(b[bName], 'games_completed');
+      const aSum = sumArrayOfObjectProperty(a[aName], 'gamesCompleted');
+      const bSum = sumArrayOfObjectProperty(b[bName], 'gamesCompleted');
       return sortDirection === 'desc' ? bSum - aSum : aSum - bSum;
     };
 
@@ -222,7 +269,7 @@ export class StatsService {
       arr.reduce((a: any, b: any) => a + (Number(b[key]) || 0), 0);
     const filterInactive = (obj: any) => {
       const name = Object.keys(obj)[0];
-      const sum = sumArrayOfObjectProperty(obj[name], 'games_completed');
+      const sum = sumArrayOfObjectProperty(obj[name], 'gamesCompleted');
       return sum > 0;
     };
     return groupedResult.filter(filterInactive);
