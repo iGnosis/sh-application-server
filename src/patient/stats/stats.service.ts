@@ -107,85 +107,125 @@ export class StatsService {
   async getPatientsDailyCompletion(query: PlotChartDTO) {
     const { startDate, endDate, userTimezone, sortBy, sortDirection, showInactive, limit, offset } =
       query;
-    const result: any[] = await this.databaseService.executeQuery(
-      `
-      SELECT
-          DATE_TRUNC('day', timezone($3, game."createdAt")) "createdAt",
-          COUNT(game.game) AS games_completed,
-          patient.nickname, patient.id
-      FROM game
-      RIGHT JOIN patient
-      ON game.patient = patient.id
-      WHERE
-        game."endedAt" IS NOT NULL AND
-        patient.id IN (SELECT id FROM patient LIMIT $4 OFFSET $5) AND
-        game."createdAt" >= $1 AND
-        game."createdAt" < $2
-      GROUP BY
-            DATE_TRUNC('day', timezone($3, game."createdAt")),
-            patient.id
-      ORDER BY ${
-        sortBy === 'recentActivity' ? '"createdAt" ' + sortDirection.toUpperCase() : 'patient.id'
-      }`,
-      [startDate, endDate, userTimezone, limit, offset],
-    );
+    let result: any[];
+    if (sortBy === 'recentActivity') {
+      result = await this.databaseService.executeQuery(
+        sortDirection === 'asc'
+          ? `
+        SELECT
+            DATE_TRUNC('day', timezone($3, game."createdAt")) "createdAt",
+            COUNT(game.game) AS games_completed,
+            patient.nickname, patient.id
+        FROM game
+        RIGHT JOIN patient
+        ON game.patient = patient.id
+        WHERE
+          game."endedAt" IS NOT NULL AND
+          patient.id IN (SELECT id FROM patient LIMIT $4 OFFSET $5) AND
+          game."createdAt" >= $1 AND
+          game."createdAt" < $2
+        GROUP BY
+              DATE_TRUNC('day', timezone($3, game."createdAt")),
+              patient.id
+        ORDER BY DATE_TRUNC('day', timezone($3, game."createdAt")) ASC`
+          : `
+        SELECT
+            DATE_TRUNC('day', timezone($3, game."createdAt")) "createdAt",
+            COUNT(game.game) AS games_completed,
+            patient.nickname, patient.id
+        FROM game
+        RIGHT JOIN patient
+        ON game.patient = patient.id
+        WHERE
+          game."endedAt" IS NOT NULL AND
+          patient.id IN (SELECT id FROM patient LIMIT $4 OFFSET $5) AND
+          game."createdAt" >= $1 AND
+          game."createdAt" < $2
+        GROUP BY
+              DATE_TRUNC('day', timezone($3, game."createdAt")),
+              patient.id
+        ORDER BY DATE_TRUNC('day', timezone($3, game."createdAt")) DESC`,
+        [startDate, endDate, userTimezone, limit, offset],
+      );
+    } else {
+      result = await this.databaseService.executeQuery(
+        `
+        SELECT
+            DATE_TRUNC('day', timezone($3, game."createdAt")) "createdAt",
+            COUNT(game.game) AS games_completed,
+            patient.nickname, patient.id
+        FROM game
+        RIGHT JOIN patient
+        ON game.patient = patient.id
+        WHERE
+          game."endedAt" IS NOT NULL AND
+          patient.id IN (SELECT id FROM patient LIMIT $4 OFFSET $5) AND
+          game."createdAt" >= $1 AND
+          game."createdAt" < $2
+        GROUP BY
+              DATE_TRUNC('day', timezone($3, game."createdAt")),
+              patient.id
+        ORDER BY patient.id`,
+        [startDate, endDate, userTimezone, limit, offset],
+      );
+    }
     const pages = await this.databaseService.executeQuery(
       `
       SELECT CEILING(CEILING(COUNT(*))/$1) FROM patient`,
       [limit],
     );
-    let groupedResult = result.reduce(function (r, a) {
-      r[a.nickname] = r[a.nickname] || [];
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      const { nickname, ...rest } = a;
-      r[a.nickname].push(rest);
-      return r;
-    }, Object.create(null));
-    if (sortBy === 'overallActivity') {
-      groupedResult = this.sortByOverallActivity(groupedResult, sortDirection);
-    }
-    if (!showInactive) {
-      groupedResult = this.hideInactive(groupedResult);
+    let groupedResult = [];
+    if (result) {
+      groupedResult = result.reduce((acc, val) => {
+        if (acc.findIndex((v) => val.nickname === Object.keys(v)[0]) === -1) {
+          acc.push({
+            [val.nickname]: [],
+          });
+        }
+        return acc;
+      }, []);
+
+      // [ { 'John Doe': [] }, { 'Jane Doe': [] } ]
+
+      result.forEach((val) => {
+        const idx = groupedResult.findIndex((v) => Object.keys(v)[0] === val.nickname);
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        const { nickname, ...data } = val;
+        groupedResult[idx][val.nickname].push(data);
+      });
+      if (sortBy === 'overallActivity') {
+        groupedResult = this.sortByOverallActivity(groupedResult, sortDirection);
+      }
+      if (!showInactive) {
+        groupedResult = this.hideInactive(groupedResult);
+      }
     }
     return { result: groupedResult, pages: pages[0].ceiling };
   }
 
-  sortByOverallActivity(groupedResult: any, sortDirection = 'desc') {
+  sortByOverallActivity(groupedResult: any[], sortDirection = 'desc') {
     const sumArrayOfObjectProperty = (arr: any, key: string) =>
       arr.reduce((a: any, b: any) => a + (Number(b[key]) || 0), 0);
-    const sortByMonthlyCompletion = (a: string, b: string) => {
-      const aSum = sumArrayOfObjectProperty(groupedResult[a], 'games_completed');
-      const bSum = sumArrayOfObjectProperty(groupedResult[b], 'games_completed');
+    const sortByMonthlyCompletion = (a: any, b: any) => {
+      const aName = Object.keys(a)[0];
+      const bName = Object.keys(b)[0];
+      const aSum = sumArrayOfObjectProperty(a[aName], 'games_completed');
+      const bSum = sumArrayOfObjectProperty(b[bName], 'games_completed');
       return sortDirection === 'desc' ? bSum - aSum : aSum - bSum;
     };
 
-    return Object.keys(groupedResult)
-      .sort(sortByMonthlyCompletion)
-      .reduce(
-        (acc, key) => ({
-          ...acc,
-          [key]: groupedResult[key],
-        }),
-        {},
-      );
+    return groupedResult.sort(sortByMonthlyCompletion);
   }
 
-  hideInactive(groupedResult: any) {
+  hideInactive(groupedResult: any[]) {
     const sumArrayOfObjectProperty = (arr: any, key: string) =>
       arr.reduce((a: any, b: any) => a + (Number(b[key]) || 0), 0);
-    const filterInactive = (key: string) => {
-      const sum = sumArrayOfObjectProperty(groupedResult[key], 'games_completed');
+    const filterInactive = (obj: any) => {
+      const name = Object.keys(obj)[0];
+      const sum = sumArrayOfObjectProperty(obj[name], 'games_completed');
       return sum > 0;
     };
-    return Object.keys(groupedResult)
-      .filter(filterInactive)
-      .reduce(
-        (acc, key) => ({
-          ...acc,
-          [key]: groupedResult[key],
-        }),
-        {},
-      );
+    return groupedResult.filter(filterInactive);
   }
 
   async getAvgAchievementPercentage(query: PlotChartDTO) {
