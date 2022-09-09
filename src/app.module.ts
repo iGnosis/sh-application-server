@@ -6,11 +6,10 @@ import { AppService } from './app.service';
 
 import { AuthModule } from './auth/auth.module';
 import { DatabaseModule } from './database/database.module';
-import { AnalyticsModule } from './analytics/analytics.module';
 
 import { GqlService } from './services/gql/gql.service';
 import { EmailService } from './services/email/email.service';
-import { SpeechSynthesisModule } from './speechSynthesis/speechSynthesis.module';
+import { SpeechSynthesisModule } from './speech-synthesis/speech-synthesis.module';
 import { CronModule } from './cron/cron.module';
 import { StatsModule } from './patient/stats/stats.module';
 import { EventsModule } from './events/events.module';
@@ -19,12 +18,15 @@ import { SmsAuthService } from './auth/sms-auth/sms-auth.service';
 import { SmsService } from './services/sms/sms.service';
 import { PoseDataGateway } from './pose-data/pose-data.gateway';
 import { S3Service } from './services/s3/s3.service';
+import { AggregateAnalyticsService } from './services/aggregate-analytics/aggregate-analytics.service';
+import { ProviderChartsService } from './services/provider-charts/provider-charts.service';
+import { ProviderChartsController } from './provider-charts/provider-charts.controller';
+import { StatsService } from './patient/stats/stats.service';
 
 @Module({
   imports: [
     AuthModule,
     DatabaseModule,
-    AnalyticsModule,
     SpeechSynthesisModule,
     StatsModule,
     CronModule,
@@ -34,7 +36,7 @@ import { S3Service } from './services/s3/s3.service';
     EventsModule,
     RewardsModule,
   ],
-  controllers: [AppController],
+  controllers: [AppController, ProviderChartsController],
   providers: [
     AppService,
     GqlService,
@@ -43,6 +45,9 @@ import { S3Service } from './services/s3/s3.service';
     SmsService,
     PoseDataGateway,
     S3Service,
+    AggregateAnalyticsService,
+    StatsService,
+    ProviderChartsService,
   ],
 })
 export class AppModule {}

@@ -6,6 +6,7 @@ import * as jwt from 'jsonwebtoken';
 import { Patient } from 'src/types/patient';
 import { SmsService } from 'src/services/sms/sms.service';
 import { IsArray } from 'class-validator';
+import { User } from 'src/types/user';
 
 @Injectable()
 export class SmsAuthService {
@@ -57,29 +58,69 @@ export class SmsAuthService {
     return resp.patient[0];
   }
 
-  async insertPatient(phoneCountryCode: string, phoneNumber: string) {
+  async fetchTherapist(phoneCountryCode: string, phoneNumber: string): Promise<User> {
     const query = `
+     query FetchUser($phoneCountryCode: String!, $phoneNumber: String!) {
+        user(where: {phoneCountryCode: {_eq: $phoneCountryCode}, phoneNumber: {_eq: $phoneNumber}, type: {_eq: therapist}}) {
+          auth
+          id
+        }
+      }`;
+
+    const resp = await this.gqlService.client.request(query, { phoneCountryCode, phoneNumber });
+
+    if (!resp || !IsArray(resp.user) || !resp.user.length) {
+      throw new HttpException('Invalid Request', HttpStatus.BAD_REQUEST);
+    }
+
+    return resp.user[0];
+  }
+
+  async insertUser(userRole: string, phoneCountryCode: string, phoneNumber: string) {
+    let query = `
       mutation InsertPatient($phoneCountryCode: String!, $phoneNumber: String!) {
         insert_patient(objects: {phoneCountryCode: $phoneCountryCode, phoneNumber: $phoneNumber}) {
           affected_rows
         }
       }`;
 
+    if (userRole === 'therapist') {
+      query = `mutation InsertTherapist($phoneCountryCode: String!, $phoneNumber: String!) {
+                insert_user(objects: {phoneCountryCode: $phoneCountryCode, phoneNumber: $phoneNumber, type: therapist}) {
+                   affected_rows
+                }
+              }`;
+    }
+
     try {
       await this.gqlService.client.request(query, { phoneCountryCode, phoneNumber: phoneNumber });
     } catch (err) {
       // user might already exist.
-      console.log('insertPatient:err', err);
+      console.log('insertUser:err', err);
     }
   }
 
-  async updatePatientOtp(phoneCountryCode: string, phoneNumber: string, otp: number) {
-    const updateOtpQuery = `
+  async updateUserOtp(
+    userRole: string,
+    phoneCountryCode: string,
+    phoneNumber: string,
+    otp: number,
+  ) {
+    let updateOtpQuery = `
       mutation UpdateOTP($phoneCountryCode: String!, $phoneNumber: String!, $auth: jsonb!) {
         update_patient(where: {phoneCountryCode: {_eq: $phoneCountryCode}, phoneNumber: {_eq: $phoneNumber}}, _set: {auth: $auth}) {
           affected_rows
         }
       }`;
+
+    if (userRole === 'therapist') {
+      updateOtpQuery = `
+        mutation UpdateUserOTP($phoneCountryCode: String!, $phoneNumber: String!, $auth: jsonb!) {
+          update_user(where: {phoneCountryCode: {_eq: $phoneCountryCode}, phoneNumber: {_eq: $phoneNumber}, type: {_eq: therapist}}, _set: {auth: $auth}) {
+            affected_rows
+          }
+        }`;
+    }
 
     try {
       await this.gqlService.client.request(updateOtpQuery, {
@@ -95,7 +136,7 @@ export class SmsAuthService {
     }
   }
 
-  generateJwtToken(patient: Patient) {
+  generateJwtToken(userRole: string, user: Patient | User) {
     const key = JSON.parse(this.configService.get('JWT_SECRET'));
 
     // JWT token remains valid for 24 hours.
@@ -108,16 +149,15 @@ export class SmsAuthService {
     const exp = iat + expOffset;
 
     const payload = {
-      id: patient.id,
+      id: user.id,
       iat,
       exp,
       'https://hasura.io/jwt/claims': {
         'x-hasura-allowed-roles': ['patient', 'therapist', 'admin'],
-        'x-hasura-default-role': 'patient',
-        'x-hasura-user-id': patient.id,
+        'x-hasura-default-role': userRole,
+        'x-hasura-user-id': user.id,
 
-        // [DEPRECATED] - default careplans & providers.
-        'x-hasura-provider-id': '00000000-0000-0000-0000-000000000000',
+        // [DEPRECATED] - default careplan.
         'x-hasura-careplan-id': '4319023a-a24b-4d19-af82-be92d14f09de',
       },
     };

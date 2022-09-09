@@ -1,9 +1,3 @@
-export class GoalsApiResponse {
-  id: string;
-  createdAt: Date;
-  sessionDurationInMin: number;
-}
-
 export class DailyGoalsApiResponse {
   activity: string;
 }

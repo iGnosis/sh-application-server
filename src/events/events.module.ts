@@ -10,10 +10,23 @@ import { DatabaseModule } from 'src/database/database.module';
 import { HelpAccessedController } from './help-accessed/help-accessed.controller';
 import { SmsAuthService } from 'src/auth/sms-auth/sms-auth.service';
 import { SmsService } from 'src/services/sms/sms.service';
+import { S3Service } from 'src/services/s3/s3.service';
+import { ExtractInformationService } from 'src/services/extract-information/extract-information.service';
+import { AggregateAnalyticsService } from 'src/services/aggregate-analytics/aggregate-analytics.service';
 
 @Module({
   imports: [DatabaseModule],
   controllers: [PatientController, GameController, TherapistController, HelpAccessedController],
-  providers: [EventsService, GqlService, CronService, StatsService, SmsAuthService, SmsService],
+  providers: [
+    EventsService,
+    GqlService,
+    CronService,
+    StatsService,
+    SmsAuthService,
+    SmsService,
+    S3Service,
+    ExtractInformationService,
+    AggregateAnalyticsService,
+  ],
 })
 export class EventsModule {}

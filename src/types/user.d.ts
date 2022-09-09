@@ -10,6 +10,12 @@ export class User {
   type: string;
   status: string;
   provider: string;
+  phoneCountryCode: string;
+  phoneNumber: string;
+  auth: {
+    otp: number;
+    issuedAt: number;
+  };
 }
 
 export interface UserObjDecorator {
