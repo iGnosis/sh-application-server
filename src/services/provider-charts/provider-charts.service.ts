@@ -219,4 +219,9 @@ export class ProviderChartsService {
       engagementPercentage: Object.values(engagmentStore),
     };
   }
+
+  async getPatientsCompletionHeatmap(query: PlotChartDTO) {
+    const result = await this.statService.getPatientsDailyCompletion(query);
+    return result;
+  }
 }

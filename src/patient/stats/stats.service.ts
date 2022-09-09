@@ -104,6 +104,83 @@ export class StatsService {
     return result;
   }
 
+  async getPatientsDailyCompletion(query: PlotChartDTO) {
+    const { startDate, endDate, userTimezone, sortBy, sortDirection, showInactive, limit, offset } =
+      query;
+    const result: any[] = await this.databaseService.executeQuery(
+      `
+      SELECT
+          DATE_TRUNC('day', timezone($3, game."createdAt")) "createdAt",
+          COUNT(game.game) AS games_completed,
+          patient.nickname, patient.id
+      FROM game
+      RIGHT JOIN patient
+      ON game.patient = patient.id
+      WHERE
+        game."endedAt" IS NOT NULL AND
+        patient.id IN (SELECT id FROM patient LIMIT $4 OFFSET $5) AND
+        game."createdAt" >= $1 AND
+        game."createdAt" < $2
+      GROUP BY
+            DATE_TRUNC('day', timezone($3, game."createdAt")),
+            patient.id
+      ORDER BY ${
+        sortBy === 'recentActivity' ? '"createdAt" ' + sortDirection.toUpperCase() : 'patient.id'
+      }`,
+      [startDate, endDate, userTimezone, limit, offset],
+    );
+    let groupedResult = result.reduce(function (r, a) {
+      r[a.nickname] = r[a.nickname] || [];
+      r[a.nickname].push(a);
+      return r;
+    }, Object.create(null));
+    if (sortBy === 'overallActivity') {
+      groupedResult = this.sortByOverallActivity(groupedResult, sortDirection);
+    }
+    if (!showInactive) {
+      groupedResult = this.hideInactive(groupedResult);
+    }
+    return groupedResult;
+  }
+
+  sortByOverallActivity(groupedResult: any, sortDirection = 'desc') {
+    const sumArrayOfObjectProperty = (arr: any, key: string) =>
+      arr.reduce((a: any, b: any) => a + (Number(b[key]) || 0), 0);
+    const sortByMonthlyCompletion = (a: string, b: string) => {
+      const aSum = sumArrayOfObjectProperty(groupedResult[a], 'games_completed');
+      const bSum = sumArrayOfObjectProperty(groupedResult[b], 'games_completed');
+      return sortDirection === 'desc' ? bSum - aSum : aSum - bSum;
+    };
+
+    return Object.keys(groupedResult)
+      .sort(sortByMonthlyCompletion)
+      .reduce(
+        (acc, key) => ({
+          ...acc,
+          [key]: groupedResult[key],
+        }),
+        {},
+      );
+  }
+
+  hideInactive(groupedResult: any) {
+    const sumArrayOfObjectProperty = (arr: any, key: string) =>
+      arr.reduce((a: any, b: any) => a + (Number(b[key]) || 0), 0);
+    const filterInactive = (key: string) => {
+      const sum = sumArrayOfObjectProperty(groupedResult[key], 'games_completed');
+      return sum > 0;
+    };
+    return Object.keys(groupedResult)
+      .filter(filterInactive)
+      .reduce(
+        (acc, key) => ({
+          ...acc,
+          [key]: groupedResult[key],
+        }),
+        {},
+      );
+  }
+
   async getAvgAchievementPercentage(query: PlotChartDTO) {
     const { patientId, startDate, endDate, userTimezone, groupBy } = query;
     const result: {

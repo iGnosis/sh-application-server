@@ -8,14 +8,14 @@ import {
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
-import { ApiBearerAuth } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
 import { Roles } from 'src/auth/decorators/roles.decorator';
 import { Role } from 'src/auth/enums/role.enum';
 import { AuthGuard } from 'src/auth/guards/auth.guard';
 import { RolesGuard } from 'src/auth/guards/roles.guard';
 import { TransformResponseInterceptor } from 'src/interceptor/transform-response.interceptor';
 import { ProviderChartsService } from 'src/services/provider-charts/provider-charts.service';
-import { ChartType, GroupBy, PlotChartDTO } from 'src/types/provider-charts';
+import { ChartType, GroupBy, PlotChartDTO, SortBy, SortDirection } from 'src/types/provider-charts';
 import { groupBy as lodashGroupBy } from 'lodash';
 import { StatsService } from 'src/patient/stats/stats.service';
 
@@ -32,6 +32,14 @@ export class ProviderChartsController {
 
   @HttpCode(200)
   @Get('/')
+  @ApiQuery({ name: 'patientId', required: false })
+  @ApiQuery({ name: 'groupBy', required: false })
+  @ApiQuery({ name: 'isGroupByGames', required: false })
+  @ApiQuery({ name: 'sortBy', required: false })
+  @ApiQuery({ name: 'sortDirection', required: false })
+  @ApiQuery({ name: 'limit', required: false })
+  @ApiQuery({ name: 'offset', required: false })
+  @ApiQuery({ name: 'showInactive', required: false })
   async plotChart(
     @Query('startDate') startDate: Date,
     @Query('endDate') endDate: Date,
@@ -40,6 +48,11 @@ export class ProviderChartsController {
     @Query('chartType') chartType: ChartType,
     @Query('groupBy') groupBy: GroupBy,
     @Query('isGroupByGames') isGroupByGames: boolean,
+    @Query('sortBy') sortBy?: SortBy,
+    @Query('sortDirection') sortDirection?: SortDirection,
+    @Query('limit') limit?: number,
+    @Query('offset') offset?: number,
+    @Query('showInactive') showInactive?: boolean,
   ) {
     // input sanitization
     const validGroupByValues: GroupBy[] = ['day', 'week', 'month'];
@@ -47,6 +60,7 @@ export class ProviderChartsController {
       'avgAchievementRatio',
       'avgCompletionTime',
       'avgEngagementRatio',
+      'patientsCompletionHeatmap',
     ];
     if (!validGroupByValues.includes(groupBy)) {
       throw new HttpException('Invalid groupBy value', HttpStatus.BAD_REQUEST);
@@ -67,6 +81,11 @@ export class ProviderChartsController {
       chartType,
       groupBy,
       isGroupByGames,
+      sortBy,
+      sortDirection,
+      limit,
+      offset,
+      showInactive,
     };
 
     if (chartType === 'avgAchievementRatio') {
@@ -83,6 +102,11 @@ export class ProviderChartsController {
 
     if (chartType === 'avgEngagementRatio') {
       const results = await this.providerChartsService.getPatientAvgEngagement(query);
+      return { results };
+    }
+
+    if (chartType === 'patientsCompletionHeatmap') {
+      const results = await this.providerChartsService.getPatientsCompletionHeatmap(query);
       return { results };
     }
   }
