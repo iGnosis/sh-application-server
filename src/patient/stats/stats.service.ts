@@ -198,28 +198,28 @@ export class StatsService {
     }
     const pages = await this.databaseService.executeQuery(
       `
-      SELECT CEILING(CEILING(COUNT(DISTINCT patient.id))/$4) AS pages
-      FROM game
-      JOIN patient
-      ON game.patient = patient.id
-      WHERE
-        game."createdAt" >= $1 AND
-        game."createdAt" < $2 AND
-        patient.id IN (
-          SELECT DISTINCT p1.id
-          FROM patient p1
-          JOIN game g1
-          ON g1.patient = p1.id
-          WHERE g1."endedAt" IS NOT NULL
-          ORDER BY p1.id
-          LIMIT $4
-          OFFSET $5
-        )
-      GROUP BY
-          DATE_TRUNC('day', timezone($3, game."createdAt")),
+      SELECT CEILING(CEILING(COUNT(*))/$4) FROM (
+        SELECT DISTINCT
           patient.id
-      ORDER BY patient.id`,
-      [startDate, endDate, userTimezone, limit, offset],
+        FROM game
+        JOIN patient
+        ON game.patient = patient.id
+        WHERE
+          game."createdAt" >= $1 AND
+          game."createdAt" < $2 AND
+          patient.id IN (
+            SELECT DISTINCT p1.id
+            FROM patient p1
+            JOIN game g1
+            ON g1.patient = p1.id
+            WHERE g1."endedAt" IS NOT NULL
+            ORDER BY p1.id
+          )
+        GROUP BY
+            DATE_TRUNC('day', timezone($3, game."createdAt")),
+            patient.id
+        ORDER BY patient.id) as t`,
+      [startDate, endDate, userTimezone, limit],
     );
     let groupedResult = [];
     if (result) {
