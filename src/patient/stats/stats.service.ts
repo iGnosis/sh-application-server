@@ -129,9 +129,16 @@ export class StatsService {
       }`,
       [startDate, endDate, userTimezone, limit, offset],
     );
+    const pages = await this.databaseService.executeQuery(
+      `
+      SELECT CEILING(CEILING(COUNT(*))/$1) FROM patient`,
+      [limit],
+    );
     let groupedResult = result.reduce(function (r, a) {
       r[a.nickname] = r[a.nickname] || [];
-      r[a.nickname].push(a);
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const { nickname, ...rest } = a;
+      r[a.nickname].push(rest);
       return r;
     }, Object.create(null));
     if (sortBy === 'overallActivity') {
@@ -140,7 +147,7 @@ export class StatsService {
     if (!showInactive) {
       groupedResult = this.hideInactive(groupedResult);
     }
-    return groupedResult;
+    return { result: groupedResult, pages: pages[0].ceiling };
   }
 
   sortByOverallActivity(groupedResult: any, sortDirection = 'desc') {
