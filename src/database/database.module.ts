@@ -18,6 +18,7 @@ const databasePoolFactory = async (configService: ConfigService) => {
   });
 };
 
+@Global()
 @Module({
   providers: [
     {
