@@ -1,6 +1,6 @@
 import * as request from 'supertest';
 import { Test } from '@nestjs/testing';
-import { AppModule } from './../src/app.module';
+import { AppModule } from '../src/app.module';
 import { INestApplication } from '@nestjs/common';
 
 describe('AppController (e2e)', () => {
@@ -15,7 +15,14 @@ describe('AppController (e2e)', () => {
     await app.init();
   });
 
-  it('/ (GET)', () => {
-    return request(app.getHttpServer()).get('/speech/generate').expect(200);
+  afterAll(async () => {
+    await app.close();
+  });
+
+  it('/speech/generate (GET)', () => {
+    return request(app.getHttpServer())
+      .get('/speech/generate?text=hello+world+this+is+test')
+      .expect('Content-Type', 'audio/mpeg')
+      .expect(200);
   });
 });
