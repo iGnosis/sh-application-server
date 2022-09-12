@@ -3,7 +3,7 @@ import { Dictionary } from 'lodash';
 import { groupBy as lodashGroupBy, merge as lodashMerge } from 'lodash';
 import { DatabaseService } from 'src/database/database.service';
 import { GqlService } from 'src/services/gql/gql.service';
-import { GroupBy, PlotChartDTO } from 'src/types/provider-charts';
+import { GroupBy, PlotChartDTO, PlotHeatmapDTO } from 'src/types/provider-charts';
 import { MonthlyGoalsApiResponse } from '../../types/stats';
 import * as moment from 'moment';
 
@@ -104,7 +104,7 @@ export class StatsService {
     return result;
   }
 
-  async getPatientsDailyCompletion(query: PlotChartDTO) {
+  async getPatientsMonthlyCompletion(query: PlotHeatmapDTO) {
     const { startDate, endDate, userTimezone, sortBy, sortDirection, showInactive, limit, offset } =
       query;
     let result: any[];

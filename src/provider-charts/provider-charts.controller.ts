@@ -15,7 +15,14 @@ import { AuthGuard } from 'src/auth/guards/auth.guard';
 import { RolesGuard } from 'src/auth/guards/roles.guard';
 import { TransformResponseInterceptor } from 'src/interceptor/transform-response.interceptor';
 import { ProviderChartsService } from 'src/services/provider-charts/provider-charts.service';
-import { ChartType, GroupBy, PlotChartDTO, SortBy, SortDirection } from 'src/types/provider-charts';
+import {
+  ChartType,
+  GroupBy,
+  PlotChartDTO,
+  PlotHeatmapDTO,
+  SortBy,
+  SortDirection,
+} from 'src/types/provider-charts';
 import { groupBy as lodashGroupBy } from 'lodash';
 import { StatsService } from 'src/patient/stats/stats.service';
 
@@ -47,7 +54,6 @@ export class ProviderChartsController {
       'avgAchievementRatio',
       'avgCompletionTime',
       'avgEngagementRatio',
-      'patientsCompletionHeatmap',
     ];
     if (!validGroupByValues.includes(groupBy)) {
       throw new HttpException('Invalid groupBy value', HttpStatus.BAD_REQUEST);
@@ -100,7 +106,7 @@ export class ProviderChartsController {
     @Query('offset') offset: number,
     @Query('showInactive') showInactive: boolean,
   ) {
-    const query: any = {
+    const query: PlotHeatmapDTO = {
       startDate,
       endDate,
       userTimezone,

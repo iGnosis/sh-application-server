@@ -2,7 +2,7 @@ import { HttpCode, HttpException, HttpStatus, Injectable } from '@nestjs/common'
 import { groupBy as lodashGroupBy } from 'lodash';
 import { StatsService } from 'src/patient/stats/stats.service';
 import { AnalyticsDTO } from 'src/types/analytics';
-import { GroupBy, PlotChartDTO } from 'src/types/provider-charts';
+import { GroupBy, PlotChartDTO, PlotHeatmapDTO } from 'src/types/provider-charts';
 import { GqlService } from '../gql/gql.service';
 
 @Injectable()
@@ -220,8 +220,8 @@ export class ProviderChartsService {
     };
   }
 
-  async getPatientsCompletionHeatmap(query: PlotChartDTO) {
-    const result = await this.statService.getPatientsDailyCompletion(query);
+  async getPatientsCompletionHeatmap(query: PlotHeatmapDTO) {
+    const result = await this.statService.getPatientsMonthlyCompletion(query);
     return result;
   }
 }
