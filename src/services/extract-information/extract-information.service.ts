@@ -93,7 +93,7 @@ export class ExtractInformationService {
    * @returns median of the given elements
    */
   median(numbers: number[], firstNNumbers?: number): number {
-    let sorted = Array.from(numbers).sort((a, b) => a + b);
+    let sorted = Array.from(numbers).sort((a, b) => a - b);
     if (firstNNumbers) {
       sorted = Array.from(numbers)
         .sort((a, b) => a + b)
