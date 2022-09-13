@@ -3,7 +3,7 @@ import { Dictionary } from 'lodash';
 import { groupBy as lodashGroupBy, merge as lodashMerge } from 'lodash';
 import { DatabaseService } from 'src/database/database.service';
 import { GqlService } from 'src/services/gql/gql.service';
-import { GroupBy, PlotChartDTO } from 'src/types/provider-charts';
+import { GroupBy, PlotChartDTO, PlotHeatmapDTO } from 'src/types/provider-charts';
 import { MonthlyGoalsApiResponse } from '../../types/stats';
 import * as moment from 'moment';
 
@@ -104,153 +104,114 @@ export class StatsService {
     return result;
   }
 
-  async getPatientsDailyCompletion(query: PlotChartDTO) {
+  async getPatientsMonthlyCompletion(query: PlotHeatmapDTO) {
     const { startDate, endDate, userTimezone, sortBy, sortDirection, showInactive, limit, offset } =
       query;
     let result: any[];
     if (sortBy === 'recentActivity') {
-      result = await this.databaseService.executeQuery(
-        sortDirection === 'asc'
-          ? `
-          SELECT DISTINCT
-          DATE_TRUNC('day', timezone($3, game."createdAt")) "createdAt",
-          COUNT(*) FILTER(WHERE game."endedAt" IS NOT NULL) "gamesCompleted",
-          patient.nickname,
-          patient.id
-      FROM game
-      JOIN patient
-      ON game.patient = patient.id
-      WHERE
-        game."createdAt" >= $1 AND
-        game."createdAt" < $2 AND
-        patient.id IN (
-          SELECT DISTINCT p1.id
-          FROM patient p1
-          JOIN game g1
-          ON g1.patient = p1.id
-          WHERE g1."endedAt" IS NOT NULL
-          ORDER BY p1.id
-          LIMIT $4
-          OFFSET $5
-        )
-      GROUP BY
-          DATE_TRUNC('day', timezone($3, game."createdAt")),
-          patient.id
-      ORDER BY DATE_TRUNC('day', timezone($3, game."createdAt")) ASC`
-          : `
-          SELECT DISTINCT
-          DATE_TRUNC('day', timezone($3, game."createdAt")) "createdAt",
-          COUNT(*) FILTER(WHERE game."endedAt" IS NOT NULL) "gamesCompleted",
-          patient.nickname,
-          patient.id
-      FROM game
-      JOIN patient
-      ON game.patient = patient.id
-      WHERE
-        game."createdAt" >= $1 AND
-        game."createdAt" < $2 AND
-        patient.id IN (
-          SELECT DISTINCT p1.id
-          FROM patient p1
-          JOIN game g1
-          ON g1.patient = p1.id
-          WHERE g1."endedAt" IS NOT NULL
-          ORDER BY p1.id
-          LIMIT $4
-          OFFSET $5
-        )
-      GROUP BY
-          DATE_TRUNC('day', timezone($3, game."createdAt")),
-          patient.id
-      ORDER BY DATE_TRUNC('day', timezone($3, game."createdAt")) DESC`,
-        [startDate, endDate, userTimezone, limit, offset],
-      );
+      if (sortDirection === 'desc') {
+        result = await this.databaseService.executeQuery(
+          `
+            SELECT p.id, g."gamesCompleted", g.nickname, g."createdAt"
+              FROM (SELECT id from patient LIMIT $4 OFFSET $5) as p 
+              LEFT OUTER JOIN
+                  (SELECT
+                      DATE_TRUNC('day', timezone($3, game."createdAt")) "createdAt",
+                      COUNT(*) FILTER(WHERE game."endedAt" IS NOT NULL) "gamesCompleted",
+                      patient.nickname, patient.id
+                  FROM game
+                  RIGHT JOIN patient
+                  ON game.patient = patient.id
+                  WHERE
+                    game."createdAt" BETWEEN $1 AND $2
+                  GROUP BY
+                        DATE_TRUNC('day', timezone($3, game."createdAt")),
+                        patient.id
+                  ORDER BY DATE_TRUNC('day', timezone($3, game."createdAt")) DESC) as g
+              ON g.id = p.id
+            `,
+          [startDate, endDate, userTimezone, limit, offset],
+        );
+      } else {
+        result = await this.databaseService.executeQuery(
+          `
+            SELECT p.id, g."gamesCompleted", g.nickname, g."createdAt"
+              FROM (SELECT id from patient LIMIT $4 OFFSET $5) as p 
+              LEFT OUTER JOIN
+                  (SELECT
+                      DATE_TRUNC('day', timezone($3, game."createdAt")) "createdAt",
+                      COUNT(*) FILTER(WHERE game."endedAt" IS NOT NULL) "gamesCompleted",
+                      patient.nickname, patient.id
+                  FROM game
+                  RIGHT JOIN patient
+                  ON game.patient = patient.id
+                  WHERE
+                    game."createdAt" BETWEEN $1 AND $2
+                  GROUP BY
+                        DATE_TRUNC('day', timezone($3, game."createdAt")),
+                        patient.id
+                  ORDER BY DATE_TRUNC('day', timezone($3, game."createdAt")) ASC) as g
+              ON g.id = p.id
+            `,
+          [startDate, endDate, userTimezone, limit, offset],
+        );
+      }
     } else {
       result = await this.databaseService.executeQuery(
         `
-        SELECT DISTINCT
-          DATE_TRUNC('day', timezone($3, game."createdAt")) "createdAt",
-          COUNT(*) FILTER(WHERE game."endedAt" IS NOT NULL) "gamesCompleted",
-          patient.nickname,
-          patient.id
-      FROM game
-      JOIN patient
-      ON game.patient = patient.id
-      WHERE
-        game."createdAt" >= $1 AND
-        game."createdAt" < $2 AND
-        patient.id IN (
-          SELECT DISTINCT p1.id
-          FROM patient p1
-          JOIN game g1
-          ON g1.patient = p1.id
-          WHERE g1."endedAt" IS NOT NULL
-          ORDER BY p1.id
-          LIMIT $4
-          OFFSET $5
-        )
-      GROUP BY
-          DATE_TRUNC('day', timezone($3, game."createdAt")),
-          patient.id
-      ORDER BY patient.id`,
+        SELECT p.id, g."gamesCompleted", g.nickname, g."createdAt"
+          FROM (SELECT id from patient LIMIT $4 OFFSET $5) as p 
+          LEFT OUTER JOIN
+              (SELECT
+                  DATE_TRUNC('day', timezone($3, game."createdAt")) "createdAt",
+                  COUNT(*) FILTER(WHERE game."endedAt" IS NOT NULL) "gamesCompleted",
+                  patient.nickname, patient.id
+              FROM game
+              RIGHT JOIN patient
+              ON game.patient = patient.id
+              WHERE
+                game."createdAt" BETWEEN $1 AND $2
+              GROUP BY
+                    DATE_TRUNC('day', timezone($3, game."createdAt")),
+                    patient.id
+              ORDER BY patient.id) as g
+          ON g.id = p.id`,
         [startDate, endDate, userTimezone, limit, offset],
       );
     }
-    const pages = await this.databaseService.executeQuery(
+    const noOfPages = await this.databaseService.executeQuery(
       `
-      SELECT CEILING(CEILING(COUNT(*))/$4) FROM (
-        SELECT DISTINCT
-          patient.id
-        FROM game
-        JOIN patient
-        ON game.patient = patient.id
-        WHERE
-          game."createdAt" >= $1 AND
-          game."createdAt" < $2 AND
-          patient.id IN (
-            SELECT DISTINCT p1.id
-            FROM patient p1
-            JOIN game g1
-            ON g1.patient = p1.id
-            WHERE g1."endedAt" IS NOT NULL
-            ORDER BY p1.id
-          )
-        GROUP BY
-            DATE_TRUNC('day', timezone($3, game."createdAt")),
-            patient.id
-        ORDER BY patient.id) as t`,
-      [startDate, endDate, userTimezone, limit],
+      SELECT CEILING(CEILING(COUNT(*))/$1) FROM patient`,
+      [limit],
     );
     let groupedResult = [];
     if (result) {
       groupedResult = result.reduce((acc, val) => {
-        if (acc.findIndex((v) => val.nickname === Object.keys(v)[0]) === -1) {
+        if (acc.findIndex((v) => val.id === Object.keys(v)[0]) === -1) {
           acc.push({
-            [val.nickname]: [],
+            [val.id]: [],
           });
         }
         return acc;
       }, []);
 
-      // [ { 'John Doe': [] }, { 'Jane Doe': [] } ]
-
       result.forEach((val) => {
-        const idx = groupedResult.findIndex((v) => Object.keys(v)[0] === val.nickname);
+        const idx = groupedResult.findIndex((v) => Object.keys(v)[0] === val.id);
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        const { nickname, ...data } = val;
-        groupedResult[idx][val.nickname].push(data);
+        const { id, ...data } = val;
+        groupedResult[idx][val.id].push(data);
       });
       if (sortBy === 'overallActivity') {
         groupedResult = this.sortByOverallActivity(groupedResult, sortDirection);
       }
       if (!showInactive) {
-        groupedResult = this.hideInactive(groupedResult);
+        groupedResult = this.hideInactivePatients(groupedResult);
       }
     }
-    return { result: groupedResult, pages: pages[0].ceiling };
+    return { result: groupedResult, pages: noOfPages[0].ceiling };
   }
 
-  sortByOverallActivity(groupedResult: any[], sortDirection = 'desc') {
+  private sortByOverallActivity(groupedResult: any[], sortDirection = 'desc') {
     const sumArrayOfObjectProperty = (arr: any, key: string) =>
       arr.reduce((a: any, b: any) => a + (Number(b[key]) || 0), 0);
     const sortByMonthlyCompletion = (a: any, b: any) => {
@@ -264,7 +225,7 @@ export class StatsService {
     return groupedResult.sort(sortByMonthlyCompletion);
   }
 
-  hideInactive(groupedResult: any[]) {
+  private hideInactivePatients(groupedResult: any[]) {
     const sumArrayOfObjectProperty = (arr: any, key: string) =>
       arr.reduce((a: any, b: any) => a + (Number(b[key]) || 0), 0);
     const filterInactive = (obj: any) => {
