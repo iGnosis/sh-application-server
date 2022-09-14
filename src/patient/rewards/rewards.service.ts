@@ -1,9 +1,16 @@
-import { Injectable } from '@nestjs/common';
+import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
+import { EventsService } from 'src/events/events.service';
 import { GqlService } from 'src/services/gql/gql.service';
+
+const couponCodes = {
+  bronze: 'PTMOBR',
+  silver: 'PTMOGU',
+  gold: 'PTMOPE',
+};
 
 @Injectable()
 export class RewardsService {
-  constructor(private gqlService: GqlService) {}
+  constructor(private gqlService: GqlService, private pinpointEventsService: EventsService) {}
 
   async getRewards(userId) {
     const getPatientRewards = `query GetPatientReward($userId: uuid!) {
@@ -30,5 +37,40 @@ export class RewardsService {
       userId,
       rewards,
     });
+  }
+
+  async unlockRewards(rewards: Reward[], daysCompleted: number) {
+    for (let i = 0; i < rewards.length; i++) {
+      if (daysCompleted >= rewards[i].unlockAtDayCompleted && !rewards[i].isUnlocked) {
+        const tier = rewards[i].tier;
+        const couponCode = couponCodes[tier];
+        rewards[i].isUnlocked = true;
+        rewards[i].couponCode = couponCode;
+      }
+    }
+    return rewards;
+  }
+
+  /**
+   * Triggers a pinpoint event if a new reward is unlocked.
+   */
+  async sendRewardsUnlockedEvent(userId: string, oldRewards: Reward[], newRewards: Reward[]) {
+    if (oldRewards.length !== newRewards.length) {
+      throw new HttpException(
+        'oldRewards and newRewards length dont match',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+
+    const unlockedRewardsTier = new Set();
+    for (let i = 0; i < oldRewards.length; i++) {
+      const isOldRewardUnlocked = oldRewards[i].isUnlocked;
+      const isNewRewardUnlocked = newRewards[i].isUnlocked;
+      if (isNewRewardUnlocked && !isOldRewardUnlocked) {
+        unlockedRewardsTier.add(newRewards[i].tier);
+        await this.pinpointEventsService.rewardUnlockedEvent(userId, newRewards[i].tier);
+      }
+    }
+    return unlockedRewardsTier;
   }
 }

@@ -1,4 +1,13 @@
-import { Body, Controller, HttpCode, Post, Query, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  HttpCode,
+  HttpException,
+  HttpStatus,
+  Post,
+  Query,
+  UseGuards,
+} from '@nestjs/common';
 import { ApiBearerAuth } from '@nestjs/swagger';
 import { Roles } from 'src/auth/decorators/roles.decorator';
 import { User } from 'src/auth/decorators/user.decorator';
@@ -37,6 +46,13 @@ export class RewardsController {
     @Body('userTimezone') userTimezone: string,
     @User() userId: string,
   ) {
+    try {
+      startDate = new Date(startDate);
+      endDate = new Date(endDate);
+    } catch (err) {
+      throw new HttpException('Invalid date format', HttpStatus.BAD_REQUEST);
+    }
+
     const addOneDayToendDate = this.statsService.getFutureDate(endDate, 1);
     const { daysCompleted } = await this.statsService.getMonthlyGoalsNew(
       userId,
@@ -54,26 +70,19 @@ export class RewardsController {
       };
     }
 
-    for (let i = 0; i < patientRewards.patient_by_pk.rewards.length; i++) {
-      if (
-        daysCompleted >= patientRewards.patient_by_pk.rewards[i].unlockAtDayCompleted &&
-        !patientRewards.patient_by_pk.rewards[i].isUnlocked
-      ) {
-        const tier = patientRewards.patient_by_pk.rewards[i].tier;
-        const couponCode = couponCodes[tier];
+    const unlockedRewards = await this.rewardService.unlockRewards(
+      patientRewards.patient_by_pk.rewards,
+      daysCompleted,
+    );
+    await this.rewardService.sendRewardsUnlockedEvent(
+      userId,
+      patientRewards.patient_by_pk.rewards,
+      unlockedRewards,
+    );
 
-        patientRewards.patient_by_pk.rewards[i].isUnlocked = true;
-        patientRewards.patient_by_pk.rewards[i].couponCode = couponCode;
-
-        await this.pinpointEventsService.rewardUnlockedEvent(
-          userId,
-          patientRewards.patient_by_pk.rewards[i].tier,
-        );
-      }
-    }
     // update Hasura JSONB
-    await this.rewardService.updateRewards(userId, patientRewards.patient_by_pk.rewards);
-    console.log('updated:patientRewards:', patientRewards.patient_by_pk.rewards);
+    await this.rewardService.updateRewards(userId, unlockedRewards);
+    console.log('updated:unlockedRewards:', unlockedRewards);
 
     return {
       status: 'success',
