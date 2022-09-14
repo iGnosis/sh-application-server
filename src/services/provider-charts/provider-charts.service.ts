@@ -111,48 +111,6 @@ export class ProviderChartsService {
     return results.filter((val) => val.numOfGamesPlayed >= numOfGamesToBePlayed);
   }
 
-  // TOOD: remove this function
-  async getPatientEngagementTemp(
-    patientId: string,
-    startDate: Date,
-    endDate: Date,
-    timezone: string,
-  ) {
-    const engagmentStore = {};
-    const results = await this.statService.getMonthlyGoalsNew(
-      patientId,
-      startDate,
-      endDate,
-      timezone,
-    );
-    const { groupByCreatedAtDayGames } = results;
-    const getGamesQuery = `query GetAllGames {
-      game_name {
-        name
-      }
-    }`;
-    const fetchAvailableGames = await this.gqlService.client.request(getGamesQuery);
-    const gamesAvailable: string[] = fetchAvailableGames.game_name.map((data) => data.name);
-
-    for (const [createdAtDay, gamesArr] of Object.entries(groupByCreatedAtDayGames)) {
-      const seenGames = new Set();
-      gamesArr.forEach((game) => {
-        const isSeen = seenGames.has(game.game);
-        if (!isSeen) {
-          seenGames.add(game.game);
-        }
-      });
-      const engagementPercentage =
-        parseFloat((seenGames.size / gamesAvailable.length).toFixed(2)) * 100;
-      engagmentStore[createdAtDay] = engagementPercentage;
-    }
-
-    return {
-      labels: Object.keys(engagmentStore).map((key) => new Date(key)),
-      engagementPercentage: Object.values(engagmentStore),
-    };
-  }
-
   async getPatientsCompletionHeatmap(query: PlotHeatmapDTO) {
     const result = await this.statService.getPatientsMonthlyCompletion(query);
     return result;

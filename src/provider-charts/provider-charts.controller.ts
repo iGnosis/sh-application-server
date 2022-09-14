@@ -150,27 +150,4 @@ export class ProviderChartsController {
     const activePatientsCount = results.length;
     return { activePatientsCount, totalNumOfPatients };
   }
-
-  // TODO: remove this API, and instead use a generic one.
-  @HttpCode(200)
-  @Get('patient/engagement-ratio')
-  async getPatientEngagement(
-    @Query('startDate') startDate: Date,
-    @Query('endDate') endDate: Date,
-    @Query('userTimezone') userTimezone: string,
-    @Query('patientId') patientId: string,
-  ) {
-    const results = await this.providerChartsService.getPatientEngagementTemp(
-      patientId,
-      startDate,
-      endDate,
-      userTimezone,
-    );
-
-    console.log('getPatientEngagement:results:', results);
-
-    return {
-      ...results,
-    };
-  }
 }
