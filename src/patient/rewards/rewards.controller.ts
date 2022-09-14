@@ -101,12 +101,13 @@ export class RewardsController {
         data: {},
       };
     }
-    patientRewards.patient_by_pk.rewards.forEach((val) => {
-      if (val.tier === body.rewardTier) {
-        val.isViewed = true;
-      }
-    });
-    await this.rewardService.updateRewards(userId, patientRewards.patient_by_pk.rewards);
+
+    const viewedRewards = await this.rewardService.markRewardAsViewed(
+      patientRewards.patient_by_pk.rewards,
+      body.rewardTier,
+    );
+
+    await this.rewardService.updateRewards(userId, viewedRewards);
     return {
       status: 'success',
       data: {},
@@ -126,17 +127,12 @@ export class RewardsController {
       };
     }
 
-    let rewardAccessed: RewardTypes;
-    patientRewards.patient_by_pk.rewards.forEach((reward) => {
-      if (reward.tier === rewardTier && !reward.isAccessed) {
-        reward.isAccessed = true;
-        rewardAccessed = reward.tier;
-      }
-    });
-
-    // update JSONB in Postgres
-    await this.rewardService.updateRewards(userId, patientRewards.patient_by_pk.rewards);
-    await this.pinpointEventsService.rewardAccessedEvent(userId, rewardAccessed);
+    const accessedRewards = await this.rewardService.markRewardAsAccessed(
+      patientRewards.patient_by_pk.rewards,
+      rewardTier,
+    );
+    await this.rewardService.updateRewards(userId, accessedRewards);
+    await this.pinpointEventsService.rewardAccessedEvent(userId, rewardTier);
 
     return {
       status: 'success',

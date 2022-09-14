@@ -39,6 +39,24 @@ export class RewardsService {
     });
   }
 
+  async markRewardAsViewed(rewards: Reward[], rewardTier: RewardTypes) {
+    rewards.forEach((reward) => {
+      if (reward.tier === rewardTier) {
+        reward.isViewed = true;
+      }
+    });
+    return rewards;
+  }
+
+  async markRewardAsAccessed(rewards: Reward[], rewardTier: RewardTypes) {
+    rewards.forEach((reward) => {
+      if (reward.tier === rewardTier) {
+        reward.isAccessed = true;
+      }
+    });
+    return rewards;
+  }
+
   async unlockRewards(rewards: Reward[], daysCompleted: number) {
     for (let i = 0; i < rewards.length; i++) {
       if (daysCompleted >= rewards[i].unlockAtDayCompleted && !rewards[i].isUnlocked) {
