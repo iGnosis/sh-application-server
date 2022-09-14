@@ -42,20 +42,19 @@ describe('Provider Charts Controller (e2e)', () => {
   });
 
   it('/ (GET) - getAvgAchievementPercentageGroupByGames', async () => {
-    DatabaseService.prototype.executeQuery = jest.fn().mockImplementation(() => {
-      return [
-        {
-          createdAt: '2022-09-12T18:30:00.000Z',
-          game: 'Sit Stand Achieve',
-          avgAchievementPercentage: '78',
-        },
-        {
-          createdAt: '2022-09-12T18:30:00.000Z',
-          game: 'Sit Stand Achieve',
-          avgAchievementPercentage: '90',
-        },
-      ];
-    });
+    const mockDbResp = [
+      {
+        createdAt: '2022-09-12T18:30:00.000Z',
+        game: 'Sit Stand Achieve',
+        avgAchievementPercentage: '78',
+      },
+      {
+        createdAt: '2022-09-12T18:30:00.000Z',
+        game: 'Sit Stand Achieve',
+        avgAchievementPercentage: '90',
+      },
+    ];
+    DatabaseService.prototype.executeQuery = jest.fn().mockImplementation(() => mockDbResp);
     const reqQueryStr = {
       startDate: '2022-09-12T18:30:00.000Z',
       endDate: '2022-09-15T18:30:00.000Z',
@@ -70,7 +69,38 @@ describe('Provider Charts Controller (e2e)', () => {
       .get(`/provider-charts?${qs.stringify(reqQueryStr)}`)
       .expect(200)
       .then((res) => {
-        console.log(res.body.data.results);
+        expect(res.body).toHaveProperty('data');
+        expect(res.body.data).toHaveProperty('results');
+        expect(res.body.data.results).toEqual(mockDbResp);
+      });
+  });
+
+  it('/ (GET) - getAvgAchievementPercentage', async () => {
+    const mockDbResp = [
+      {
+        createdAt: '2022-09-11T18:30:00.000Z',
+        game: 'Sit Stand Achieve',
+        avgAchievementPercentage: '84',
+      },
+    ];
+    DatabaseService.prototype.executeQuery = jest.fn().mockImplementation(() => mockDbResp);
+    const reqQueryStr = {
+      startDate: '2022-09-12T18:30:00.000Z',
+      endDate: '2022-09-15T18:30:00.000Z',
+      userTimezone: 'Asia/Kolkata',
+      patientId: '123',
+      chartType: 'avgAchievementRatio',
+      groupBy: 'week',
+      isGroupByGames: true,
+    };
+
+    return request(app.getHttpServer())
+      .get(`/provider-charts?${qs.stringify(reqQueryStr)}`)
+      .expect(200)
+      .then((res) => {
+        expect(res.body).toHaveProperty('data');
+        expect(res.body.data).toHaveProperty('results');
+        expect(res.body.data.results).toEqual(mockDbResp);
       });
   });
 });
