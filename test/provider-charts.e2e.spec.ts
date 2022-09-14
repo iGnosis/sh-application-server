@@ -159,4 +159,109 @@ describe('Provider Charts Controller (e2e)', () => {
         expect(res.body.data.results).toEqual(mockDbResp);
       });
   });
+
+  it('/ (GET) - avgEngagementRatio - groupBy:day', async () => {
+    const mockDbResp = [
+      {
+        createdAt: '2022-09-11T18:30:00.000Z',
+        gamesPlayedCount: 2,
+      },
+      {
+        createdAt: '2022-09-12T18:30:00.000Z',
+        gamesPlayedCount: 3,
+      },
+    ];
+    DatabaseService.prototype.executeQuery = jest.fn().mockImplementation(() => mockDbResp);
+    const reqQueryStr = {
+      startDate: '2022-09-12T18:30:00.000Z',
+      endDate: '2022-09-15T18:30:00.000Z',
+      userTimezone: 'Asia/Kolkata',
+      patientId: '123',
+      chartType: 'avgEngagementRatio',
+      groupBy: 'day',
+    };
+
+    return request(app.getHttpServer())
+      .get(`/provider-charts?${qs.stringify(reqQueryStr)}`)
+      .expect(200)
+      .then((res) => {
+        expect(res.body).toHaveProperty('data');
+        expect(res.body.data).toHaveProperty('results');
+        expect(res.body.data.results).toEqual({
+          '2022-09-11T18:30:00.000Z': 66.67,
+          '2022-09-12T18:30:00.000Z': 100,
+        });
+        console.log(res.body.data.results);
+      });
+  });
+
+  it('/ (GET) - avgEngagementRatio - groupBy: week', async () => {
+    const mockDbResp = [
+      {
+        createdAt: '2022-09-11T18:30:00.000Z',
+        gamesPlayedCount: 2,
+      },
+      {
+        createdAt: '2022-09-12T18:30:00.000Z',
+        gamesPlayedCount: 3,
+      },
+    ];
+    DatabaseService.prototype.executeQuery = jest.fn().mockImplementation(() => mockDbResp);
+    const reqQueryStr = {
+      startDate: '2022-09-12T18:30:00.000Z',
+      endDate: '2022-09-15T18:30:00.000Z',
+      userTimezone: 'Asia/Kolkata',
+      patientId: '123',
+      chartType: 'avgEngagementRatio',
+      groupBy: 'week',
+    };
+
+    return request(app.getHttpServer())
+      .get(`/provider-charts?${qs.stringify(reqQueryStr)}`)
+      .expect(200)
+      .then((res) => {
+        expect(res.body).toHaveProperty('data');
+        expect(res.body.data).toHaveProperty('results');
+        expect(res.body.data.results).toEqual({
+          '2022-09-11T18:30:00.000Z': 9.52,
+          '2022-09-12T18:30:00.000Z': 14.29,
+        });
+        console.log(res.body.data.results);
+      });
+  });
+
+  it('/ (GET) - avgEngagementRatio - groupBy: month', async () => {
+    const mockDbResp = [
+      {
+        createdAt: '2022-09-11T18:30:00.000Z',
+        gamesPlayedCount: 2,
+      },
+      {
+        createdAt: '2022-09-12T18:30:00.000Z',
+        gamesPlayedCount: 3,
+      },
+    ];
+    DatabaseService.prototype.executeQuery = jest.fn().mockImplementation(() => mockDbResp);
+    const reqQueryStr = {
+      startDate: '2022-09-12T18:30:00.000Z',
+      endDate: '2022-09-15T18:30:00.000Z',
+      userTimezone: 'Asia/Kolkata',
+      patientId: '123',
+      chartType: 'avgEngagementRatio',
+      groupBy: 'month',
+    };
+
+    return request(app.getHttpServer())
+      .get(`/provider-charts?${qs.stringify(reqQueryStr)}`)
+      .expect(200)
+      .then((res) => {
+        expect(res.body).toHaveProperty('data');
+        expect(res.body.data).toHaveProperty('results');
+        expect(res.body.data.results).toEqual({
+          '2022-09-11T18:30:00.000Z': 2.22,
+          '2022-09-12T18:30:00.000Z': 3.33,
+        });
+        console.log(res.body.data.results);
+      });
+  });
 });
