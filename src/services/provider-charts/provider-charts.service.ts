@@ -70,46 +70,7 @@ export class ProviderChartsService {
 
   async getPatientAvgAchievement(query: PlotChartDTO) {
     if (query.isGroupByGames) {
-      const results = await this.statService.getAvgAchievementPercentageGroupByGames(query);
-      return results;
-      console.log('results:', results);
-
-      const generatedDates = this.statService.generateDates(
-        query.startDate,
-        query.endDate,
-        query.groupBy,
-      );
-      console.log('generatedDates:', generatedDates);
-
-      const plottableFormatDs = [];
-      const groupedByGames = lodashGroupBy(results, 'game');
-      console.log('groupedByGames:', groupedByGames);
-
-      for (const [gameName, gameArr] of Object.entries(groupedByGames)) {
-        const obj = {
-          game: gameName,
-          avgAchievmentPercentage: [],
-        };
-
-        const existingDates = gameArr.map((val) => new Date(val.createdAt).toISOString());
-        const stripDates = existingDates.map((val) => val.split('T')[0]);
-
-        generatedDates.forEach((gDate: string) => {
-          if (!stripDates.includes(gDate)) {
-            obj.avgAchievmentPercentage.push(0);
-          } else {
-            gameArr.forEach((game) => {
-              const strippedDate = new Date(game.createdAt).toISOString().split('T')[0];
-              if (new Date(gDate).getTime() - new Date(strippedDate).getTime() === 0) {
-                obj.avgAchievmentPercentage.push(game.avgAchievementPercentage);
-              }
-            });
-          }
-        });
-        plottableFormatDs.push(obj);
-      }
-      console.log('plottableFormatDs:', plottableFormatDs);
-      return plottableFormatDs;
+      return await this.statService.getAvgAchievementPercentageGroupByGames(query);
     } else {
       return await this.statService.getAvgAchievementPercentage(query);
     }

@@ -113,7 +113,7 @@ export class StatsService {
         result = await this.databaseService.executeQuery(
           `
             SELECT p.id, g."gamesCompleted", g.nickname, g."createdAt"
-              FROM (SELECT id from patient LIMIT $4 OFFSET $5) as p 
+              FROM (SELECT id from patient LIMIT $4 OFFSET $5) as p
               LEFT OUTER JOIN
                   (SELECT
                       DATE_TRUNC('day', timezone($3, game."createdAt")) "createdAt",
@@ -136,7 +136,7 @@ export class StatsService {
         result = await this.databaseService.executeQuery(
           `
             SELECT p.id, g."gamesCompleted", g.nickname, g."createdAt"
-              FROM (SELECT id from patient LIMIT $4 OFFSET $5) as p 
+              FROM (SELECT id from patient LIMIT $4 OFFSET $5) as p
               LEFT OUTER JOIN
                   (SELECT
                       DATE_TRUNC('day', timezone($3, game."createdAt")) "createdAt",
@@ -160,7 +160,7 @@ export class StatsService {
       result = await this.databaseService.executeQuery(
         `
         SELECT p.id, g."gamesCompleted", g.nickname, g."createdAt"
-          FROM (SELECT id from patient LIMIT $4 OFFSET $5) as p 
+          FROM (SELECT id from patient LIMIT $4 OFFSET $5) as p
           LEFT OUTER JOIN
               (SELECT
                   DATE_TRUNC('day', timezone($3, game."createdAt")) "createdAt",

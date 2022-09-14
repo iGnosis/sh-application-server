@@ -62,6 +62,13 @@ export class ProviderChartsController {
       throw new HttpException('Invalid chartType value', HttpStatus.BAD_REQUEST);
     }
 
+    try {
+      startDate = new Date(startDate);
+      endDate = new Date(endDate);
+    } catch (error) {
+      throw new HttpException(error, HttpStatus.BAD_REQUEST);
+    }
+
     // to make endDate inclusive.
     endDate = this.statsService.getFutureDate(endDate, 1);
 

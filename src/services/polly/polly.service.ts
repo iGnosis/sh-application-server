@@ -10,7 +10,7 @@ export class PollyService {
   private pollyClient;
   constructor(private configService: ConfigService) {
     const REGION = this.configService.get('AWS_DEFAULT_REGION') || 'us-east-1';
-    console.log('REGION:', REGION);
+    // console.log('REGION:', REGION);
     this.pollyClient = new Polly({ region: REGION });
   }
 
