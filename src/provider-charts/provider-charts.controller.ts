@@ -8,7 +8,7 @@ import {
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
-import { ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
+import { ApiBearerAuth } from '@nestjs/swagger';
 import { Roles } from 'src/auth/decorators/roles.decorator';
 import { Role } from 'src/auth/enums/role.enum';
 import { AuthGuard } from 'src/auth/guards/auth.guard';
@@ -23,7 +23,6 @@ import {
   SortBy,
   SortDirection,
 } from 'src/types/provider-charts';
-import { groupBy as lodashGroupBy } from 'lodash';
 import { StatsService } from 'src/patient/stats/stats.service';
 
 @Roles(Role.THERAPIST)

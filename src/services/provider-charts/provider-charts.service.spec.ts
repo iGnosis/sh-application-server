@@ -1,7 +1,6 @@
 import { ConfigService } from '@nestjs/config';
 import { Test, TestingModule } from '@nestjs/testing';
 import { DatabaseModule } from 'src/database/database.module';
-import { DatabaseService } from 'src/database/database.service';
 import { StatsService } from 'src/patient/stats/stats.service';
 import { GqlService } from '../gql/gql.service';
 import { ProviderChartsService } from './provider-charts.service';

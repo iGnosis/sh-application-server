@@ -2,7 +2,7 @@ import { ConfigService } from '@nestjs/config';
 import { Test, TestingModule } from '@nestjs/testing';
 import { GqlService } from '../gql/gql.service';
 import { AggregateAnalyticsService } from './aggregate-analytics.service';
-import { AnalyticsDTO, Sit2StandAnalyticsDTO } from 'src/types/analytics';
+import { AnalyticsDTO } from 'src/types/analytics';
 
 describe('AggregateAnalyticsService', () => {
   let service: AggregateAnalyticsService;

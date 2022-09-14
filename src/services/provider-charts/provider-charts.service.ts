@@ -1,5 +1,4 @@
-import { HttpCode, HttpException, HttpStatus, Injectable } from '@nestjs/common';
-import { groupBy as lodashGroupBy } from 'lodash';
+import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { StatsService } from 'src/patient/stats/stats.service';
 import { AnalyticsDTO } from 'src/types/analytics';
 import { GroupBy, PlotChartDTO, PlotHeatmapDTO } from 'src/types/provider-charts';
@@ -12,30 +11,6 @@ export class ProviderChartsService {
     // TODO: get activity count dynamically!
     this.numberOfGamesAvailable = 3;
   }
-
-  getOverviewChart(startDate: Date, endDate: Date, cache = true) {
-    throw new Error('Not Yet Implemented.');
-
-    // Easy.
-    // fetch all the patients
-    // fetch patients' games within the date ranges
-    // --> Store the number of games played
-    // --> figure out their average session completion
-    // --> figure out their average achievement ratio
-
-    const apiResponse = {
-      // x --> avg session completion
-      // y --> avg achievement ratio
-      // pid --> nickname
-      data: [
-        { x: 20, y: 30, r: 10, pid: 'anakin' },
-        { x: 40, y: 10, r: 25, pid: 'obiwan' },
-        { x: 55, y: 47, r: 18, pid: 'leia' },
-      ],
-    };
-    return apiResponse;
-  }
-
   async getGameAchievementRatio(gameId: string) {
     const query = `
       query GetGameAnalytics($gameId: uuid!) {
@@ -133,17 +108,7 @@ export class ProviderChartsService {
     }
 
     const results = await this.statService.getPatientAdherence(startDate, endDate, groupBy);
-    const filteredPatients = results.filter((val) => val.numOfGamesPlayed >= numOfGamesToBePlayed);
-    return filteredPatients;
-
-    /*
-        const apiResponse = {
-          labels: ['Active Patients', 'Inactive Patients'],
-          pieChartDataset: [11, 4],
-          backgroundColor: ['#ffa2ad', '#2f51ae'],
-        };
-        return apiResponse;
-    */
+    return results.filter((val) => val.numOfGamesPlayed >= numOfGamesToBePlayed);
   }
 
   // TOOD: remove this function

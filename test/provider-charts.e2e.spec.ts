@@ -5,9 +5,7 @@ import { ExecutionContext, INestApplication } from '@nestjs/common';
 import { AuthGuard } from 'src/auth/guards/auth.guard';
 import { DatabaseService } from 'src/database/database.service';
 import { DatabaseModule } from 'src/database/database.module';
-import { StatsService } from 'src/patient/stats/stats.service';
 import * as qs from 'qs';
-import { PlotChartDTO } from 'src/types/provider-charts';
 
 describe('Provider Charts Controller (e2e)', () => {
   let app: INestApplication;
@@ -226,7 +224,6 @@ describe('Provider Charts Controller (e2e)', () => {
           '2022-09-11T18:30:00.000Z': 9.52,
           '2022-09-12T18:30:00.000Z': 14.29,
         });
-        console.log(res.body.data.results);
       });
   });
 
