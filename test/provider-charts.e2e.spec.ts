@@ -45,12 +45,12 @@ describe('Provider Charts Controller (e2e)', () => {
     const mockDbResp = [
       {
         createdAt: '2022-09-12T18:30:00.000Z',
-        game: 'Sit Stand Achieve',
+        game: 'sit_stand_achieve',
         avgAchievementPercentage: '78',
       },
       {
         createdAt: '2022-09-12T18:30:00.000Z',
-        game: 'Sit Stand Achieve',
+        game: 'sit_stand_achieve',
         avgAchievementPercentage: '90',
       },
     ];
@@ -79,7 +79,6 @@ describe('Provider Charts Controller (e2e)', () => {
     const mockDbResp = [
       {
         createdAt: '2022-09-11T18:30:00.000Z',
-        game: 'Sit Stand Achieve',
         avgAchievementPercentage: '84',
       },
     ];
@@ -91,7 +90,64 @@ describe('Provider Charts Controller (e2e)', () => {
       patientId: '123',
       chartType: 'avgAchievementRatio',
       groupBy: 'week',
+      isGroupByGames: false,
+    };
+
+    return request(app.getHttpServer())
+      .get(`/provider-charts?${qs.stringify(reqQueryStr)}`)
+      .expect(200)
+      .then((res) => {
+        expect(res.body).toHaveProperty('data');
+        expect(res.body.data).toHaveProperty('results');
+        expect(res.body.data.results).toEqual(mockDbResp);
+      });
+  });
+
+  it('/ (GET) - getAvgCompletionTimeInSecGroupByGames', async () => {
+    const mockDbResp = [
+      {
+        createdAt: '2022-09-11T18:30:00.000Z',
+        game: 'sit_stand_achieve',
+        avgAchievementPercentage: '84',
+      },
+    ];
+    DatabaseService.prototype.executeQuery = jest.fn().mockImplementation(() => mockDbResp);
+    const reqQueryStr = {
+      startDate: '2022-09-12T18:30:00.000Z',
+      endDate: '2022-09-15T18:30:00.000Z',
+      userTimezone: 'Asia/Kolkata',
+      patientId: '123',
+      chartType: 'avgCompletionTime',
+      groupBy: 'week',
       isGroupByGames: true,
+    };
+
+    return request(app.getHttpServer())
+      .get(`/provider-charts?${qs.stringify(reqQueryStr)}`)
+      .expect(200)
+      .then((res) => {
+        expect(res.body).toHaveProperty('data');
+        expect(res.body.data).toHaveProperty('results');
+        expect(res.body.data.results).toEqual(mockDbResp);
+      });
+  });
+
+  it('/ (GET) - getAvgCompletionTimeInSec', async () => {
+    const mockDbResp = [
+      {
+        createdAt: '2022-09-11T18:30:00.000Z',
+        avgCompletionTimePerRepInSec: '2.12',
+      },
+    ];
+    DatabaseService.prototype.executeQuery = jest.fn().mockImplementation(() => mockDbResp);
+    const reqQueryStr = {
+      startDate: '2022-09-12T18:30:00.000Z',
+      endDate: '2022-09-15T18:30:00.000Z',
+      userTimezone: 'Asia/Kolkata',
+      patientId: '123',
+      chartType: 'avgCompletionTime',
+      groupBy: 'week',
+      isGroupByGames: false,
     };
 
     return request(app.getHttpServer())
