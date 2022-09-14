@@ -458,16 +458,6 @@ export class StatsService {
     return { daysCompleted, groupByCreatedAtDayGames: groupByRes };
   }
 
-  // TODO: clean this up
-  // async updateActiveDays(patientId: string, activeDays: number) {
-  //   const updateActiveDaysQuery = `mutation UpdatePatientActiveDays($patientId: uuid!, $activeDays: Int!) {
-  //     update_patient(where: {id: {_eq: $patientId}}, _set: {activeDays: $activeDays}) {
-  //       affected_rows
-  //     }
-  //   }`;
-  //   await this.gqlService.client.request(updateActiveDaysQuery, { patientId, activeDays });
-  // }
-
   workOutStreak(days: Array<MonthlyGoalsApiResponse>) {
     let streak = 0;
     let mostRecentDate = new Date(new Date().setHours(0, 0, 0, 0));
@@ -494,8 +484,16 @@ export class StatsService {
     return new Date(currentDate.getTime() - 86400000 * numOfDaysInPast);
   }
 
+  /**
+   * month is indexed from 1.
+   * ie. 1 = January, 12 = December
+   *
+   * @param year
+   * @param month
+   * @returns number of days in a given month & a year.
+   */
   getDaysInMonth(year: number, month: number) {
-    return new Date(year, month, 0).getUTCDate();
+    return new Date(year, month, 0).getDate();
   }
 
   getDiffInDays(startDate: Date, endDate: Date) {

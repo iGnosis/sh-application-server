@@ -90,10 +90,16 @@ export class ProviderChartsService {
     const engagementResultSet = {};
     results.forEach((result) => {
       if (query.groupBy === 'month') {
-        const currentYear = new Date(result.createdAt).getUTCFullYear();
-        const currentMonth = new Date(result.createdAt).getUTCMonth();
-        const noOfDays = this.statService.getDaysInMonth(currentYear, currentMonth);
+        const currentYear = new Date(result.createdAt).getFullYear();
+        const currentMonth = new Date(result.createdAt).getMonth();
+        const noOfDays = this.statService.getDaysInMonth(currentYear, currentMonth + 1);
         numOfGamesToBePlayed = noOfDays * this.numberOfGamesAvailable;
+        console.table({
+          currentYear,
+          currentMonth,
+          noOfDays,
+          numOfGamesToBePlayed,
+        });
       }
 
       const key = new Date(result.createdAt).toISOString();
@@ -119,10 +125,11 @@ export class ProviderChartsService {
     }
 
     if (groupBy === 'month') {
-      const currentYear = new Date().getUTCFullYear();
-      const currentMonth = new Date().getUTCMonth();
+      const currentYear = new Date().getFullYear();
+      const currentMonth = new Date().getMonth();
       numOfGamesToBePlayed =
-        this.statService.getDaysInMonth(currentYear, currentMonth) * this.numberOfGamesAvailable;
+        this.statService.getDaysInMonth(currentYear, currentMonth + 1) *
+        this.numberOfGamesAvailable;
     }
 
     const results = await this.statService.getPatientAdherence(startDate, endDate, groupBy);

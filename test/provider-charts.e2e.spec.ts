@@ -237,14 +237,14 @@ describe('Provider Charts Controller (e2e)', () => {
         gamesPlayedCount: 2,
       },
       {
-        createdAt: '2022-09-12T18:30:00.000Z',
+        createdAt: '2022-10-12T18:30:00.000Z',
         gamesPlayedCount: 3,
       },
     ];
     DatabaseService.prototype.executeQuery = jest.fn().mockImplementation(() => mockDbResp);
     const reqQueryStr = {
       startDate: '2022-09-12T18:30:00.000Z',
-      endDate: '2022-09-15T18:30:00.000Z',
+      endDate: '2022-10-15T18:30:00.000Z',
       userTimezone: 'Asia/Kolkata',
       patientId: '123',
       chartType: 'avgEngagementRatio',
@@ -259,9 +259,8 @@ describe('Provider Charts Controller (e2e)', () => {
         expect(res.body.data).toHaveProperty('results');
         expect(res.body.data.results).toEqual({
           '2022-09-11T18:30:00.000Z': 2.22,
-          '2022-09-12T18:30:00.000Z': 3.33,
+          '2022-10-12T18:30:00.000Z': 3.23,
         });
-        console.log(res.body.data.results);
       });
   });
 });
