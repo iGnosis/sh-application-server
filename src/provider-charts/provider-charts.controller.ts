@@ -8,7 +8,7 @@ import {
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
-import { ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
+import { ApiBearerAuth } from '@nestjs/swagger';
 import { Roles } from 'src/auth/decorators/roles.decorator';
 import { Role } from 'src/auth/enums/role.enum';
 import { AuthGuard } from 'src/auth/guards/auth.guard';
@@ -23,7 +23,6 @@ import {
   SortBy,
   SortDirection,
 } from 'src/types/provider-charts';
-import { groupBy as lodashGroupBy } from 'lodash';
 import { StatsService } from 'src/patient/stats/stats.service';
 
 @Roles(Role.THERAPIST)
@@ -60,6 +59,13 @@ export class ProviderChartsController {
     }
     if (!validChartTypeValues.includes(chartType)) {
       throw new HttpException('Invalid chartType value', HttpStatus.BAD_REQUEST);
+    }
+
+    try {
+      startDate = new Date(startDate);
+      endDate = new Date(endDate);
+    } catch (error) {
+      throw new HttpException(error, HttpStatus.BAD_REQUEST);
     }
 
     // to make endDate inclusive.
@@ -143,28 +149,5 @@ export class ProviderChartsController {
     const totalNumOfPatients = await this.statsService.getTotalPatientCount();
     const activePatientsCount = results.length;
     return { activePatientsCount, totalNumOfPatients };
-  }
-
-  // TODO: remove this API, and instead use a generic one.
-  @HttpCode(200)
-  @Get('patient/engagement-ratio')
-  async getPatientEngagement(
-    @Query('startDate') startDate: Date,
-    @Query('endDate') endDate: Date,
-    @Query('userTimezone') userTimezone: string,
-    @Query('patientId') patientId: string,
-  ) {
-    const results = await this.providerChartsService.getPatientEngagementTemp(
-      patientId,
-      startDate,
-      endDate,
-      userTimezone,
-    );
-
-    console.log('getPatientEngagement:results:', results);
-
-    return {
-      ...results,
-    };
   }
 }

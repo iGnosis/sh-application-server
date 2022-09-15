@@ -86,6 +86,10 @@ jobs:
          npm install
          npm run build
 
+      - name: Run test cases
+        run: |
+         npm run test
+
       - name: Copy Files Over Remote Server
         run: |
           rsync -avzr --delete \

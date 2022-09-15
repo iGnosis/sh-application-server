@@ -1,4 +1,4 @@
-import { Logger, Module } from '@nestjs/common';
+import { Global, Logger, Module } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { ModuleRef } from '@nestjs/core';
 import { Pool } from 'pg';
@@ -18,6 +18,7 @@ const databasePoolFactory = async (configService: ConfigService) => {
   });
 };
 
+@Global()
 @Module({
   providers: [
     {
@@ -26,6 +27,7 @@ const databasePoolFactory = async (configService: ConfigService) => {
       useFactory: databasePoolFactory,
     },
     DatabaseService,
+    ConfigService,
   ],
   exports: [DatabaseService],
 })
