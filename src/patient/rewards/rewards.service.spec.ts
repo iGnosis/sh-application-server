@@ -8,11 +8,14 @@ describe('RewardsService', () => {
   let service: RewardsService;
   let rewards: Reward[];
 
-  beforeEach(async () => {
+  beforeAll(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [RewardsService, GqlService, EventsService, ConfigService],
     }).compile();
     service = module.get<RewardsService>(RewardsService);
+  });
+
+  beforeEach(async () => {
     rewards = [
       {
         tier: 'bronze',
