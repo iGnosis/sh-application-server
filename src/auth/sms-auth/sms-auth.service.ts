@@ -86,10 +86,10 @@ export class SmsAuthService {
 
     if (userRole === 'therapist') {
       query = `mutation InsertTherapist($phoneCountryCode: String!, $phoneNumber: String!) {
-                insert_user(objects: {phoneCountryCode: $phoneCountryCode, phoneNumber: $phoneNumber, type: therapist}) {
-                   affected_rows
-                }
-              }`;
+        insert_user(objects: {phoneCountryCode: $phoneCountryCode, phoneNumber: $phoneNumber, type: therapist}) {
+            affected_rows
+        }
+      }`;
     }
 
     try {
@@ -136,7 +136,7 @@ export class SmsAuthService {
     }
   }
 
-  generateJwtToken(userRole: string, user: Patient | User) {
+  generateJwtToken(userRole: 'patient' | 'therapist', user: Patient | User) {
     const key = JSON.parse(this.configService.get('JWT_SECRET'));
 
     // JWT token remains valid for 24 hours.
