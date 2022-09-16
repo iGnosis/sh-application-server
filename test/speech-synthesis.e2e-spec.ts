@@ -22,7 +22,7 @@ describe('Speech Synthesis Controller (e2e)', () => {
   it('/speech/generate (GET)', () => {
     return request(app.getHttpServer())
       .get('/speech/generate?text=hello+world+this+is+test')
-      .expect('Content-Type', 'audio/mpeg')
+      .expect('Content-Type', /audio\/mpeg*/)
       .expect(200);
   });
 });
