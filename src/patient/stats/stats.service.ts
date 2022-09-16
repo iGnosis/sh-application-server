@@ -456,7 +456,6 @@ export class StatsService {
     }
     return { daysCompleted, groupByCreatedAtDayGames: groupByRes };
   }
-
   getFutureDate(currentDate: Date, numOfDaysInFuture: number) {
     return new Date(currentDate.getTime() + 86400000 * numOfDaysInFuture);
   }
