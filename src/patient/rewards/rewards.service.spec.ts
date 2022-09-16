@@ -184,19 +184,19 @@ describe('RewardsService', () => {
   });
 
   describe('should mark rewards as accessed', () => {
-    it('should mark a bronze reward as viewed', async () => {
+    it('should mark a bronze reward as accessed', async () => {
       const res = await service.markRewardAsAccessed(rewards, 'bronze');
       expect(res).toHaveLength(3);
       expect(res[0].isAccessed).toBe(true);
     });
 
-    it('should mark a silver reward as viewed', async () => {
+    it('should mark a silver reward as accessed', async () => {
       const res = await service.markRewardAsAccessed(rewards, 'silver');
       expect(res).toHaveLength(3);
       expect(res[1].isAccessed).toBe(true);
     });
 
-    it('should mark a gold reward as viewed', async () => {
+    it('should mark a gold reward as accessed', async () => {
       const res = await service.markRewardAsAccessed(rewards, 'gold');
       expect(res).toHaveLength(3);
       expect(res[2].isAccessed).toBe(true);
