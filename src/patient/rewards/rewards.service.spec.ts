@@ -122,47 +122,6 @@ describe('RewardsService', () => {
     });
   });
 
-  it('should send pinpoint unlocked reward event', async () => {
-    const unlockedRewards: Reward[] = [
-      {
-        tier: 'bronze',
-        isViewed: false,
-        isAccessed: false,
-        isUnlocked: true,
-        couponCode: 'XYZ',
-        description: '',
-        unlockAtDayCompleted: 5,
-      },
-      {
-        tier: 'silver',
-        isViewed: false,
-        isAccessed: false,
-        isUnlocked: true,
-        couponCode: 'PQE',
-        description: '',
-        unlockAtDayCompleted: 10,
-      },
-      {
-        tier: 'gold',
-        isViewed: false,
-        isAccessed: false,
-        isUnlocked: false,
-        couponCode: 'PQE',
-        description: '',
-        unlockAtDayCompleted: 15,
-      },
-    ];
-    const unlockedRewardsTier = await service.sendRewardsUnlockedEvent(
-      '123',
-      rewards,
-      unlockedRewards,
-    );
-    expect(unlockedRewardsTier).toBeTruthy();
-    expect(unlockedRewardsTier).toContain('bronze');
-    expect(unlockedRewardsTier).toContain('silver');
-    expect(unlockedRewardsTier).not.toContain('gold');
-  });
-
   describe('should mark rewards as viewed', () => {
     it('should mark a bronze reward as viewed', async () => {
       const res = await service.markRewardAsViewed(rewards, 'bronze');
