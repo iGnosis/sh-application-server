@@ -4,7 +4,6 @@ import { groupBy as lodashGroupBy, merge as lodashMerge } from 'lodash';
 import { DatabaseService } from 'src/database/database.service';
 import { GqlService } from 'src/services/gql/gql.service';
 import { GroupBy, PlotChartDTO, PlotHeatmapDTO } from 'src/types/provider-charts';
-import { MonthlyGoalsApiResponse } from '../../types/stats';
 import * as moment from 'moment';
 
 @Injectable()
@@ -456,24 +455,6 @@ export class StatsService {
       }
     }
     return { daysCompleted, groupByCreatedAtDayGames: groupByRes };
-  }
-
-  workOutStreak(days: Array<MonthlyGoalsApiResponse>) {
-    let streak = 0;
-    let mostRecentDate = new Date(new Date().setHours(0, 0, 0, 0));
-    const activeDays = days.filter((day) => day.activityEndedCount >= 3);
-
-    for (let i = 0; i < activeDays.length; i++) {
-      const dayCreatedAt = new Date(activeDays[i].createdAtLocaleDate);
-      const diff = mostRecentDate.getTime() - dayCreatedAt.getTime();
-      if (diff === 0 || diff == 86400000) {
-        streak++;
-      } else {
-        break;
-      }
-      mostRecentDate = dayCreatedAt;
-    }
-    return streak;
   }
 
   getFutureDate(currentDate: Date, numOfDaysInFuture: number) {
