@@ -6,7 +6,7 @@ import { Patient } from 'src/types/patient';
 import { User } from 'src/types/user';
 import { SmsAuthService } from './sms-auth.service';
 
-describe('sms auth service', () => {
+describe('SmsAuthService', () => {
   let service: SmsAuthService;
   beforeAll(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -29,7 +29,6 @@ describe('sms auth service', () => {
 
   it('should detect expired OTP issued at', () => {
     // given
-
     // otp remains valid for 30 minutes.
     const msInHalfHour = 31 * 60 * 1000;
     const issuedAt = new Date().getTime() - msInHalfHour;
