@@ -24,17 +24,7 @@ export class EventsService {
   constructor(private configService: ConfigService) {
     this.REGION = this.configService.get('AWS_DEFAULT_REGION') || 'us-east-1';
     this.projectId = this.configService.get('PINPOINT_PROJECT_ID');
-
-    // TODO: remove hardcoded keys. Use IAM roles instead.
-    // TODO: a new pinpoint project per env.
-    this.pinpoint = new Pinpoint({
-      region: this.REGION,
-      endpoint: 'https://pinpoint.us-east-1.amazonaws.com',
-      credentials: {
-        accessKeyId: 'AKIASYR4W4DVRO6KNAVL',
-        secretAccessKey: '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',
-      },
-    });
+    this.pinpoint = new Pinpoint({ region: this.REGION });
   }
 
   async updateEndpoint(details: Details, endpointId: string, type: 'patient' | 'therapist') {

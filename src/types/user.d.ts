@@ -33,6 +33,5 @@ interface HasuraClaims {
   'x-hasura-allowed-roles': Array<string>;
   'x-hasura-user-id': string;
   'x-hasura-default-role': string;
-  'x-hasura-provider-id': string;
   'x-hasura-careplan-id': string;
 }

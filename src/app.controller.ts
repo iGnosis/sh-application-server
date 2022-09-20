@@ -12,7 +12,6 @@ import { TransformResponseInterceptor } from './interceptor/transform-response.i
 @Controller()
 export class AppController {
   constructor(private readonly appService: AppService) {}
-
   @Get()
   getHello(): string {
     return this.appService.getHello();
@@ -21,7 +20,6 @@ export class AppController {
   @Roles(Role.PATIENT)
   @UseGuards(AuthGuard, RolesGuard)
   @ApiBearerAuth('access-token')
-  @HttpCode(200)
   @Get('auth-check/patient')
   authCheckPatient(@User() userId: string) {
     return {

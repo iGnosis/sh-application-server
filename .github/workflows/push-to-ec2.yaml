@@ -86,6 +86,11 @@ jobs:
          npm install
          npm run build
 
+      # TODO: Put tests in CI once you create a env file dynamically.
+      # - name: Run test cases
+      #   run: |
+      #    npm run test
+
       - name: Copy Files Over Remote Server
         run: |
           rsync -avzr --delete \

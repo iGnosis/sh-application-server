@@ -14,7 +14,7 @@ export type AnalyticsReactionDTO = {
   type: string;
   timestamp: number; // placeholder value.
   startTime: number; // placeholder value.
-  completionTime: number | null; // completion time in seconds.
+  completionTime?: number; // completion time in seconds.
 };
 
 export type AnalyticsResultDTO = {

@@ -3,8 +3,7 @@ import { Dictionary } from 'lodash';
 import { groupBy as lodashGroupBy, merge as lodashMerge } from 'lodash';
 import { DatabaseService } from 'src/database/database.service';
 import { GqlService } from 'src/services/gql/gql.service';
-import { GroupBy, PlotChartDTO } from 'src/types/provider-charts';
-import { MonthlyGoalsApiResponse } from '../../types/stats';
+import { GroupBy, PlotChartDTO, PlotHeatmapDTO } from 'src/types/provider-charts';
 import * as moment from 'moment';
 
 @Injectable()
@@ -104,88 +103,136 @@ export class StatsService {
     return result;
   }
 
-  async getPatientsDailyCompletion(query: PlotChartDTO) {
+  async getPatientsMonthlyCompletion(query: PlotHeatmapDTO) {
     const { startDate, endDate, userTimezone, sortBy, sortDirection, showInactive, limit, offset } =
       query;
-    const result: any[] = await this.databaseService.executeQuery(
-      `
-      SELECT
-          DATE_TRUNC('day', timezone($3, game."createdAt")) "createdAt",
-          COUNT(game.game) AS games_completed,
-          patient.nickname, patient.id
-      FROM game
-      RIGHT JOIN patient
-      ON game.patient = patient.id
-      WHERE
-        game."endedAt" IS NOT NULL AND
-        patient.id IN (SELECT id FROM patient LIMIT $4 OFFSET $5) AND
-        game."createdAt" >= $1 AND
-        game."createdAt" < $2
-      GROUP BY
-            DATE_TRUNC('day', timezone($3, game."createdAt")),
-            patient.id
-      ORDER BY ${
-        sortBy === 'recentActivity' ? '"createdAt" ' + sortDirection.toUpperCase() : 'patient.id'
-      }`,
-      [startDate, endDate, userTimezone, limit, offset],
-    );
-    const pages = await this.databaseService.executeQuery(
+    let result: any[];
+    if (sortBy === 'recentActivity') {
+      if (sortDirection === 'desc') {
+        result = await this.databaseService.executeQuery(
+          `
+            SELECT p.id, g."gamesCompleted", g.nickname, g."createdAt"
+              FROM (SELECT id from patient LIMIT $4 OFFSET $5) as p
+              LEFT OUTER JOIN
+                  (SELECT
+                      DATE_TRUNC('day', timezone($3, game."createdAt")) "createdAt",
+                      COUNT(*) FILTER(WHERE game."endedAt" IS NOT NULL) "gamesCompleted",
+                      patient.nickname, patient.id
+                  FROM game
+                  RIGHT JOIN patient
+                  ON game.patient = patient.id
+                  WHERE
+                    game."createdAt" BETWEEN $1 AND $2
+                  GROUP BY
+                        DATE_TRUNC('day', timezone($3, game."createdAt")),
+                        patient.id
+                  ORDER BY DATE_TRUNC('day', timezone($3, game."createdAt")) DESC) as g
+              ON g.id = p.id
+            `,
+          [startDate, endDate, userTimezone, limit, offset],
+        );
+      } else {
+        result = await this.databaseService.executeQuery(
+          `
+            SELECT p.id, g."gamesCompleted", g.nickname, g."createdAt"
+              FROM (SELECT id from patient LIMIT $4 OFFSET $5) as p
+              LEFT OUTER JOIN
+                  (SELECT
+                      DATE_TRUNC('day', timezone($3, game."createdAt")) "createdAt",
+                      COUNT(*) FILTER(WHERE game."endedAt" IS NOT NULL) "gamesCompleted",
+                      patient.nickname, patient.id
+                  FROM game
+                  RIGHT JOIN patient
+                  ON game.patient = patient.id
+                  WHERE
+                    game."createdAt" BETWEEN $1 AND $2
+                  GROUP BY
+                        DATE_TRUNC('day', timezone($3, game."createdAt")),
+                        patient.id
+                  ORDER BY DATE_TRUNC('day', timezone($3, game."createdAt")) ASC) as g
+              ON g.id = p.id
+            `,
+          [startDate, endDate, userTimezone, limit, offset],
+        );
+      }
+    } else {
+      result = await this.databaseService.executeQuery(
+        `
+        SELECT p.id, g."gamesCompleted", g.nickname, g."createdAt"
+          FROM (SELECT id from patient LIMIT $4 OFFSET $5) as p
+          LEFT OUTER JOIN
+              (SELECT
+                  DATE_TRUNC('day', timezone($3, game."createdAt")) "createdAt",
+                  COUNT(*) FILTER(WHERE game."endedAt" IS NOT NULL) "gamesCompleted",
+                  patient.nickname, patient.id
+              FROM game
+              RIGHT JOIN patient
+              ON game.patient = patient.id
+              WHERE
+                game."createdAt" BETWEEN $1 AND $2
+              GROUP BY
+                    DATE_TRUNC('day', timezone($3, game."createdAt")),
+                    patient.id
+              ORDER BY patient.id) as g
+          ON g.id = p.id`,
+        [startDate, endDate, userTimezone, limit, offset],
+      );
+    }
+    const noOfPages = await this.databaseService.executeQuery(
       `
       SELECT CEILING(CEILING(COUNT(*))/$1) FROM patient`,
       [limit],
     );
-    let groupedResult = result.reduce(function (r, a) {
-      r[a.nickname] = r[a.nickname] || [];
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      const { nickname, ...rest } = a;
-      r[a.nickname].push(rest);
-      return r;
-    }, Object.create(null));
-    if (sortBy === 'overallActivity') {
-      groupedResult = this.sortByOverallActivity(groupedResult, sortDirection);
+    let groupedResult = [];
+    if (result) {
+      groupedResult = result.reduce((acc, val) => {
+        if (acc.findIndex((v) => val.id === Object.keys(v)[0]) === -1) {
+          acc.push({
+            [val.id]: [],
+          });
+        }
+        return acc;
+      }, []);
+
+      result.forEach((val) => {
+        const idx = groupedResult.findIndex((v) => Object.keys(v)[0] === val.id);
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        const { id, ...data } = val;
+        groupedResult[idx][val.id].push(data);
+      });
+      if (sortBy === 'overallActivity') {
+        groupedResult = this.sortByOverallActivity(groupedResult, sortDirection);
+      }
+      if (!showInactive) {
+        groupedResult = this.hideInactivePatients(groupedResult);
+      }
     }
-    if (!showInactive) {
-      groupedResult = this.hideInactive(groupedResult);
-    }
-    return { result: groupedResult, pages: pages[0].ceiling };
+    return { result: groupedResult, pages: noOfPages[0].ceiling };
   }
 
-  sortByOverallActivity(groupedResult: any, sortDirection = 'desc') {
+  private sortByOverallActivity(groupedResult: any[], sortDirection = 'desc') {
     const sumArrayOfObjectProperty = (arr: any, key: string) =>
       arr.reduce((a: any, b: any) => a + (Number(b[key]) || 0), 0);
-    const sortByMonthlyCompletion = (a: string, b: string) => {
-      const aSum = sumArrayOfObjectProperty(groupedResult[a], 'games_completed');
-      const bSum = sumArrayOfObjectProperty(groupedResult[b], 'games_completed');
+    const sortByMonthlyCompletion = (a: any, b: any) => {
+      const aName = Object.keys(a)[0];
+      const bName = Object.keys(b)[0];
+      const aSum = sumArrayOfObjectProperty(a[aName], 'gamesCompleted');
+      const bSum = sumArrayOfObjectProperty(b[bName], 'gamesCompleted');
       return sortDirection === 'desc' ? bSum - aSum : aSum - bSum;
     };
 
-    return Object.keys(groupedResult)
-      .sort(sortByMonthlyCompletion)
-      .reduce(
-        (acc, key) => ({
-          ...acc,
-          [key]: groupedResult[key],
-        }),
-        {},
-      );
+    return groupedResult.sort(sortByMonthlyCompletion);
   }
 
-  hideInactive(groupedResult: any) {
+  private hideInactivePatients(groupedResult: any[]) {
     const sumArrayOfObjectProperty = (arr: any, key: string) =>
       arr.reduce((a: any, b: any) => a + (Number(b[key]) || 0), 0);
-    const filterInactive = (key: string) => {
-      const sum = sumArrayOfObjectProperty(groupedResult[key], 'games_completed');
+    const filterInactive = (obj: any) => {
+      const name = Object.keys(obj)[0];
+      const sum = sumArrayOfObjectProperty(obj[name], 'gamesCompleted');
       return sum > 0;
     };
-    return Object.keys(groupedResult)
-      .filter(filterInactive)
-      .reduce(
-        (acc, key) => ({
-          ...acc,
-          [key]: groupedResult[key],
-        }),
-        {},
-      );
+    return groupedResult.filter(filterInactive);
   }
 
   async getAvgAchievementPercentage(query: PlotChartDTO) {
@@ -409,35 +456,6 @@ export class StatsService {
     }
     return { daysCompleted, groupByCreatedAtDayGames: groupByRes };
   }
-
-  // TODO: clean this up
-  // async updateActiveDays(patientId: string, activeDays: number) {
-  //   const updateActiveDaysQuery = `mutation UpdatePatientActiveDays($patientId: uuid!, $activeDays: Int!) {
-  //     update_patient(where: {id: {_eq: $patientId}}, _set: {activeDays: $activeDays}) {
-  //       affected_rows
-  //     }
-  //   }`;
-  //   await this.gqlService.client.request(updateActiveDaysQuery, { patientId, activeDays });
-  // }
-
-  workOutStreak(days: Array<MonthlyGoalsApiResponse>) {
-    let streak = 0;
-    let mostRecentDate = new Date(new Date().setHours(0, 0, 0, 0));
-    const activeDays = days.filter((day) => day.activityEndedCount >= 3);
-
-    for (let i = 0; i < activeDays.length; i++) {
-      const dayCreatedAt = new Date(activeDays[i].createdAtLocaleDate);
-      const diff = mostRecentDate.getTime() - dayCreatedAt.getTime();
-      if (diff === 0 || diff == 86400000) {
-        streak++;
-      } else {
-        break;
-      }
-      mostRecentDate = dayCreatedAt;
-    }
-    return streak;
-  }
-
   getFutureDate(currentDate: Date, numOfDaysInFuture: number) {
     return new Date(currentDate.getTime() + 86400000 * numOfDaysInFuture);
   }
@@ -446,8 +464,16 @@ export class StatsService {
     return new Date(currentDate.getTime() - 86400000 * numOfDaysInPast);
   }
 
+  /**
+   * month is indexed from 1.
+   * ie. 1 = January, 12 = December
+   *
+   * @param year
+   * @param month
+   * @returns number of days in a given month & a year.
+   */
   getDaysInMonth(year: number, month: number) {
-    return new Date(year, month, 0).getUTCDate();
+    return new Date(year, month, 0).getDate();
   }
 
   getDiffInDays(startDate: Date, endDate: Date) {

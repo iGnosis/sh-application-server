@@ -11,5 +11,5 @@ interface Reward {
 }
 
 interface PatientRewards {
-  rewards: Array<Reward>;
+  rewards: Reward[];
 }
