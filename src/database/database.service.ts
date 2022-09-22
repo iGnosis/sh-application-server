@@ -15,4 +15,8 @@ export class DatabaseService {
       return result.rows;
     });
   }
+
+  getConnectionPool() {
+    return this.pool;
+  }
 }
