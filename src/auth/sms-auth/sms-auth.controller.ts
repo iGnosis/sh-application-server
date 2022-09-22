@@ -23,8 +23,9 @@ export class SmsAuthController {
   @HttpCode(200)
   @Post('login')
   async login(@Body() body: SMSLoginBody, @Headers('x-pointmotion-user') userRole: string) {
-    if (!userRole || (userRole !== 'patient' && userRole !== 'therapist'))
+    if (!userRole || (userRole !== 'patient' && userRole !== 'therapist')) {
       throw new HttpException('Invalid Request', HttpStatus.BAD_REQUEST);
+    }
 
     const { phoneCountryCode, phoneNumber } = body;
     const otp = this.smsAuthService.generateOtp();
@@ -47,8 +48,9 @@ export class SmsAuthController {
 
   @Post('resend-otp')
   async resendOtp(@Body() body: SMSLoginBody, @Headers('x-pointmotion-user') userRole: string) {
-    if (!userRole || (userRole !== 'patient' && userRole !== 'therapist'))
+    if (!userRole || (userRole !== 'patient' && userRole !== 'therapist')) {
       throw new HttpException('Invalid Request', HttpStatus.BAD_REQUEST);
+    }
 
     const { phoneCountryCode, phoneNumber } = body;
 
@@ -80,8 +82,9 @@ export class SmsAuthController {
 
   @Post('verify-otp')
   async verifyOtp(@Body() body: SMSVerifyBody, @Headers('x-pointmotion-user') userRole: string) {
-    if (!userRole || (userRole !== 'patient' && userRole !== 'therapist'))
+    if (!userRole || (userRole !== 'patient' && userRole !== 'therapist')) {
       throw new HttpException('Invalid Request', HttpStatus.BAD_REQUEST);
+    }
 
     const { otp: recievedOtp, phoneCountryCode, phoneNumber } = body;
     let user: User | Patient;

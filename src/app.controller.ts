@@ -13,8 +13,9 @@ import { TransformResponseInterceptor } from './interceptor/transform-response.i
 export class AppController {
   constructor(private readonly appService: AppService) {}
   @Get()
-  getHello(): string {
-    return this.appService.getHello();
+  ping(): string {
+    // used by Route53 to Heath Check.
+    return this.appService.ping();
   }
 
   @Roles(Role.PATIENT)

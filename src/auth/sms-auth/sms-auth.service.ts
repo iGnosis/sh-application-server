@@ -139,13 +139,13 @@ export class SmsAuthService {
   generateJwtToken(userRole: 'patient' | 'therapist', user: Patient | User) {
     const key = JSON.parse(this.configService.get('JWT_SECRET'));
 
-    // JWT token remains valid for 24 hours.
-    const expOffset = 60 * 60 * 24;
+    // JWT token remains valid for 30 days.
+    const expOffset = 60 * 60 * 24 * 30;
 
     // issued at in seconds (as per JWT standards).
     const iat = parseInt(`${new Date().getTime() / 1000}`);
 
-    // issued at in seconds (as per JWT standards).
+    // expiry at in seconds (as per JWT standards).
     const exp = iat + expOffset;
 
     const payload = {
