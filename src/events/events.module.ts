@@ -8,11 +8,25 @@ import { CronService } from 'src/cron/cron.service';
 import { StatsService } from 'src/patient/stats/stats.service';
 import { DatabaseModule } from 'src/database/database.module';
 import { HelpAccessedController } from './help-accessed/help-accessed.controller';
-import { Auth0Service } from 'src/auth/auth0/auth0.service';
+import { SmsAuthService } from 'src/auth/sms-auth/sms-auth.service';
+import { SmsService } from 'src/services/sms/sms.service';
+import { S3Service } from 'src/services/s3/s3.service';
+import { ExtractInformationService } from 'src/services/extract-information/extract-information.service';
+import { AggregateAnalyticsService } from 'src/services/aggregate-analytics/aggregate-analytics.service';
 
 @Module({
   imports: [DatabaseModule],
   controllers: [PatientController, GameController, TherapistController, HelpAccessedController],
-  providers: [EventsService, GqlService, CronService, StatsService, Auth0Service],
+  providers: [
+    EventsService,
+    GqlService,
+    CronService,
+    StatsService,
+    SmsAuthService,
+    SmsService,
+    S3Service,
+    ExtractInformationService,
+    AggregateAnalyticsService,
+  ],
 })
 export class EventsModule {}

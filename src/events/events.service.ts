@@ -18,22 +18,13 @@ interface GameEndedEventMetrics {
 @Injectable()
 export class EventsService {
   private pinpoint: Pinpoint;
-  private projectId = '4c852bebebf74c0a9050337a0e841fc5';
+  private projectId: string;
   private REGION: string;
   private eventsRequest: EventsRequest;
   constructor(private configService: ConfigService) {
     this.REGION = this.configService.get('AWS_DEFAULT_REGION') || 'us-east-1';
-
-    // TODO: remove hardcoded keys. Use IAM roles instead.
-    // TODO: a new pinpoint project per env.
-    this.pinpoint = new Pinpoint({
-      region: this.REGION,
-      endpoint: 'https://pinpoint.us-east-1.amazonaws.com',
-      credentials: {
-        accessKeyId: 'AKIASYR4W4DVRO6KNAVL',
-        secretAccessKey: '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',
-      },
-    });
+    this.projectId = this.configService.get('PINPOINT_PROJECT_ID');
+    this.pinpoint = new Pinpoint({ region: this.REGION });
   }
 
   async updateEndpoint(details: Details, endpointId: string, type: 'patient' | 'therapist') {
@@ -45,6 +36,7 @@ export class EventsService {
           EndpointId: endpointId,
           EndpointRequest: {
             ChannelType: 'EMAIL',
+            OptOut: 'NONE',
             Address: emailAddress,
             EndpointStatus: 'ACTIVE',
             User: {
@@ -155,13 +147,13 @@ export class EventsService {
     this.eventsRequest.BatchItem[userId] = {
       Endpoint: {
         ChannelType: 'EMAIL',
+        Metrics: metrics ? metrics : {},
       },
       Events: {
         eventType: {
           EventType: eventType,
           Timestamp: new Date().toISOString(),
           Attributes: userAttributes ? userAttributes : {},
-          Metrics: metrics ? metrics : {},
         },
       },
     };
@@ -169,7 +161,7 @@ export class EventsService {
       ApplicationId: this.projectId,
       EventsRequest: this.eventsRequest,
     });
-    console.log(res);
+    console.log(`_updateEvents:eventType: ${eventType}`, res);
   }
 
   async sendFeedbackEmail(patientFeedback: PatientFeedback) {

@@ -10,6 +10,12 @@ export class User {
   type: string;
   status: string;
   provider: string;
+  phoneCountryCode: string;
+  phoneNumber: string;
+  auth: {
+    otp: number;
+    issuedAt: number;
+  };
 }
 
 export interface UserObjDecorator {
@@ -27,6 +33,5 @@ interface HasuraClaims {
   'x-hasura-allowed-roles': Array<string>;
   'x-hasura-user-id': string;
   'x-hasura-default-role': string;
-  'x-hasura-provider-id': string;
   'x-hasura-careplan-id': string;
 }

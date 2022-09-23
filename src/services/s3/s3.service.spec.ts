@@ -1,15 +1,16 @@
+import { ConfigService } from '@nestjs/config';
 import { Test, TestingModule } from '@nestjs/testing';
-import { PatientJwtService } from './jwt.service';
+import { S3Service } from './s3.service';
 
-describe('JwtService', () => {
-  let service: PatientJwtService;
+describe('S3Service', () => {
+  let service: S3Service;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
-      providers: [PatientJwtService],
+      providers: [S3Service, ConfigService],
     }).compile();
 
-    service = module.get<PatientJwtService>(PatientJwtService);
+    service = module.get<S3Service>(S3Service);
   });
 
   it('should be defined', () => {
