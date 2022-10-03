@@ -9,6 +9,7 @@ describe('AggregateAnalyticsService', () => {
   const testData: AnalyticsDTO[] = [
     {
       prompt: {
+        id: '1fc601e4-d2fd-4819-ab20-c972c55cb5b0',
         type: 'x',
         timestamp: 123,
         data: {
@@ -29,6 +30,7 @@ describe('AggregateAnalyticsService', () => {
     },
     {
       prompt: {
+        id: '99a2d8f7-f613-44df-b273-537b111c43f9',
         type: 'x',
         timestamp: 123,
         data: {
