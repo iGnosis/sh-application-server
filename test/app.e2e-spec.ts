@@ -36,7 +36,7 @@ describe('AppController (e2e)', () => {
       .expect(200)
       .then((res) => {
         expect(res.body).toEqual({
-          data: 'Hello World 222',
+          data: 'success',
         });
       });
   });
