@@ -106,7 +106,7 @@ export class GameController {
       // aggregating analytics for a game.
       const aggregatedInfo = {
         avgAchievementRatio: this.aggregateAnalyticsService.averageAchievementRatio(analytics),
-        avgCompletionTime: this.aggregateAnalyticsService.averageCompletionRatio(analytics),
+        avgCompletionTimeInMs: this.aggregateAnalyticsService.averageCompletionTimeInMs(analytics),
       };
 
       console.log('updateAggregateAnalytics::', { extractedInfo, aggregatedInfo });

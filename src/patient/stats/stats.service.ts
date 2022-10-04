@@ -14,11 +14,11 @@ export class StatsService {
     this.numberOfGamesAvailable = 3;
   }
 
-  async getAvgCompletionTimeInSecGroupByGames(query: PlotChartDTO): Promise<
+  async getAvgCompletionTimeInMsGroupByGames(query: PlotChartDTO): Promise<
     {
       createdAt: string;
       game: string;
-      avgCompletionTimePerRepInSec: number;
+      avgCompletionTimePerRepInMs: number;
     }[]
   > {
     const { patientId, startDate, endDate, userTimezone, groupBy } = query;
@@ -27,13 +27,13 @@ export class StatsService {
     SELECT
         DATE_TRUNC($5, timezone($4, aggregate_analytics."createdAt")) "createdAt",
         game.game,
-        ROUND(SUM(aggregate_analytics.value * aggregate_analytics."noOfSamples") / SUM(aggregate_analytics."noOfSamples"), 2) "avgCompletionTimePerRepInSec"
+        ROUND(SUM(aggregate_analytics.value * aggregate_analytics."noOfSamples") / SUM(aggregate_analytics."noOfSamples"), 2) "avgCompletionTimePerRepInMs"
     FROM aggregate_analytics
     JOIN game
     ON game.id = aggregate_analytics.game
     WHERE
         aggregate_analytics.patient = $1 AND
-        aggregate_analytics."key" = 'avgCompletionTime' AND
+        aggregate_analytics."key" = 'avgCompletionTimeInMs' AND
         aggregate_analytics."createdAt" >= $2 AND
         aggregate_analytics."createdAt" < $3
     GROUP BY
@@ -44,10 +44,10 @@ export class StatsService {
     );
   }
 
-  async getAvgCompletionTimeInSec(query: PlotChartDTO): Promise<
+  async getAvgCompletionTimeInMs(query: PlotChartDTO): Promise<
     {
       createdAt: string;
-      avgCompletionTimePerRepInSec: number;
+      avgCompletionTimePerRepInMs: number;
     }[]
   > {
     const { patientId, startDate, endDate, userTimezone, groupBy } = query;
@@ -55,13 +55,13 @@ export class StatsService {
       `
     SELECT
         DATE_TRUNC($5, timezone($4, aggregate_analytics."createdAt")) "createdAt",
-        ROUND(SUM(aggregate_analytics.value * aggregate_analytics."noOfSamples") / SUM(aggregate_analytics."noOfSamples"), 2) "avgCompletionTimePerRepInSec"
+        ROUND(SUM(aggregate_analytics.value * aggregate_analytics."noOfSamples") / SUM(aggregate_analytics."noOfSamples"), 2) "avgCompletionTimePerRepInMs"
     FROM aggregate_analytics
     JOIN game
     ON game.id = aggregate_analytics.game
     WHERE
         aggregate_analytics.patient = $1 AND
-        aggregate_analytics."key" = 'avgCompletionTime' AND
+        aggregate_analytics."key" = 'avgCompletionTimeInMs' AND
         aggregate_analytics."createdAt" >= $2 AND
         aggregate_analytics."createdAt" < $3
     GROUP BY

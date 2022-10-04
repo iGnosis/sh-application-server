@@ -37,9 +37,9 @@ export class ProviderChartsService {
 
   async getPatientAvgCompletionTime(query: PlotChartDTO) {
     if (query.isGroupByGames) {
-      return await this.statService.getAvgCompletionTimeInSecGroupByGames(query);
+      return await this.statService.getAvgCompletionTimeInMsGroupByGames(query);
     } else {
-      return await this.statService.getAvgCompletionTimeInSec(query);
+      return await this.statService.getAvgCompletionTimeInMs(query);
     }
   }
 

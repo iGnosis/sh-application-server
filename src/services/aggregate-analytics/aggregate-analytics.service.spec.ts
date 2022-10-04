@@ -25,7 +25,7 @@ describe('AggregateAnalyticsService', () => {
         type: 'x',
         timestamp: 1,
         startTime: new Date().getTime(),
-        completionTime: 10,
+        completionTimeInMs: 1020,
       },
     },
     {
@@ -46,7 +46,7 @@ describe('AggregateAnalyticsService', () => {
         type: 'x',
         timestamp: 1,
         startTime: new Date().getTime(),
-        completionTime: 20,
+        completionTimeInMs: 2001,
       },
     },
   ];
@@ -71,10 +71,10 @@ describe('AggregateAnalyticsService', () => {
     });
   });
 
-  it('should calculate avg completion ratio', () => {
-    expect(service.averageCompletionRatio(testData)).toEqual({
-      key: 'avgCompletionTime',
-      value: 15,
+  it('should calculate avg completion time in milliseconds', () => {
+    expect(service.averageCompletionTimeInMs(testData)).toEqual({
+      key: 'avgCompletionTimeInMs',
+      value: 1510.5,
       noOfSamples: 2,
     });
   });
