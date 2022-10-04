@@ -22,6 +22,7 @@ import { AggregateAnalyticsService } from './services/aggregate-analytics/aggreg
 import { ProviderChartsService } from './services/provider-charts/provider-charts.service';
 import { ProviderChartsController } from './provider-charts/provider-charts.controller';
 import { StatsService } from './patient/stats/stats.service';
+import { GameBenchmarkingService } from './services/game-benchmarking/game-benchmarking.service';
 
 @Module({
   imports: [
@@ -48,6 +49,7 @@ import { StatsService } from './patient/stats/stats.service';
     AggregateAnalyticsService,
     StatsService,
     ProviderChartsService,
+    GameBenchmarkingService,
   ],
 })
 export class AppModule {}
