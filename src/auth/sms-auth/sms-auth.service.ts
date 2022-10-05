@@ -45,7 +45,7 @@ export class SmsAuthService {
       query FetchPatient($phoneCountryCode: String!, $phoneNumber: String!) {
         patient(where: {phoneCountryCode: {_eq: $phoneCountryCode}, phoneNumber: {_eq: $phoneNumber}}) {
           id
-          isTester
+          canBenchmark
           auth
         }
       }`;
