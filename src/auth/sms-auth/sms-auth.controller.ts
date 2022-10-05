@@ -23,7 +23,10 @@ export class SmsAuthController {
   @HttpCode(200)
   @Post('login')
   async login(@Body() body: SMSLoginBody, @Headers('x-pointmotion-user') userRole: string) {
-    if (!userRole || (userRole !== 'patient' && userRole !== 'therapist')) {
+    if (
+      !userRole ||
+      (userRole !== 'patient' && userRole !== 'therapist' && userRole !== 'tester')
+    ) {
       throw new HttpException('Invalid Request', HttpStatus.BAD_REQUEST);
     }
 
@@ -35,6 +38,12 @@ export class SmsAuthController {
       await this.smsAuthService.fetchTherapist(phoneCountryCode, phoneNumber).catch(() => {
         throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
       });
+    } else if (userRole === 'tester') {
+      // Only patients having `isTester` set are allowed to login.
+      const patient = await this.smsAuthService.fetchPatient(phoneCountryCode, phoneNumber);
+      if (!patient.isTester) {
+        throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
+      }
     }
 
     await this.smsAuthService.insertUser(userRole, phoneCountryCode, phoneNumber);
@@ -48,7 +57,10 @@ export class SmsAuthController {
 
   @Post('resend-otp')
   async resendOtp(@Body() body: SMSLoginBody, @Headers('x-pointmotion-user') userRole: string) {
-    if (!userRole || (userRole !== 'patient' && userRole !== 'therapist')) {
+    if (
+      !userRole ||
+      (userRole !== 'patient' && userRole !== 'therapist' && userRole !== 'tester')
+    ) {
       throw new HttpException('Invalid Request', HttpStatus.BAD_REQUEST);
     }
 
@@ -57,13 +69,17 @@ export class SmsAuthController {
     let user: User | Patient;
     if (userRole === 'patient') {
       user = await this.smsAuthService.fetchPatient(phoneCountryCode, phoneNumber);
+    } else if (userRole === 'tester') {
+      user = await this.smsAuthService.fetchPatient(phoneCountryCode, phoneNumber);
+      if (!user.isTester) {
+        throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
+      }
     } else if (userRole === 'therapist') {
       // only the phone numbers added to the user table should be allowed to enter the provider portal.
       user = await this.smsAuthService.fetchTherapist(phoneCountryCode, phoneNumber).catch(() => {
         throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
       });
     }
-    console.log('resendOtp:patient:', user);
 
     // If OTP is not expired, send the same OTP and update issued at time.
     const isOtpExpired = this.smsAuthService.isOtpExpired(user.auth.issuedAt);
@@ -82,7 +98,10 @@ export class SmsAuthController {
 
   @Post('verify-otp')
   async verifyOtp(@Body() body: SMSVerifyBody, @Headers('x-pointmotion-user') userRole: string) {
-    if (!userRole || (userRole !== 'patient' && userRole !== 'therapist')) {
+    if (
+      !userRole ||
+      (userRole !== 'patient' && userRole !== 'therapist' && userRole !== 'tester')
+    ) {
       throw new HttpException('Invalid Request', HttpStatus.BAD_REQUEST);
     }
 
@@ -90,10 +109,14 @@ export class SmsAuthController {
     let user: User | Patient;
     if (userRole === 'patient') {
       user = await this.smsAuthService.fetchPatient(phoneCountryCode, phoneNumber);
+    } else if (userRole === 'tester') {
+      user = await this.smsAuthService.fetchPatient(phoneCountryCode, phoneNumber);
+      if (!user.isTester) {
+        throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
+      }
     } else if (userRole === 'therapist') {
       user = await this.smsAuthService.fetchTherapist(phoneCountryCode, phoneNumber);
     }
-    console.log('verifyOtp:user:', user);
 
     // check if OTP has been expired.
     const isExpired = this.smsAuthService.isOtpExpired(user.auth.issuedAt);

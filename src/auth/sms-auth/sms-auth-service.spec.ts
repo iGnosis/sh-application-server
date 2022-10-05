@@ -52,6 +52,7 @@ describe('SmsAuthService', () => {
     expect(isExpired).toBe(false);
   });
 
+  // TODO: Look into parameterizing tests.
   it('should generate a valid patient JWT token', () => {
     // given
     const userType = 'patient';
@@ -71,8 +72,6 @@ describe('SmsAuthService', () => {
     expect(verifiedToken).toHaveProperty('exp');
     expect(verifiedToken['https://hasura.io/jwt/claims']).toHaveProperty('x-hasura-allowed-roles', [
       'patient',
-      'therapist',
-      'admin',
     ]);
     expect(verifiedToken['https://hasura.io/jwt/claims']).toHaveProperty(
       'x-hasura-default-role',
@@ -81,10 +80,6 @@ describe('SmsAuthService', () => {
     expect(verifiedToken['https://hasura.io/jwt/claims']).toHaveProperty(
       'x-hasura-user-id',
       userObj.id,
-    );
-    expect(verifiedToken['https://hasura.io/jwt/claims']).toHaveProperty(
-      'x-hasura-careplan-id',
-      '4319023a-a24b-4d19-af82-be92d14f09de',
     );
   });
 
@@ -106,9 +101,7 @@ describe('SmsAuthService', () => {
     expect(verifiedToken).toHaveProperty('iat');
     expect(verifiedToken).toHaveProperty('exp');
     expect(verifiedToken['https://hasura.io/jwt/claims']).toHaveProperty('x-hasura-allowed-roles', [
-      'patient',
       'therapist',
-      'admin',
     ]);
     expect(verifiedToken['https://hasura.io/jwt/claims']).toHaveProperty(
       'x-hasura-default-role',
@@ -118,9 +111,35 @@ describe('SmsAuthService', () => {
       'x-hasura-user-id',
       userObj.id,
     );
+  });
+
+  it('should generate a valid tester JWT token', () => {
+    // given
+    const userType = 'tester';
+    const userObj = {
+      id: 'tester-abc',
+    };
+
+    // when
+    const jwt = service.generateJwtToken(userType, userObj as User);
+    const verifiedToken = service.verifyToken(jwt);
+
+    // then
+    expect(typeof jwt).toBe('string');
+    expect(verifiedToken).toBeDefined();
+    expect(verifiedToken).toHaveProperty('id', userObj.id);
+    expect(verifiedToken).toHaveProperty('iat');
+    expect(verifiedToken).toHaveProperty('exp');
+    expect(verifiedToken['https://hasura.io/jwt/claims']).toHaveProperty('x-hasura-allowed-roles', [
+      'tester',
+    ]);
     expect(verifiedToken['https://hasura.io/jwt/claims']).toHaveProperty(
-      'x-hasura-careplan-id',
-      '4319023a-a24b-4d19-af82-be92d14f09de',
+      'x-hasura-default-role',
+      userType,
+    );
+    expect(verifiedToken['https://hasura.io/jwt/claims']).toHaveProperty(
+      'x-hasura-user-id',
+      userObj.id,
     );
   });
 });

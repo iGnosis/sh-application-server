@@ -30,6 +30,19 @@ export class AppController {
     };
   }
 
+  @Roles(Role.TESTER)
+  @UseGuards(AuthGuard, RolesGuard)
+  @ApiBearerAuth('access-token')
+  @HttpCode(200)
+  @Get('auth-check/tester')
+  authCheckTester(@User() userId: string) {
+    return {
+      status: 'success',
+      role: 'tester',
+      userId,
+    };
+  }
+
   @Roles(Role.THERAPIST)
   @UseGuards(AuthGuard, RolesGuard)
   @ApiBearerAuth('access-token')
