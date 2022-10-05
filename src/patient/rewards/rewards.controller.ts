@@ -25,7 +25,7 @@ const couponCodes = {
   gold: 'PTMOPE',
 };
 
-@Roles(Role.PATIENT)
+@Roles(Role.PATIENT, Role.BENCHMARK)
 @UseGuards(AuthGuard, RolesGuard)
 @ApiBearerAuth('access-token')
 @Controller('patient/rewards')

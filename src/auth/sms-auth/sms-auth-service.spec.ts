@@ -113,11 +113,11 @@ describe('SmsAuthService', () => {
     );
   });
 
-  it('should generate a valid tester JWT token', () => {
+  it('should generate a valid benchmark JWT token', () => {
     // given
-    const userType = 'tester';
+    const userType = 'benchmark';
     const userObj = {
-      id: 'tester-abc',
+      id: 'benchmark-abc',
     };
 
     // when
@@ -131,7 +131,7 @@ describe('SmsAuthService', () => {
     expect(verifiedToken).toHaveProperty('iat');
     expect(verifiedToken).toHaveProperty('exp');
     expect(verifiedToken['https://hasura.io/jwt/claims']).toHaveProperty('x-hasura-allowed-roles', [
-      'tester',
+      'benchmark',
     ]);
     expect(verifiedToken['https://hasura.io/jwt/claims']).toHaveProperty(
       'x-hasura-default-role',

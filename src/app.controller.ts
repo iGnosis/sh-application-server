@@ -30,15 +30,15 @@ export class AppController {
     };
   }
 
-  @Roles(Role.TESTER)
+  @Roles(Role.BENCHMARK)
   @UseGuards(AuthGuard, RolesGuard)
   @ApiBearerAuth('access-token')
   @HttpCode(200)
-  @Get('auth-check/tester')
-  authCheckTester(@User() userId: string) {
+  @Get('auth-check/benchmark')
+  authCheckBenchmark(@User() userId: string) {
     return {
       status: 'success',
-      role: 'tester',
+      role: 'benchmark',
       userId,
     };
   }

@@ -124,7 +124,7 @@ export class GameController {
   }
 
   // Call whenever a user lands on Patient Portal.
-  @Roles(Role.PATIENT)
+  @Roles(Role.PATIENT, Role.BENCHMARK)
   @UseGuards(AuthGuard, RolesGuard)
   @ApiBearerAuth('access-token')
   @HttpCode(200)
@@ -139,7 +139,7 @@ export class GameController {
   // For pinpoint.
   // Called from activity-exp (since it was pain to manage user localtime server-side)
   // on completion of a game.
-  @Roles(Role.PATIENT)
+  @Roles(Role.PATIENT, Role.BENCHMARK)
   @UseGuards(AuthGuard, RolesGuard)
   @ApiBearerAuth('access-token')
   @HttpCode(200)

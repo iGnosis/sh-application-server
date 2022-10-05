@@ -25,7 +25,7 @@ export class SmsAuthController {
   async login(@Body() body: SMSLoginBody, @Headers('x-pointmotion-user') userRole: string) {
     if (
       !userRole ||
-      (userRole !== 'patient' && userRole !== 'therapist' && userRole !== 'tester')
+      (userRole !== 'patient' && userRole !== 'therapist' && userRole !== 'benchmark')
     ) {
       throw new HttpException('Invalid Request', HttpStatus.BAD_REQUEST);
     }
@@ -38,10 +38,10 @@ export class SmsAuthController {
       await this.smsAuthService.fetchTherapist(phoneCountryCode, phoneNumber).catch(() => {
         throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
       });
-    } else if (userRole === 'tester') {
-      // Only patients having `isTester` set are allowed to login.
+    } else if (userRole === 'benchmark') {
+      // Only patients having `canBenchmark` set are allowed to login.
       const patient = await this.smsAuthService.fetchPatient(phoneCountryCode, phoneNumber);
-      if (!patient.isTester) {
+      if (!patient.canBenchmark) {
         throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
       }
     }
@@ -59,7 +59,7 @@ export class SmsAuthController {
   async resendOtp(@Body() body: SMSLoginBody, @Headers('x-pointmotion-user') userRole: string) {
     if (
       !userRole ||
-      (userRole !== 'patient' && userRole !== 'therapist' && userRole !== 'tester')
+      (userRole !== 'patient' && userRole !== 'therapist' && userRole !== 'benchmark')
     ) {
       throw new HttpException('Invalid Request', HttpStatus.BAD_REQUEST);
     }
@@ -69,9 +69,9 @@ export class SmsAuthController {
     let user: User | Patient;
     if (userRole === 'patient') {
       user = await this.smsAuthService.fetchPatient(phoneCountryCode, phoneNumber);
-    } else if (userRole === 'tester') {
+    } else if (userRole === 'benchmark') {
       user = await this.smsAuthService.fetchPatient(phoneCountryCode, phoneNumber);
-      if (!user.isTester) {
+      if (!user.canBenchmark) {
         throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
       }
     } else if (userRole === 'therapist') {
@@ -100,7 +100,7 @@ export class SmsAuthController {
   async verifyOtp(@Body() body: SMSVerifyBody, @Headers('x-pointmotion-user') userRole: string) {
     if (
       !userRole ||
-      (userRole !== 'patient' && userRole !== 'therapist' && userRole !== 'tester')
+      (userRole !== 'patient' && userRole !== 'therapist' && userRole !== 'benchmark')
     ) {
       throw new HttpException('Invalid Request', HttpStatus.BAD_REQUEST);
     }
@@ -109,9 +109,9 @@ export class SmsAuthController {
     let user: User | Patient;
     if (userRole === 'patient') {
       user = await this.smsAuthService.fetchPatient(phoneCountryCode, phoneNumber);
-    } else if (userRole === 'tester') {
+    } else if (userRole === 'benchmark') {
       user = await this.smsAuthService.fetchPatient(phoneCountryCode, phoneNumber);
-      if (!user.isTester) {
+      if (!user.canBenchmark) {
         throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
       }
     } else if (userRole === 'therapist') {

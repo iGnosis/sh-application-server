@@ -9,7 +9,7 @@ import { RolesGuard } from 'src/auth/guards/roles.guard';
 import { UserObjDecorator } from 'src/types/user';
 import { EventsService } from '../events.service';
 
-@Roles(Role.PATIENT)
+@Roles(Role.PATIENT, Role.BENCHMARK)
 @UseGuards(AuthGuard, RolesGuard)
 @ApiBearerAuth('access-token')
 @Controller('events/help-accessed')

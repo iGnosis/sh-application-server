@@ -11,7 +11,7 @@ export class GameBenchmarkingController {
   constructor(private gameBenchmarkingService: GameBenchmarkingService) {}
 
   // TODO: Generate Excel report.
-  @Roles(Role.TESTER)
+  @Roles(Role.BENCHMARK)
   @UseGuards(AuthGuard, RolesGuard)
   @ApiBearerAuth('access-token')
   @Get('report')

@@ -137,7 +137,7 @@ export class SmsAuthService {
     }
   }
 
-  generateJwtToken(userRole: 'patient' | 'therapist' | 'tester', user: Patient | User) {
+  generateJwtToken(userRole: 'patient' | 'therapist' | 'benchmark', user: Patient | User) {
     const key = JSON.parse(this.configService.get('JWT_SECRET'));
 
     // JWT token remains valid for 30 days.

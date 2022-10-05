@@ -7,7 +7,7 @@ import { AuthGuard } from 'src/auth/guards/auth.guard';
 import { RolesGuard } from 'src/auth/guards/roles.guard';
 import { StatsService } from './stats.service';
 
-@Roles(Role.PATIENT)
+@Roles(Role.PATIENT, Role.BENCHMARK)
 @UseGuards(AuthGuard, RolesGuard)
 @ApiBearerAuth('access-token')
 @Controller('patient/stats')
