@@ -61,7 +61,7 @@ describe('GameBenchmarkingService', () => {
     const results = await service.generateReport(testGameId, testBenchmarkId);
 
     // Then
-    console.log(results);
+    // console.log(results);
   });
 
   describe('Calculate relative percentage difference', () => {
