@@ -2,7 +2,6 @@ import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { groupBy as _groupBy, mean as _mean } from 'lodash';
 import {
   BenchmarkConfig,
-  BenchmarkReportOld,
   BenchmarkReport,
   GameBenchmark,
   GameInfo,

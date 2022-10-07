@@ -37,19 +37,6 @@ export type BenchmarkConfig = {
   };
 };
 
-export type BenchmarkReportOld = {
-  promptId: string;
-  timestamp: number;
-  metricName: metricNameEnum;
-  manualValue: number;
-  benchmarkValue: number;
-
-  /**
-   * Percentage difference from manual value to new value.
-   */
-  relativePercentageDiff?: number;
-};
-
 export type BenchmarkReport = {
   gameInfo: Array<any[]>;
   prompts: Array<any[]>;
