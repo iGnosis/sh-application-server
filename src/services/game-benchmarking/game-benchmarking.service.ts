@@ -228,49 +228,6 @@ export class GameBenchmarkingService {
     return excelFile;
   }
 
-  async createExcelReportBak(reportMetrics: BenchmarkReportOld[]) {
-    const rows = [];
-    reportMetrics.forEach((reportMetric) => {
-      rows.push(Object.values(reportMetric));
-    });
-
-    const workbook = new Workbook();
-    const sheet = workbook.addWorksheet('sheet1');
-
-    this.styleSheet(sheet);
-
-    // Adding headers
-    rows.unshift(Object.keys(reportMetrics[0]));
-    sheet.addRows(rows);
-
-    const excelFile: string = await new Promise((resolve, reject) => {
-      tmp.file(
-        {
-          discardDescriptor: true,
-          prefix: 'MyExcelSheet',
-          postfix: '.xlsx',
-          mode: parseInt('0600', 8),
-        },
-        async (err: any, file: any) => {
-          if (err) {
-            console.log(err);
-            throw new HttpException('Internal server error', HttpStatus.INTERNAL_SERVER_ERROR);
-          }
-          workbook.xlsx
-            .writeFile(file)
-            .then((_) => {
-              resolve(file);
-            })
-            .catch((err) => {
-              console.log(err);
-              throw new HttpException('Internal server error', HttpStatus.INTERNAL_SERVER_ERROR);
-            });
-        },
-      );
-    });
-    return excelFile;
-  }
-
   private styleSheet(sheet: Worksheet) {
     sheet.getColumn(1).width = 35.5;
     sheet.getColumn(2).width = 30.5;
