@@ -19,24 +19,28 @@ describe('S3Service', () => {
 
   xit('should generate a signed URL for PUTting an object', async () => {
     // Given
-    const bucketName = 'benchmark-videos';
-    const completeFilePath = 'testKey';
+    const bucketName = 'soundhealth-benchmark-videos';
+    const completeFilePath = 'test/hello.html';
 
     // When
     const signedUrl = await service.putObjectSignedUrl(bucketName, completeFilePath);
 
     // Then
+    console.log(signedUrl);
     expect(signedUrl).toBeDefined();
   });
 
   xit('should generate a signed URL for GETting an object', async () => {
     // Given
-    const bucketName = 'soundhealth-pose-data';
-    const completeFilePath =
-      'prod/03c235b6-75b6-405f-b424-b4f9b725ffac/10bf627b-2447-41fe-b660-6184ba84ca5e.json';
+    const bucketName = 'soundhealth-benchmark-videos';
+    const completeFilePath = 'test/hello.pdf';
 
     // When
-    const signedUrl = await service.getObjectedSignedUrl(bucketName, completeFilePath);
+    const signedUrl = await service.getObjectedSignedUrl(
+      bucketName,
+      completeFilePath,
+      7 * 24 * 60 * 60,
+    );
 
     // Then
     expect(signedUrl).toBeDefined();

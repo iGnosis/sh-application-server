@@ -23,6 +23,8 @@ import { ProviderChartsService } from './services/provider-charts/provider-chart
 import { ProviderChartsController } from './provider-charts/provider-charts.controller';
 import { StatsService } from './patient/stats/stats.service';
 import { GameBenchmarkingService } from './services/game-benchmarking/game-benchmarking.service';
+import { GameBenchmarkingController } from './game-benchmarking/game-benchmarking.controller';
+import { ExtractInformationService } from './services/extract-information/extract-information.service';
 
 @Module({
   imports: [
@@ -37,7 +39,7 @@ import { GameBenchmarkingService } from './services/game-benchmarking/game-bench
     EventsModule,
     RewardsModule,
   ],
-  controllers: [AppController, ProviderChartsController],
+  controllers: [AppController, ProviderChartsController, GameBenchmarkingController],
   providers: [
     AppService,
     GqlService,
@@ -50,6 +52,7 @@ import { GameBenchmarkingService } from './services/game-benchmarking/game-bench
     StatsService,
     ProviderChartsService,
     GameBenchmarkingService,
+    ExtractInformationService,
   ],
 })
 export class AppModule {}

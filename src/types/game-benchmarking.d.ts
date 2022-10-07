@@ -1,28 +1,43 @@
 import { AnalyticsDTO } from './analytics';
 
-export type metricNameEnum = 'isSuccess' | 'completionTimeInMs';
+export type GameInfo = {
+  game_by_pk: {
+    gameId: string;
+    createdAt: Date;
+    game_name: {
+      name: string;
+    };
+    patientByPatient: {
+      nickname: string;
+    };
+  };
+};
 
 export interface GameBenchmark {
-  game_benchmarks_by_pk: {
-    id: string;
-    gameId: string;
-    createdAt: Date;
-    analytics: AnalyticsDTO[];
-  };
+  id: string;
+  gameId: string;
+  createdAt: Date;
+  analytics: AnalyticsDTO[];
 }
 
-export interface GameManualCalculations {
-  game_manual_calculations: {
-    gameId: string;
-    promptId: string;
+export type BenchmarkConfig = {
+  game_benchmark_config_by_pk: {
+    id: string;
     createdAt: Date;
     updatedAt: Date;
-    metricName: metricNameEnum;
-    metricValue: number;
-  }[];
-}
+    manualCalculations: {
+      [key: string]: {
+        isSuccess: boolean;
+        completionTimeInMs: number;
+      };
+    };
+    rawVideoUrl: string;
+    screenRecordingUrl: string;
+    originalGameId: string;
+  };
+};
 
-export type BenchmarkReport = {
+export type BenchmarkReportOld = {
   promptId: string;
   timestamp: number;
   metricName: metricNameEnum;
@@ -33,4 +48,10 @@ export type BenchmarkReport = {
    * Percentage difference from manual value to new value.
    */
   relativePercentageDiff?: number;
+};
+
+export type BenchmarkReport = {
+  gameInfo: Array<any[]>;
+  prompts: Array<any[]>;
+  varience: Array<any[]>;
 };

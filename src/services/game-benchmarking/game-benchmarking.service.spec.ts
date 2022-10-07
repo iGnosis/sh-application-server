@@ -1,5 +1,6 @@
 import { ConfigService } from '@nestjs/config';
 import { Test, TestingModule } from '@nestjs/testing';
+import { ExtractInformationService } from '../extract-information/extract-information.service';
 import { GqlService } from '../gql/gql.service';
 import { GameBenchmarkingService } from './game-benchmarking.service';
 
@@ -8,7 +9,7 @@ describe('GameBenchmarkingService', () => {
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
-      providers: [GameBenchmarkingService, GqlService, ConfigService],
+      providers: [GameBenchmarkingService, GqlService, ConfigService, ExtractInformationService],
     }).compile();
 
     service = module.get<GameBenchmarkingService>(GameBenchmarkingService);
@@ -20,48 +21,54 @@ describe('GameBenchmarkingService', () => {
 
   it('should fetch game benchmarks', async () => {
     // Given
-    const testBenchmarkId = 'ef6c7f78-70fb-47a0-9e69-126aeea8bf5c';
+    const newGameId = '798ff028-daa1-4c1b-a52d-286a1e0f4286';
 
     // When
-    const resp = await service.fetchGameBenchmarks(testBenchmarkId);
+    const resp = await service.fetchGameBenchmarks(newGameId);
 
     // Then
     expect(resp).toBeDefined();
-    expect(resp.game_benchmarks_by_pk).toBeDefined();
-    expect(resp.game_benchmarks_by_pk.id).toBeDefined();
-    expect(resp.game_benchmarks_by_pk.gameId).toBeDefined();
-    expect(resp.game_benchmarks_by_pk.createdAt).toBeDefined();
-    expect(resp.game_benchmarks_by_pk.analytics).toBeDefined();
-  });
-
-  it('should fetch game manual calculations', async () => {
-    // Given
-    const testGameId = '798ff028-daa1-4c1b-a52d-286a1e0f4286';
-
-    // When
-    const resp = await service.fetchGameManualCalculations(testGameId);
-
-    // Then
-    expect(resp).toBeDefined();
-    expect(resp.game_manual_calculations).toBeInstanceOf(Array);
-    expect(resp.game_manual_calculations[0]).toHaveProperty('gameId');
-    expect(resp.game_manual_calculations[0]).toHaveProperty('promptId');
-    expect(resp.game_manual_calculations[0]).toHaveProperty('createdAt');
-    expect(resp.game_manual_calculations[0]).toHaveProperty('updatedAt');
-    expect(resp.game_manual_calculations[0]).toHaveProperty('metricName');
-    expect(resp.game_manual_calculations[0]).toHaveProperty('metricValue');
+    expect(resp.id).toBeDefined();
+    expect(resp.gameId).toBeDefined();
+    expect(resp.createdAt).toBeDefined();
+    expect(resp.analytics).toBeDefined();
   });
 
   it('should generate report', async () => {
     // Given
-    const testGameId = '798ff028-daa1-4c1b-a52d-286a1e0f4286';
-    const testBenchmarkId = 'ef6c7f78-70fb-47a0-9e69-126aeea8bf5c';
+    const newGameId = '798ff028-daa1-4c1b-a52d-286a1e0f4286';
+    const benchMarkConfigId = '5ed3bb8f-bd99-4282-8edd-1f1f070432b5';
 
     // When
-    const results = await service.generateReport(testGameId, testBenchmarkId);
+    const reportMetrics = await service.generateReport(newGameId, benchMarkConfigId);
+    const report = await service.createExcelReport(reportMetrics);
+    // console.log(reportMetrics);
+    // console.log(report);
 
     // Then
-    // console.log(results);
+    expect(reportMetrics).toBeDefined();
+    expect(report).toBeDefined();
+  });
+
+  it('should update game benchmark config with download URLs ', async () => {
+    // Given
+    const benchmarkConfigId = '5ed3bb8f-bd99-4282-8edd-1f1f070432b5';
+    const rawVideoUrl =
+      'https://soundhealth-benchmark-videos.s3.amazonaws.com/798ff028-daa1-4c1b-a52d-286a1e0f4286/webcam';
+    const screenRecordingUrl = 'nestjs-test-screen-capture-download-url';
+
+    // When
+    const resp = await service.updateBenchmarkConfigVideoUrls(
+      benchmarkConfigId,
+      rawVideoUrl,
+      screenRecordingUrl,
+    );
+
+    // Then
+    expect(resp).toBeDefined();
+    expect(resp.update_game_benchmark_config_by_pk).toBeDefined();
+    expect(resp.update_game_benchmark_config_by_pk.rawVideoUrl).toBe(rawVideoUrl);
+    expect(resp.update_game_benchmark_config_by_pk.screenRecordingUrl).toBe(screenRecordingUrl);
   });
 
   describe('Calculate relative percentage difference', () => {
