@@ -1,5 +1,5 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
-import { groupBy as _groupBy, mean as _mean } from 'lodash';
+import { groupBy as _groupBy, mean as _mean, isEmpty as _isEmpty } from 'lodash';
 import {
   BenchmarkConfig,
   BenchmarkReport,
@@ -94,6 +94,14 @@ export class GameBenchmarkingService {
 
   async generateReport(newGameId: string, benchmarkConfigId: string): Promise<BenchmarkReport> {
     const manualCalculations = await this.fetchBenchmarkConfig(benchmarkConfigId);
+
+    if (_isEmpty(manualCalculations.game_benchmark_config_by_pk.manualCalculations)) {
+      throw new HttpException(
+        'No manual calculations found for this benchmark',
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+
     const benchmarkedAnalytics = await this.fetchGameBenchmarks(newGameId);
     const gameInfo = await this.fetchGameInfo(newGameId);
 
