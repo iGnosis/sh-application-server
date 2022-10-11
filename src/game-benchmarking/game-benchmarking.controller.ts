@@ -63,11 +63,11 @@ export class GameBenchmarkingController {
   async s3UploadSignedUrl(@Query('benchmarkConfigId') benchmarkConfigId: string) {
     const webcamUploadUrl = await this.s3Service.putObjectSignedUrl(
       'soundhealth-benchmark-videos',
-      `${benchmarkConfigId}/webcam`,
+      `raw/${benchmarkConfigId}/webcam`,
     );
     const screenCaptureUploadUrl = await this.s3Service.putObjectSignedUrl(
       'soundhealth-benchmark-videos',
-      `${benchmarkConfigId}/screenCapture`,
+      `raw/${benchmarkConfigId}/screenCapture`,
     );
 
     const webcamDownloadUrl = `https://soundhealth-benchmark-videos.s3.amazonaws.com/transcoded/${benchmarkConfigId}/webcam.mp4`;
@@ -91,7 +91,7 @@ export class GameBenchmarkingController {
     const command = new CreateJobCommand({
       PipelineId: this.videoTranscoderPipelineId,
       Input: {
-        Key: `${benchmarkConfigId}/${type}`,
+        Key: `raw/${benchmarkConfigId}/${type}`,
       },
       OutputKeyPrefix: 'transcoded/',
       Output: {
