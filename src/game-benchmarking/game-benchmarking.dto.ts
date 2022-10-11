@@ -12,6 +12,6 @@ export class TranscodeVideoAPI {
     description: 'type of video to transcode',
   })
   @IsNotEmpty()
-  @IsIn(['webcam', 'screen-capture'])
-  type: string;
+  @IsIn(['webcam', 'screenCapture'])
+  type: 'webcam' | 'screenCapture';
 }

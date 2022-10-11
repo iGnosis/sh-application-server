@@ -67,11 +67,11 @@ export class GameBenchmarkingController {
     );
     const screenCaptureUploadUrl = await this.s3Service.putObjectSignedUrl(
       'soundhealth-benchmark-videos',
-      `${benchmarkConfigId}/screen-capture`,
+      `${benchmarkConfigId}/screenCapture`,
     );
 
     const webcamDownloadUrl = `https://soundhealth-benchmark-videos.s3.amazonaws.com/transcoded/${benchmarkConfigId}/webcam.mp4`;
-    const screenCaptureDownloadUrl = `https://soundhealth-benchmark-videos.s3.amazonaws.com/transcoded/${benchmarkConfigId}/screen-capture.mp4`;
+    const screenCaptureDownloadUrl = `https://soundhealth-benchmark-videos.s3.amazonaws.com/transcoded/${benchmarkConfigId}/screenCapture.mp4`;
 
     await this.gameBenchmarkingService.updateBenchmarkConfigVideoUrls(
       benchmarkConfigId,
@@ -100,5 +100,9 @@ export class GameBenchmarkingController {
       },
     });
     await this.videoTranscoderService.client.send(command);
+
+    return {
+      status: 'success',
+    };
   }
 }
