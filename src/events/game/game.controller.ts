@@ -53,6 +53,15 @@ export class GameController {
     const { gameId, patientId, endedAt, analytics } = body;
     if (!endedAt) return;
 
+    // aggregating analytics for a game.
+    const aggregatedInfo = {
+      avgAchievementRatio: this.aggregateAnalyticsService.averageAchievementRatio(analytics),
+      avgCompletionTimeInMs: this.aggregateAnalyticsService.averageCompletionTimeInMs(analytics),
+    };
+    await this.aggregateAnalyticsService.insertAggregatedAnalytics(patientId, gameId, {
+      ...aggregatedInfo,
+    });
+
     const downloadsDir = join(process.cwd(), 'pose-documents');
     const fileName = `${patientId}.${gameId}.json`;
     const filePath = join(downloadsDir, fileName);
@@ -102,16 +111,7 @@ export class GameController {
       }
       // clean up the file after upload
       await fs.unlink(filePath);
-
-      // aggregating analytics for a game.
-      const aggregatedInfo = {
-        avgAchievementRatio: this.aggregateAnalyticsService.averageAchievementRatio(analytics),
-        avgCompletionTimeInMs: this.aggregateAnalyticsService.averageCompletionTimeInMs(analytics),
-      };
-
-      console.log('updateAggregateAnalytics::', { extractedInfo, aggregatedInfo });
       await this.aggregateAnalyticsService.insertAggregatedAnalytics(patientId, gameId, {
-        ...aggregatedInfo,
         ...extractedInfo.angles,
       });
     } catch (err) {
