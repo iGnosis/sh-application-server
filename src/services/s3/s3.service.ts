@@ -14,11 +14,16 @@ export class S3Service {
     });
   }
 
-  async putObjectSignedUrl(bucketName: string, completeFilePath: string, expiryInSec = 3600) {
-    // TODO: use infrequent S3 Storage class.
+  async putObjectSignedUrl(
+    bucketName: string,
+    completeFilePath: string,
+    expiryInSec = 3600,
+    StorageClass = 'STANDARD_IA',
+  ) {
     const command = new PutObjectCommand({
       Bucket: bucketName,
       Key: completeFilePath,
+      StorageClass,
     });
 
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment

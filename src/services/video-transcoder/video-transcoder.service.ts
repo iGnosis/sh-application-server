@@ -1,9 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import {
-  ElasticTranscoderClient,
-  CancelJobCommand,
-  CreateJobCommand,
-} from '@aws-sdk/client-elastic-transcoder';
+import { ElasticTranscoderClient } from '@aws-sdk/client-elastic-transcoder';
 import { ConfigService } from '@nestjs/config';
 
 @Injectable()
