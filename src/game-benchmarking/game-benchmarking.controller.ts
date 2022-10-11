@@ -1,4 +1,13 @@
-import { Controller, Get, Query, Res, UseGuards, UseInterceptors } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Post,
+  Query,
+  Res,
+  UseGuards,
+  UseInterceptors,
+} from '@nestjs/common';
 import { ApiBearerAuth } from '@nestjs/swagger';
 import { Roles } from 'src/auth/decorators/roles.decorator';
 import { Role } from 'src/auth/enums/role.enum';
@@ -9,6 +18,9 @@ import { Response } from 'express';
 import { S3Service } from 'src/services/s3/s3.service';
 import { TransformResponseInterceptor } from 'src/interceptor/transform-response.interceptor';
 import * as fs from 'fs';
+import { TranscodeVideoAPI } from './game-benchmarking.dto';
+import { VideoTranscoderService } from 'src/services/video-transcoder/video-transcoder.service';
+import { CreateJobCommand } from '@aws-sdk/client-elastic-transcoder';
 
 @Roles(Role.BENCHMARK)
 @UseGuards(AuthGuard, RolesGuard)
@@ -16,9 +28,12 @@ import * as fs from 'fs';
 @Controller('game-benchmarking')
 @UseInterceptors(new TransformResponseInterceptor())
 export class GameBenchmarkingController {
+  private videoTranscoderPipelineId = '1665469373812-uc99w8';
+
   constructor(
     private gameBenchmarkingService: GameBenchmarkingService,
     private s3Service: S3Service,
+    private videoTranscoderService: VideoTranscoderService,
   ) {}
 
   @Get('report')
@@ -55,8 +70,8 @@ export class GameBenchmarkingController {
       `${benchmarkConfigId}/screen-capture`,
     );
 
-    const webcamDownloadUrl = `https://soundhealth-benchmark-videos.s3.amazonaws.com/${benchmarkConfigId}/webcam`;
-    const screenCaptureDownloadUrl = `https://soundhealth-benchmark-videos.s3.amazonaws.com/${benchmarkConfigId}/screen-capture`;
+    const webcamDownloadUrl = `https://soundhealth-benchmark-videos.s3.amazonaws.com/transcoded/${benchmarkConfigId}/webcam.mp4`;
+    const screenCaptureDownloadUrl = `https://soundhealth-benchmark-videos.s3.amazonaws.com/transcoded/${benchmarkConfigId}/screen-capture.mp4`;
 
     await this.gameBenchmarkingService.updateBenchmarkConfigVideoUrls(
       benchmarkConfigId,
@@ -68,5 +83,22 @@ export class GameBenchmarkingController {
       webcamUploadUrl,
       screenCaptureUploadUrl,
     };
+  }
+
+  @Post('transcode-video')
+  async transcodeVideo(@Body() body: TranscodeVideoAPI) {
+    const { benchmarkConfigId, type } = body;
+    const command = new CreateJobCommand({
+      PipelineId: this.videoTranscoderPipelineId,
+      Input: {
+        Key: `${benchmarkConfigId}/${type}`,
+      },
+      OutputKeyPrefix: 'transcoded/',
+      Output: {
+        Key: `${benchmarkConfigId}/${type}.mp4`,
+        PresetId: '1351620000001-000020', // https://docs.aws.amazon.com/elastictranscoder/latest/developerguide/system-presets.html
+      },
+    });
+    await this.videoTranscoderService.client.send(command);
   }
 }

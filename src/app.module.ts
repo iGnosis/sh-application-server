@@ -25,6 +25,7 @@ import { StatsService } from './patient/stats/stats.service';
 import { GameBenchmarkingService } from './services/game-benchmarking/game-benchmarking.service';
 import { GameBenchmarkingController } from './game-benchmarking/game-benchmarking.controller';
 import { ExtractInformationService } from './services/extract-information/extract-information.service';
+import { VideoTranscoderService } from './services/video-transcoder/video-transcoder.service';
 
 @Module({
   imports: [
@@ -53,6 +54,7 @@ import { ExtractInformationService } from './services/extract-information/extrac
     ProviderChartsService,
     GameBenchmarkingService,
     ExtractInformationService,
+    VideoTranscoderService,
   ],
 })
 export class AppModule {}

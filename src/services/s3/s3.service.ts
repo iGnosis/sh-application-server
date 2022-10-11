@@ -15,6 +15,7 @@ export class S3Service {
   }
 
   async putObjectSignedUrl(bucketName: string, completeFilePath: string, expiryInSec = 3600) {
+    // TODO: use infrequent S3 Storage class.
     const command = new PutObjectCommand({
       Bucket: bucketName,
       Key: completeFilePath,
