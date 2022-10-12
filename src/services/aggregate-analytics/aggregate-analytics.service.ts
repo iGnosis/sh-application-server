@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
-import { AggregatedObject, AnalyticsDTO } from 'src/types/analytics';
-import { GqlService } from '../gql/gql.service';
+import { AggregatedObject, AnalyticsDTO } from 'src/types/global';
+import { GqlService } from '../clients/gql/gql.service';
 
 @Injectable()
 export class AggregateAnalyticsService {

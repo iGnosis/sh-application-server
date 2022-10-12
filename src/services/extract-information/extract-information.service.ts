@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { PoseLandmark } from 'src/pose-data/pose-data.gateway';
+import { PoseLandmark } from 'src/types/global';
 
 @Injectable()
 export class ExtractInformationService {

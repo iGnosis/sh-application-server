@@ -1,7 +1,7 @@
 import { ConfigService } from '@nestjs/config';
 import { Test, TestingModule } from '@nestjs/testing';
 import { ExtractInformationService } from '../extract-information/extract-information.service';
-import { GqlService } from '../gql/gql.service';
+import { GqlService } from '../clients/gql/gql.service';
 import { GameBenchmarkingService } from './game-benchmarking.service';
 
 describe('GameBenchmarkingService', () => {

@@ -1,0 +1,501 @@
+import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
+import { Dictionary } from 'lodash';
+import { groupBy as lodashGroupBy, merge as lodashMerge } from 'lodash';
+import { DatabaseService } from 'src/database/database.service';
+import { GqlService } from 'src/services/clients/gql/gql.service';
+import { GroupBy, PlotChartDTO, PlotHeatmapDTO } from 'src/types/provider-charts';
+import * as moment from 'moment';
+
+@Injectable()
+export class StatsService {
+  numberOfGamesAvailable: number;
+  constructor(private databaseService: DatabaseService, private gqlService: GqlService) {
+    // TODO: get activity count dynamically!
+    this.numberOfGamesAvailable = 3;
+  }
+
+  async getAvgCompletionTimeInMsGroupByGames(query: PlotChartDTO): Promise<
+    {
+      createdAt: string;
+      game: string;
+      avgCompletionTimePerRepInMs: number;
+    }[]
+  > {
+    const { patientId, startDate, endDate, userTimezone, groupBy } = query;
+    return await this.databaseService.executeQuery(
+      `
+    SELECT
+        DATE_TRUNC($5, timezone($4, aggregate_analytics."createdAt")) "createdAt",
+        game.game,
+        ROUND(SUM(aggregate_analytics.value * aggregate_analytics."noOfSamples") / SUM(aggregate_analytics."noOfSamples"), 2) "avgCompletionTimePerRepInMs"
+    FROM aggregate_analytics
+    JOIN game
+    ON game.id = aggregate_analytics.game
+    WHERE
+        aggregate_analytics.patient = $1 AND
+        aggregate_analytics."key" = 'avgCompletionTimeInMs' AND
+        aggregate_analytics."createdAt" >= $2 AND
+        aggregate_analytics."createdAt" < $3
+    GROUP BY
+        DATE_TRUNC($5, timezone($4, aggregate_analytics."createdAt")),
+        game.game
+    ORDER BY DATE_TRUNC($5, timezone($4, aggregate_analytics."createdAt"))`,
+      [patientId, startDate, endDate, userTimezone, groupBy],
+    );
+  }
+
+  async getAvgCompletionTimeInMs(query: PlotChartDTO): Promise<
+    {
+      createdAt: string;
+      avgCompletionTimePerRepInMs: number;
+    }[]
+  > {
+    const { patientId, startDate, endDate, userTimezone, groupBy } = query;
+    return await this.databaseService.executeQuery(
+      `
+    SELECT
+        DATE_TRUNC($5, timezone($4, aggregate_analytics."createdAt")) "createdAt",
+        ROUND(SUM(aggregate_analytics.value * aggregate_analytics."noOfSamples") / SUM(aggregate_analytics."noOfSamples"), 2) "avgCompletionTimePerRepInMs"
+    FROM aggregate_analytics
+    JOIN game
+    ON game.id = aggregate_analytics.game
+    WHERE
+        aggregate_analytics.patient = $1 AND
+        aggregate_analytics."key" = 'avgCompletionTimeInMs' AND
+        aggregate_analytics."createdAt" >= $2 AND
+        aggregate_analytics."createdAt" < $3
+    GROUP BY
+        DATE_TRUNC($5, timezone($4, aggregate_analytics."createdAt"))
+    ORDER BY DATE_TRUNC($5, timezone($4, aggregate_analytics."createdAt"))`,
+      [patientId, startDate, endDate, userTimezone, groupBy],
+    );
+  }
+
+  async getAvgAchievementPercentageGroupByGames(query: PlotChartDTO) {
+    const { patientId, startDate, endDate, userTimezone, groupBy } = query;
+    const result: {
+      createdAt: string;
+      game: string;
+      avgAchievementPercentage: number;
+    }[] = await this.databaseService.executeQuery(
+      `
+      SELECT
+          DATE_TRUNC($5, timezone($4, aggregate_analytics."createdAt")) "createdAt",
+          game.game,
+          ROUND((SUM(aggregate_analytics.value * aggregate_analytics."noOfSamples") / SUM(aggregate_analytics."noOfSamples")) * 100, 2) "avgAchievementPercentage"
+      FROM aggregate_analytics
+      JOIN game
+      ON game.id = aggregate_analytics.game
+      WHERE
+          aggregate_analytics.patient = $1 AND
+          aggregate_analytics."key" = 'avgAchievementRatio' AND
+          aggregate_analytics."createdAt" >= $2 AND
+          aggregate_analytics."createdAt" < $3
+      GROUP BY
+          DATE_TRUNC($5, timezone($4, aggregate_analytics."createdAt")),
+          game.game
+      ORDER BY DATE_TRUNC($5, timezone($4, aggregate_analytics."createdAt"))`,
+      [patientId, startDate, endDate, userTimezone, groupBy],
+    );
+    result.forEach((val) => {
+      val.avgAchievementPercentage = parseFloat(`${val.avgAchievementPercentage}`);
+    });
+    return result;
+  }
+
+  async getPatientsMonthlyCompletion(query: PlotHeatmapDTO) {
+    const { startDate, endDate, userTimezone, sortBy, sortDirection, showInactive, limit, offset } =
+      query;
+    let result: any[];
+    if (sortBy === 'recentActivity') {
+      if (sortDirection === 'desc') {
+        result = await this.databaseService.executeQuery(
+          `
+            SELECT p.id, g."gamesCompleted", g.nickname, g."createdAt"
+              FROM (SELECT id from patient LIMIT $4 OFFSET $5) as p
+              LEFT OUTER JOIN
+                  (SELECT
+                      DATE_TRUNC('day', timezone($3, game."createdAt")) "createdAt",
+                      COUNT(*) FILTER(WHERE game."endedAt" IS NOT NULL) "gamesCompleted",
+                      patient.nickname, patient.id
+                  FROM game
+                  RIGHT JOIN patient
+                  ON game.patient = patient.id
+                  WHERE
+                    game."createdAt" BETWEEN $1 AND $2
+                  GROUP BY
+                        DATE_TRUNC('day', timezone($3, game."createdAt")),
+                        patient.id
+                  ORDER BY DATE_TRUNC('day', timezone($3, game."createdAt")) DESC) as g
+              ON g.id = p.id
+            `,
+          [startDate, endDate, userTimezone, limit, offset],
+        );
+      } else {
+        result = await this.databaseService.executeQuery(
+          `
+            SELECT p.id, g."gamesCompleted", g.nickname, g."createdAt"
+              FROM (SELECT id from patient LIMIT $4 OFFSET $5) as p
+              LEFT OUTER JOIN
+                  (SELECT
+                      DATE_TRUNC('day', timezone($3, game."createdAt")) "createdAt",
+                      COUNT(*) FILTER(WHERE game."endedAt" IS NOT NULL) "gamesCompleted",
+                      patient.nickname, patient.id
+                  FROM game
+                  RIGHT JOIN patient
+                  ON game.patient = patient.id
+                  WHERE
+                    game."createdAt" BETWEEN $1 AND $2
+                  GROUP BY
+                        DATE_TRUNC('day', timezone($3, game."createdAt")),
+                        patient.id
+                  ORDER BY DATE_TRUNC('day', timezone($3, game."createdAt")) ASC) as g
+              ON g.id = p.id
+            `,
+          [startDate, endDate, userTimezone, limit, offset],
+        );
+      }
+    } else {
+      result = await this.databaseService.executeQuery(
+        `
+        SELECT p.id, g."gamesCompleted", g.nickname, g."createdAt"
+          FROM (SELECT id from patient LIMIT $4 OFFSET $5) as p
+          LEFT OUTER JOIN
+              (SELECT
+                  DATE_TRUNC('day', timezone($3, game."createdAt")) "createdAt",
+                  COUNT(*) FILTER(WHERE game."endedAt" IS NOT NULL) "gamesCompleted",
+                  patient.nickname, patient.id
+              FROM game
+              RIGHT JOIN patient
+              ON game.patient = patient.id
+              WHERE
+                game."createdAt" BETWEEN $1 AND $2
+              GROUP BY
+                    DATE_TRUNC('day', timezone($3, game."createdAt")),
+                    patient.id
+              ORDER BY patient.id) as g
+          ON g.id = p.id`,
+        [startDate, endDate, userTimezone, limit, offset],
+      );
+    }
+    const noOfPages = await this.databaseService.executeQuery(
+      `
+      SELECT CEILING(CEILING(COUNT(*))/$1) FROM patient`,
+      [limit],
+    );
+    let groupedResult = [];
+    if (result) {
+      groupedResult = result.reduce((acc, val) => {
+        if (acc.findIndex((v) => val.id === Object.keys(v)[0]) === -1) {
+          acc.push({
+            [val.id]: [],
+          });
+        }
+        return acc;
+      }, []);
+
+      result.forEach((val) => {
+        const idx = groupedResult.findIndex((v) => Object.keys(v)[0] === val.id);
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        const { id, ...data } = val;
+        groupedResult[idx][val.id].push(data);
+      });
+      if (sortBy === 'overallActivity') {
+        groupedResult = this.sortByOverallActivity(groupedResult, sortDirection);
+      }
+      if (!showInactive) {
+        groupedResult = this.hideInactivePatients(groupedResult);
+      }
+    }
+    return { result: groupedResult, pages: noOfPages[0].ceiling };
+  }
+
+  private sortByOverallActivity(groupedResult: any[], sortDirection = 'desc') {
+    const sumArrayOfObjectProperty = (arr: any, key: string) =>
+      arr.reduce((a: any, b: any) => a + (Number(b[key]) || 0), 0);
+    const sortByMonthlyCompletion = (a: any, b: any) => {
+      const aName = Object.keys(a)[0];
+      const bName = Object.keys(b)[0];
+      const aSum = sumArrayOfObjectProperty(a[aName], 'gamesCompleted');
+      const bSum = sumArrayOfObjectProperty(b[bName], 'gamesCompleted');
+      return sortDirection === 'desc' ? bSum - aSum : aSum - bSum;
+    };
+
+    return groupedResult.sort(sortByMonthlyCompletion);
+  }
+
+  private hideInactivePatients(groupedResult: any[]) {
+    const sumArrayOfObjectProperty = (arr: any, key: string) =>
+      arr.reduce((a: any, b: any) => a + (Number(b[key]) || 0), 0);
+    const filterInactive = (obj: any) => {
+      const name = Object.keys(obj)[0];
+      const sum = sumArrayOfObjectProperty(obj[name], 'gamesCompleted');
+      return sum > 0;
+    };
+    return groupedResult.filter(filterInactive);
+  }
+
+  async getAvgAchievementPercentage(query: PlotChartDTO) {
+    const { patientId, startDate, endDate, userTimezone, groupBy } = query;
+    const result: {
+      createdAt: string;
+      avgAchievementPercentage: number;
+    }[] = await this.databaseService.executeQuery(
+      `
+      SELECT
+          DATE_TRUNC($5, timezone($4, aggregate_analytics."createdAt")) "createdAt",
+          ROUND((SUM(aggregate_analytics.value * aggregate_analytics."noOfSamples") / SUM(aggregate_analytics."noOfSamples")) * 100, 2) "avgAchievementPercentage"
+      FROM aggregate_analytics
+      JOIN game
+      ON game.id = aggregate_analytics.game
+      WHERE
+          aggregate_analytics.patient = $1 AND
+          aggregate_analytics."key" = 'avgAchievementRatio' AND
+          aggregate_analytics."createdAt" >= $2 AND
+          aggregate_analytics."createdAt" < $3
+      GROUP BY
+          DATE_TRUNC($5, timezone($4, aggregate_analytics."createdAt"))
+      ORDER BY DATE_TRUNC($5, timezone($4, aggregate_analytics."createdAt"))`,
+      [patientId, startDate, endDate, userTimezone, groupBy],
+    );
+    result.forEach((val) => {
+      val.avgAchievementPercentage = parseFloat(`${val.avgAchievementPercentage}`);
+    });
+    return result;
+  }
+
+  async getAvgEngagementRatio(query: PlotChartDTO): Promise<
+    {
+      createdAt: string;
+      gamesPlayedCount: number;
+    }[]
+  > {
+    const { patientId, startDate, endDate, userTimezone, groupBy } = query;
+    return await this.databaseService.executeQuery(
+      `
+      SELECT
+          DATE_TRUNC($5, timezone($4, game."createdAt")) "createdAt",
+          COUNT(game.game) "gamesPlayedCount"
+      FROM game
+      WHERE
+          patient = $1 AND
+          game."endedAt" IS NOT NULL AND
+          game."createdAt" >= $2 AND
+          game."createdAt" < $3
+      GROUP BY DATE_TRUNC($5, timezone($4, game."createdAt"))
+      ORDER BY DATE_TRUNC($5, timezone($4, game."createdAt")) DESC`,
+      [patientId, startDate, endDate, userTimezone, groupBy],
+    );
+  }
+
+  async getPatientOverview(startDate: Date, endDate: Date) {
+    const engagementResults: {
+      patient: string;
+      gamesPlayedCount: number;
+      engagementRatio: number;
+    }[] = await this.databaseService.executeQuery(
+      `
+      SELECT
+        game.patient,
+        COUNT(game.game) "gamesPlayedCount"
+      FROM game
+      WHERE
+        game."endedAt" IS NOT NULL AND
+        game."createdAt" >= $1 AND
+        game."createdAt" < $2
+      GROUP BY
+          game.patient
+      ORDER BY
+          game.patient`,
+      [startDate, endDate],
+    );
+
+    const noOfGamesToPlay = this.getDiffInDays(startDate, endDate) * this.numberOfGamesAvailable;
+    engagementResults.forEach((val) => {
+      val.gamesPlayedCount = parseInt(`${val.gamesPlayedCount}`);
+      val.engagementRatio = parseFloat((val.gamesPlayedCount / noOfGamesToPlay).toFixed(2));
+      if (val.engagementRatio > 100) {
+        val.engagementRatio = 100;
+      }
+    });
+
+    const patientsArr = engagementResults.map((val) => val.patient);
+    const achievementResults: {
+      patient: string;
+      avgAchievementPercentage: number;
+    }[] = await this.databaseService.executeQuery(
+      `
+      SELECT
+          patient,
+          ROUND((SUM(aggregate_analytics.value * aggregate_analytics."noOfSamples") / SUM(aggregate_analytics."noOfSamples")) * 100, 2) "avgAchievementPercentage"
+      FROM aggregate_analytics
+      WHERE
+          patient = ANY($1::uuid[]) AND
+          aggregate_analytics."key" = 'avgAchievementRatio' AND
+          aggregate_analytics."createdAt" >= $2 AND
+          aggregate_analytics."createdAt" < $3
+      GROUP BY patient
+      ORDER BY patient`,
+      [patientsArr, startDate, endDate],
+    );
+
+    achievementResults.forEach((val) => {
+      val.avgAchievementPercentage = parseFloat(`${val.avgAchievementPercentage}`);
+    });
+
+    const mergedObj = lodashMerge(engagementResults, achievementResults);
+    return mergedObj;
+  }
+
+  async getPatientAdherence(
+    startDate: Date,
+    endDate: Date,
+    groupBy: GroupBy,
+  ): Promise<
+    {
+      patient: string;
+      createdAt: Date;
+      numOfGamesPlayed: number;
+    }[]
+  > {
+    return await this.databaseService.executeQuery(
+      `
+      SELECT DISTINCT ON (patient)
+          patient,
+          DATE_TRUNC($3, game."createdAt") "createdAt",
+          COUNT(game.game) "numOfGamesPlayed"
+      FROM game
+      WHERE
+          game."endedAt" IS NOT NULL AND
+          game."createdAt" >= $1 AND
+          game."endedAt" < $2
+      GROUP BY
+          patient,
+          DATE_TRUNC($3, game."createdAt")
+      ORDER BY
+          patient,
+          DATE_TRUNC($3, game."createdAt") DESC`,
+      [startDate, endDate, groupBy],
+    );
+  }
+
+  async getTotalPatientCount(): Promise<number> {
+    const results = await this.databaseService.executeQuery(
+      `SELECT count(*) "totalPatientCount" FROM patient`,
+    );
+    return parseInt(results[0].totalPatientCount);
+  }
+
+  async getMonthlyGoalsNew(
+    patientId: string,
+    startDate: Date,
+    endDate: Date,
+    dbTimezone: string,
+  ): Promise<{
+    daysCompleted: number;
+    groupByCreatedAtDayGames: Dictionary<
+      {
+        game: string;
+        createdAtDay: Date;
+        durationInSec: number;
+      }[]
+    >;
+  }> {
+    const results: Array<{
+      createdAtDay: Date;
+      game: string;
+      durationInSec: number;
+    }> = await this.databaseService.executeQuery(
+      `SELECT DISTINCT
+        game,
+        DATE_TRUNC('day', timezone($4, "createdAt")) "createdAtDay",
+        (extract('epoch' from game."endedAt") - extract('epoch' from game."createdAt")) "durationInSec"
+      FROM game
+      WHERE
+        patient = $1 AND
+        game."createdAt" >= $2 AND
+        game."createdAt" < $3 AND
+        DATE_TRUNC('day', timezone($4, "endedAt")) IS NOT NULL
+      ORDER BY DATE_TRUNC('day', timezone($4, "createdAt"))`,
+      [patientId, startDate, endDate, dbTimezone],
+    );
+
+    console.log('results:', results);
+
+    // just a sanity check.
+    if (!results || !Array.isArray(results) || results.length === 0) {
+      return;
+    }
+
+    // grouping by createdAt date.
+    const groupByRes = lodashGroupBy(results, 'createdAtDay');
+    // console.log('groupByRes:', groupByRes);
+
+    const getGamesQuery = `query GetAllGames {
+      game_name {
+        name
+      }
+    }`;
+    const response = await this.gqlService.client.request(getGamesQuery);
+    const gamesAvailable: string[] = response.game_name.map((data) => data.name);
+
+    let daysCompleted = 0;
+    for (const [createdAtDay, gamesArr] of Object.entries(groupByRes)) {
+      const seenGames = new Set();
+      gamesArr.forEach((game) => {
+        const isSeen = seenGames.has(game.game);
+        if (!isSeen) {
+          seenGames.add(game.game);
+        }
+      });
+
+      // increment counter only if all the avaiable games were played.
+      if (seenGames.size === gamesAvailable.length) {
+        daysCompleted++;
+      }
+    }
+    return { daysCompleted, groupByCreatedAtDayGames: groupByRes };
+  }
+  getFutureDate(currentDate: Date, numOfDaysInFuture: number) {
+    return new Date(currentDate.getTime() + 86400000 * numOfDaysInFuture);
+  }
+
+  getPastDate(currentDate: Date, numOfDaysInPast: number) {
+    return new Date(currentDate.getTime() - 86400000 * numOfDaysInPast);
+  }
+
+  /**
+   * month is indexed from 1.
+   * ie. 1 = January, 12 = December
+   *
+   * @param year
+   * @param month
+   * @returns number of days in a given month & a year.
+   */
+  getDaysInMonth(year: number, month: number) {
+    return new Date(year, month, 0).getDate();
+  }
+
+  getDiffInDays(startDate: Date, endDate: Date) {
+    // Take the difference between the dates and divide by milliseconds per day.
+    // Round to nearest whole number to deal with DST.
+    const millisecondsPerDay = 24 * 60 * 60 * 1000;
+    return Math.round((endDate.getTime() - startDate.getTime()) / millisecondsPerDay);
+  }
+
+  generateDates(startDate: Date, endDate: Date, offset: GroupBy) {
+    const mStartDate = moment(startDate);
+    const mEndDate = moment(endDate);
+    const generateDates = [];
+
+    if (mEndDate.isBefore(mStartDate)) {
+      throw new HttpException('Something went wrong', HttpStatus.BAD_REQUEST);
+    }
+
+    while (mStartDate.isBefore(mEndDate)) {
+      generateDates.push(mStartDate.format('YYYY-MM-DD'));
+      mStartDate.add(1, offset);
+    }
+    return generateDates;
+  }
+}

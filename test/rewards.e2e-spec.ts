@@ -2,10 +2,10 @@ import { ExecutionContext, INestApplication } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
 import * as request from 'supertest';
 import { AppModule } from 'src/app.module';
-import { AuthGuard } from 'src/auth/guards/auth.guard';
-import { EventsService } from 'src/events/events.service';
-import { RewardsService } from 'src/patient/rewards/rewards.service';
-import { StatsService } from 'src/patient/stats/stats.service';
+import { AuthGuard } from 'src/common/guards/auth.guard';
+import { RewardsService } from 'src/services/rewards/rewards.service';
+import { StatsService } from 'src/services/patient-stats/stats.service';
+import { EventsService } from 'src/services/events/events.service';
 
 describe('Rewards Controller (e2e)', () => {
   let app: INestApplication;

@@ -6,7 +6,7 @@ import {
   GameBenchmark,
   GameInfo,
 } from 'src/types/game-benchmarking';
-import { GqlService } from '../gql/gql.service';
+import { GqlService } from '../clients/gql/gql.service';
 import { Workbook, Worksheet } from 'exceljs';
 import * as tmp from 'tmp';
 import { ExtractInformationService } from '../extract-information/extract-information.service';

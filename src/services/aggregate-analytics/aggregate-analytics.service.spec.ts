@@ -1,8 +1,8 @@
 import { ConfigService } from '@nestjs/config';
 import { Test, TestingModule } from '@nestjs/testing';
-import { GqlService } from '../gql/gql.service';
+import { GqlService } from '../clients/gql/gql.service';
 import { AggregateAnalyticsService } from './aggregate-analytics.service';
-import { AnalyticsDTO } from 'src/types/analytics';
+import { AnalyticsDTO } from 'src/types/global';
 
 describe('AggregateAnalyticsService', () => {
   let service: AggregateAnalyticsService;

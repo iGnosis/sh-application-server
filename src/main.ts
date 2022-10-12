@@ -2,7 +2,7 @@ import { ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { AppModule } from './app.module';
-import { HttpExceptionFilter } from './filters/httpexception.filter';
+import { HttpExceptionFilter } from './common/filters/httpexception.filter';
 declare const module: any;
 
 async function bootstrap() {

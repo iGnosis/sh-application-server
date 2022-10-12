@@ -1,12 +1,12 @@
 import { Controller, Get, HttpCode, UseGuards, UseInterceptors } from '@nestjs/common';
 import { ApiBearerAuth } from '@nestjs/swagger';
 import { AppService } from './app.service';
-import { Roles } from './auth/decorators/roles.decorator';
-import { User } from './auth/decorators/user.decorator';
-import { Role } from './auth/enums/role.enum';
-import { AuthGuard } from './auth/guards/auth.guard';
-import { RolesGuard } from './auth/guards/roles.guard';
-import { TransformResponseInterceptor } from './interceptor/transform-response.interceptor';
+import { Roles } from './common/decorators/roles.decorator';
+import { User } from './common/decorators/user.decorator';
+import { Role } from './common/enums/role.enum';
+import { AuthGuard } from './common/guards/auth.guard';
+import { RolesGuard } from './common/guards/roles.guard';
+import { TransformResponseInterceptor } from 'src/common/interceptors/transform-response.interceptor';
 
 @UseInterceptors(new TransformResponseInterceptor())
 @Controller()
