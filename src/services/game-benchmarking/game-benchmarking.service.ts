@@ -83,6 +83,15 @@ export class GameBenchmarkingService {
     });
   }
 
+  async setBenchmarkAvgAccuracy(gameId: string, avgAccuracy: any) {
+    const query = `mutation SetAvgAccuracy($gameId: uuid!, $avgAccuracy: jsonb!) {
+      update_game_benchmarks(where: {gameId: {_eq: $gameId}}, _set: {avgAccuracy: $avgAccuracy}) {
+        affected_rows
+      }
+    }`;
+    await this.gqlService.client.request(query, { gameId, avgAccuracy });
+  }
+
   /**
    * Calculates percentage change from `expectedValue` to `newValue`.
    */
@@ -174,6 +183,11 @@ export class GameBenchmarkingService {
     const isSuccessAbsMedian = parseFloat(
       this.extractInformationService.median(absDiffOfMetrics.isSuccess).toFixed(2),
     );
+
+    await this.setBenchmarkAvgAccuracy(newGameId, {
+      completionTimeAbsAvg,
+      isSuccessAbsAvg,
+    });
 
     // Populate Game Info
     results.gameInfo.push(['Game ID', gameInfo.game_by_pk.gameId]);
