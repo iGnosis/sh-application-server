@@ -88,6 +88,13 @@ export class GameBenchmarkingController {
   @Post('transcode-video')
   async transcodeVideo(@Body() body: TranscodeVideoAPI) {
     const { benchmarkConfigId, type } = body;
+
+    // if Key already exists, then delete it from S3 first.
+    await this.s3Service.deleteObject(
+      'soundhealth-benchmark-videos',
+      `transcoded/${benchmarkConfigId}/${type}.mp4`,
+    );
+
     const command = new CreateJobCommand({
       PipelineId: this.videoTranscoderPipelineId,
       Input: {

@@ -1,5 +1,10 @@
 import { Injectable } from '@nestjs/common';
-import { S3Client, GetObjectCommand, PutObjectCommand } from '@aws-sdk/client-s3';
+import {
+  S3Client,
+  GetObjectCommand,
+  PutObjectCommand,
+  DeleteObjectCommand,
+} from '@aws-sdk/client-s3';
 import { ConfigService } from '@nestjs/config';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 
@@ -12,6 +17,14 @@ export class S3Service {
     this.client = new S3Client({
       region: this.REGION,
     });
+  }
+
+  async deleteObject(bucket: string, key: string) {
+    const command = new DeleteObjectCommand({
+      Bucket: bucket,
+      Key: key,
+    });
+    return this.client.send(command);
   }
 
   async putObjectSignedUrl(
