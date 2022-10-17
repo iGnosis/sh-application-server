@@ -1,8 +1,8 @@
 import { ConfigService } from '@nestjs/config';
 import { Test, TestingModule } from '@nestjs/testing';
 import { DatabaseModule } from 'src/database/database.module';
-import { StatsService } from 'src/patient/stats/stats.service';
-import { GqlService } from '../gql/gql.service';
+import { StatsService } from 'src/services/patient-stats/stats.service';
+import { GqlService } from '../clients/gql/gql.service';
 import { ProviderChartsService } from './provider-charts.service';
 
 describe('ProviderChartsService', () => {

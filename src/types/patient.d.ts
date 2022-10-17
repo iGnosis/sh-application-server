@@ -14,6 +14,7 @@ export class Patient {
   careGiverEmail: string;
   phoneCountryCode: string;
   phoneNumber: string;
+  canBenchmark: boolean;
   auth: {
     otp: number;
     issuedAt: number;

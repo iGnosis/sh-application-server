@@ -1,14 +1,15 @@
 import { ConfigService } from '@nestjs/config';
 import { Test, TestingModule } from '@nestjs/testing';
-import { GqlService } from '../gql/gql.service';
+import { GqlService } from '../clients/gql/gql.service';
 import { AggregateAnalyticsService } from './aggregate-analytics.service';
-import { AnalyticsDTO } from 'src/types/analytics';
+import { AnalyticsDTO } from 'src/types/global';
 
 describe('AggregateAnalyticsService', () => {
   let service: AggregateAnalyticsService;
   const testData: AnalyticsDTO[] = [
     {
       prompt: {
+        id: '1fc601e4-d2fd-4819-ab20-c972c55cb5b0',
         type: 'x',
         timestamp: 123,
         data: {
@@ -24,11 +25,12 @@ describe('AggregateAnalyticsService', () => {
         type: 'x',
         timestamp: 1,
         startTime: new Date().getTime(),
-        completionTime: 10,
+        completionTimeInMs: 1020,
       },
     },
     {
       prompt: {
+        id: '99a2d8f7-f613-44df-b273-537b111c43f9',
         type: 'x',
         timestamp: 123,
         data: {
@@ -44,7 +46,7 @@ describe('AggregateAnalyticsService', () => {
         type: 'x',
         timestamp: 1,
         startTime: new Date().getTime(),
-        completionTime: 20,
+        completionTimeInMs: 2001,
       },
     },
   ];
@@ -69,10 +71,10 @@ describe('AggregateAnalyticsService', () => {
     });
   });
 
-  it('should calculate avg completion ratio', () => {
-    expect(service.averageCompletionRatio(testData)).toEqual({
-      key: 'avgCompletionTime',
-      value: 15,
+  it('should calculate avg completion time in milliseconds', () => {
+    expect(service.averageCompletionTimeInMs(testData)).toEqual({
+      key: 'avgCompletionTimeInMs',
+      value: 1510.5,
       noOfSamples: 2,
     });
   });

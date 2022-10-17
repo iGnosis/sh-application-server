@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
-import { AggregatedObject, AnalyticsDTO } from 'src/types/analytics';
-import { GqlService } from '../gql/gql.service';
+import { AggregatedObject, AnalyticsDTO } from 'src/types/global';
+import { GqlService } from '../clients/gql/gql.service';
 
 @Injectable()
 export class AggregateAnalyticsService {
@@ -22,16 +22,16 @@ export class AggregateAnalyticsService {
     };
   }
 
-  averageCompletionRatio(analytics: AnalyticsDTO[]) {
+  averageCompletionTimeInMs(analytics: AnalyticsDTO[]) {
     const sumCompletionTime = analytics.reduce((sum, val) => {
-      if (val.reaction.completionTime) {
-        sum += val.reaction.completionTime;
+      if (val.reaction.completionTimeInMs) {
+        sum += val.reaction.completionTimeInMs;
       }
       return sum;
     }, 0);
 
     const countCompletionTimePrompts = analytics.reduce((count, val) => {
-      if (val.reaction.completionTime) {
+      if (val.reaction.completionTimeInMs) {
         count++;
       }
       return count;
@@ -39,7 +39,7 @@ export class AggregateAnalyticsService {
 
     // key, value & noOfSamples are required to store in aggregate_analytics table.
     return {
-      key: 'avgCompletionTime',
+      key: 'avgCompletionTimeInMs',
       value: parseFloat((sumCompletionTime / countCompletionTimePrompts).toFixed(2)),
       noOfSamples: countCompletionTimePrompts,
     };

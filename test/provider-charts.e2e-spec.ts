@@ -2,7 +2,7 @@ import * as request from 'supertest';
 import { Test } from '@nestjs/testing';
 import { AppModule } from '../src/app.module';
 import { ExecutionContext, INestApplication } from '@nestjs/common';
-import { AuthGuard } from 'src/auth/guards/auth.guard';
+import { AuthGuard } from 'src/common/guards/auth.guard';
 import { DatabaseService } from 'src/database/database.service';
 import { DatabaseModule } from 'src/database/database.module';
 import * as qs from 'qs';
