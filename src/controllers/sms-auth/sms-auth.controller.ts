@@ -32,15 +32,18 @@ export class SmsAuthController {
 
     const { phoneCountryCode, phoneNumber } = body;
     const otp = this.smsAuthService.generateOtp();
+    let patient: Patient;
 
     // only the phone numbers added to the user table should be allowed to enter the provider portal.
     if (userRole === 'therapist') {
       await this.smsAuthService.fetchTherapist(phoneCountryCode, phoneNumber).catch(() => {
         throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
       });
+    } else if (userRole === 'patient') {
+      patient = await this.smsAuthService.fetchPatient(phoneCountryCode, phoneNumber);
     } else if (userRole === 'benchmark') {
       // Only patients having `canBenchmark` set are allowed to login.
-      const patient = await this.smsAuthService.fetchPatient(phoneCountryCode, phoneNumber);
+      patient = await this.smsAuthService.fetchPatient(phoneCountryCode, phoneNumber);
       if (!patient.canBenchmark) {
         throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
       }
@@ -49,9 +52,12 @@ export class SmsAuthController {
     await this.smsAuthService.insertUser(userRole, phoneCountryCode, phoneNumber);
     await this.smsAuthService.updateUserOtp(userRole, phoneCountryCode, phoneNumber, otp);
     await this.smsAuthService.sendOtp(phoneCountryCode, phoneNumber, otp);
+    if (patient && patient.email) {
+      console.log(`sending Login OTP email to ${patient.email}`);
+      await this.smsAuthService.sendOtpEmail(patient.email, otp);
+    }
     return {
       message: 'OTP sent successfully.',
-      // otp: otp,
     };
   }
 
@@ -81,7 +87,7 @@ export class SmsAuthController {
       });
     }
 
-    // If OTP is not expired, send the same OTP and update issued at time.
+    // If OTP is not expired, send the same OTP.
     const isOtpExpired = this.smsAuthService.isOtpExpired(user.auth.issuedAt);
     const otp = isOtpExpired ? this.smsAuthService.generateOtp() : user.auth.otp;
 
@@ -90,9 +96,12 @@ export class SmsAuthController {
     }
 
     await this.smsAuthService.sendOtp(phoneCountryCode, phoneNumber, otp);
+    if (user && user.email) {
+      console.log(`sending resend OTP email to ${user.email}`);
+      await this.smsAuthService.sendOtpEmail(user.email, otp);
+    }
     return {
       message: 'OTP sent successfully.',
-      // otp: otp,
     };
   }
 

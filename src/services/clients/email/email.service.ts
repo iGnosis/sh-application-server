@@ -14,7 +14,7 @@ export class EmailService {
   }
 
   async send(email: Email) {
-    const from = email.from || 'no-reply@pointmotioncontrol.com';
+    const from = email.from || 'no-reply@pointmotion.us';
 
     const params = {
       Destination: {
@@ -36,16 +36,19 @@ export class EmailService {
           Data: email.subject,
         },
       },
-      Source: from, // SENDER_ADDRESS
-      ReplyToAddresses: [email.replyTo || from],
+      Source: from,
     };
+
+    if (email.replyTo) {
+      params['ReplyToAddresses'] = [email.replyTo];
+    }
 
     try {
       const data = await this.sesClient.send(new SendEmailCommand(params));
-      console.log('Success', data);
+      // console.log('Success', data);
       return data; // For unit tests.
     } catch (err) {
-      console.log('Error', err);
+      console.log('Err while sending an email', err);
     }
   }
 }

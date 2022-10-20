@@ -4,13 +4,14 @@ import { GqlService } from 'src/services/clients/gql/gql.service';
 import { SmsService } from 'src/services/clients/sms/sms.service';
 import { Patient } from 'src/types/patient';
 import { User } from 'src/types/user';
+import { EmailService } from '../clients/email/email.service';
 import { SmsAuthService } from './sms-auth.service';
 
 describe('SmsAuthService', () => {
   let service: SmsAuthService;
   beforeAll(async () => {
     const module: TestingModule = await Test.createTestingModule({
-      providers: [SmsAuthService, GqlService, ConfigService, SmsService],
+      providers: [SmsAuthService, GqlService, ConfigService, SmsService, EmailService],
     }).compile();
     service = module.get<SmsAuthService>(SmsAuthService);
   });

@@ -7,6 +7,8 @@ import { Patient } from 'src/types/patient';
 import { SmsService } from 'src/services/clients/sms/sms.service';
 import { IsArray } from 'class-validator';
 import { User } from 'src/types/user';
+import { EmailService } from '../clients/email/email.service';
+import { Email } from 'src/types/email';
 
 @Injectable()
 export class SmsAuthService {
@@ -14,6 +16,7 @@ export class SmsAuthService {
     private gqlService: GqlService,
     private configService: ConfigService,
     private smsService: SmsService,
+    private emailService: EmailService,
   ) {}
 
   // generates a 6 digit random number.
@@ -33,11 +36,33 @@ export class SmsAuthService {
   }
 
   async sendOtp(phoneCountryCode: string, phoneNumber: string, otp: number) {
-    this.smsService.client.messages.create({
-      from: this.configService.get('TWILIO_PHONE_NUMBER'),
-      to: `${phoneCountryCode}${phoneNumber}`,
-      body: `Your PointMotion OTP is ${otp}`,
-    });
+    try {
+      await this.smsService.client.messages.create({
+        from: this.configService.get('TWILIO_PHONE_NUMBER'),
+        to: `${phoneCountryCode}${phoneNumber}`,
+        body: `Your PointMotion OTP is ${otp}`,
+      });
+    } catch (err) {
+      console.log(err);
+      throw new HttpException(
+        'Unexpected error occurred while sending OTP via SMS',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+  async sendOtpEmail(patientEmail: string, otp: number) {
+    try {
+      const email: Email = {
+        to: [patientEmail],
+        subject: 'Your Pointmotion OTP',
+        body: `<h2>Your Pointmotion OTP is ${otp}<h2>`,
+        text: '', // doesn't matter if its empty.
+      };
+      return await this.emailService.send(email);
+    } catch (err) {
+      console.log(err);
+    }
   }
 
   async fetchPatient(phoneCountryCode: string, phoneNumber: string): Promise<Patient> {
@@ -47,6 +72,7 @@ export class SmsAuthService {
           id
           canBenchmark
           auth
+          email
         }
       }`;
 
