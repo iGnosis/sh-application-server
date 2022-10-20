@@ -400,7 +400,8 @@ dist
 
 
 downloads/*
-!downloads/dont_delete
-
 pose-documents/*
-!pose-documents/dont_delete
+logs/*
+
+# So that we can include 'empty' dirs.
+!**/dont_delete

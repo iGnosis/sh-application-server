@@ -1,10 +1,13 @@
-import { Module } from '@nestjs/common';
-import { ConfigModule } from '@nestjs/config';
+import { Logger, Module } from '@nestjs/common';
 
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 
+import { ConfigModule } from '@nestjs/config';
 import { DatabaseModule } from './database/database.module';
+import { utilities as nestWinstonModuleUtilities, WinstonModule } from 'nest-winston';
+import * as winston from 'winston';
+import * as winstonDailyRotateFile from 'winston-daily-rotate-file';
 
 import { GqlService } from './services/clients/gql/gql.service';
 import { EmailService } from './services/clients/email/email.service';
@@ -34,11 +37,57 @@ import { GameController } from './controllers/events/game/game.controller';
 import { PatientController } from './controllers/events/patient/patient.controller';
 import { SmsAuthController } from './controllers/sms-auth/sms-auth.controller';
 
+const winstonDailyRotateTransport = new winstonDailyRotateFile({
+  dirname: 'logs',
+  filename: '%DATE%.log',
+  datePattern: 'YYYY-MM-DD',
+  maxFiles: '30d',
+  utc: true,
+});
+
+const alignColorsAndTime = winston.format.combine(
+  winston.format.errors({ stack: true }),
+  winston.format.colorize({
+    all: true,
+  }),
+  winston.format.label({
+    label: '[LOGGER]',
+  }),
+  winston.format.timestamp({
+    format: 'YY-MM-DD HH:mm:ss',
+  }),
+  winston.format.printf(
+    (info) =>
+      ` ${info.label}  ${info.timestamp}  ${info.level} : ${info.message} ${info.stack || ''}`,
+  ),
+);
+
+const nestLikeFormatting = winston.format.combine(
+  winston.format.timestamp(),
+  winston.format.ms(),
+  nestWinstonModuleUtilities.format.nestLike('AppServer', {
+    colors: true,
+    prettyPrint: true,
+  }),
+);
+
 @Module({
   imports: [
     DatabaseModule,
     ConfigModule.forRoot({
       isGlobal: true,
+    }),
+    WinstonModule.forRoot({
+      level: 'debug',
+      format: winston.format.json(),
+      transports: [
+        winstonDailyRotateTransport,
+        new winston.transports.Console({ format: nestLikeFormatting }),
+      ],
+      exceptionHandlers: [
+        winstonDailyRotateTransport,
+        new winston.transports.Console({ format: nestLikeFormatting }),
+      ],
     }),
   ],
   controllers: [
@@ -73,6 +122,7 @@ import { SmsAuthController } from './controllers/sms-auth/sms-auth.controller';
     PollyService,
     RewardsService,
     EventsService,
+    Logger,
   ],
 })
 export class AppModule {}

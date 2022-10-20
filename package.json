@@ -52,6 +52,7 @@
     "lint-staged": "^13.0.3",
     "lodash": "^4.17.21",
     "moment": "^2.29.4",
+    "nest-winston": "^1.8.0",
     "pg": "^8.8.0",
     "reflect-metadata": "^0.1.13",
     "rimraf": "^3.0.2",
@@ -59,7 +60,9 @@
     "swagger-ui-express": "^4.5.0",
     "tmp": "^0.2.1",
     "twilio": "^3.81.0",
-    "uuid": "^8.3.2"
+    "uuid": "^8.3.2",
+    "winston": "^3.8.2",
+    "winston-daily-rotate-file": "^4.7.1"
   },
   "devDependencies": {
     "@commitlint/cli": "^17.0.3",

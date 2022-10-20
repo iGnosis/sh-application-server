@@ -106,5 +106,4 @@ jobs:
           "pkill -15 node; \
           (. ~/.pmc-secrets; \
           cd $SSH_REMOTE_PATH; \
-          echo > /tmp/app-server.log; \
-          nohup node main.js >> /tmp/app-server.log 2>&1 &)"
+          nohup node main.js > /dev/null 2>&1 &)"
