@@ -9,7 +9,7 @@ export class EmailService {
   private sesClient;
 
   constructor(private configService: ConfigService) {
-    const REGION = this.configService.get('AWS_DEFAULT_REGION');
+    const REGION = this.configService.get('AWS_DEFAULT_REGION') || 'us-east-1';
     this.sesClient = new SESClient({ region: REGION });
   }
 
