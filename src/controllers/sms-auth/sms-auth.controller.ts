@@ -58,6 +58,7 @@ export class SmsAuthController {
     }
     return {
       message: 'OTP sent successfully.',
+      isExistingUser: patient && patient.email ? true : false,
     };
   }
 
@@ -102,6 +103,7 @@ export class SmsAuthController {
     }
     return {
       message: 'OTP sent successfully.',
+      isExistingUser: user && user.email ? true : false,
     };
   }
 
