@@ -1,4 +1,4 @@
-import { Body, Controller, HttpCode, Post } from '@nestjs/common';
+import { Body, Controller, HttpCode, Logger, Post } from '@nestjs/common';
 import { NewTherapistDto, TherapistAddedFirstPatientDto } from './therapist.dto';
 import { GqlService } from 'src/services/clients/gql/gql.service';
 import { gql } from 'graphql-request';
@@ -6,7 +6,13 @@ import { EventsService } from 'src/services/events/events.service';
 
 @Controller('events/therapist')
 export class TherapistController {
-  constructor(private eventsService: EventsService, private gqlService: GqlService) {}
+  constructor(
+    private eventsService: EventsService,
+    private gqlService: GqlService,
+    private readonly logger: Logger,
+  ) {
+    this.logger = new Logger(TherapistController.name);
+  }
 
   @HttpCode(200)
   @Post('new')
@@ -26,7 +32,7 @@ export class TherapistController {
         );
         return response;
       } catch (err) {
-        console.log(err);
+        this.logger.error('newTherapist: ' + JSON.stringify(err));
       }
     }
   }
@@ -57,7 +63,7 @@ export class TherapistController {
         return putEventsResponse;
       }
     } catch (err) {
-      console.log('Error', err);
+      this.logger.error('addPatient: ' + JSON.stringify(err));
     }
   }
 }

@@ -5,6 +5,7 @@ import {
   HttpCode,
   HttpException,
   HttpStatus,
+  Logger,
   Post,
   UseInterceptors,
 } from '@nestjs/common';
@@ -18,7 +19,9 @@ import { SmsAuthService } from '../../services/sms-auth/sms-auth.service';
 @UseInterceptors(new TransformResponseInterceptor())
 @Controller('sms-auth')
 export class SmsAuthController {
-  constructor(private smsAuthService: SmsAuthService) {}
+  constructor(private smsAuthService: SmsAuthService, private readonly logger: Logger) {
+    this.logger = new Logger(SmsAuthController.name);
+  }
 
   @HttpCode(200)
   @Post('login')
@@ -53,7 +56,7 @@ export class SmsAuthController {
     await this.smsAuthService.updateUserOtp(userRole, phoneCountryCode, phoneNumber, otp);
     await this.smsAuthService.sendOtp(phoneCountryCode, phoneNumber, otp);
     if (patient && patient.email) {
-      console.log(`sending Login OTP email to ${patient.email}`);
+      this.logger.log(`sending Login OTP email to ${patient.email}`);
       await this.smsAuthService.sendOtpEmail(patient.email, otp);
     }
     return {
@@ -98,7 +101,7 @@ export class SmsAuthController {
 
     await this.smsAuthService.sendOtp(phoneCountryCode, phoneNumber, otp);
     if (user && user.email) {
-      console.log(`sending resend OTP email to ${user.email}`);
+      this.logger.log(`sending resend OTP email to ${user.email}`);
       await this.smsAuthService.sendOtpEmail(user.email, otp);
     }
     return {

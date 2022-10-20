@@ -28,6 +28,7 @@ const databasePoolFactory = async (configService: ConfigService) => {
     },
     DatabaseService,
     ConfigService,
+    Logger,
   ],
   exports: [DatabaseService],
 })

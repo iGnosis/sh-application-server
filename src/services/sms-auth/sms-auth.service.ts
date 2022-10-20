@@ -1,4 +1,4 @@
-import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
+import { HttpException, HttpStatus, Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { randomInt } from 'crypto';
 import { GqlService } from 'src/services/clients/gql/gql.service';
@@ -17,7 +17,10 @@ export class SmsAuthService {
     private configService: ConfigService,
     private smsService: SmsService,
     private emailService: EmailService,
-  ) {}
+    private readonly logger: Logger,
+  ) {
+    this.logger = new Logger(SmsAuthService.name);
+  }
 
   // generates a 6 digit random number.
   generateOtp() {
@@ -43,7 +46,7 @@ export class SmsAuthService {
         body: `Your PointMotion OTP is ${otp}`,
       });
     } catch (err) {
-      console.log(err);
+      this.logger.error('sendOtp: ', JSON.stringify(err));
       throw new HttpException(
         'Unexpected error occurred while sending OTP via SMS',
         HttpStatus.INTERNAL_SERVER_ERROR,
@@ -61,7 +64,7 @@ export class SmsAuthService {
       };
       return await this.emailService.send(email);
     } catch (err) {
-      console.log(err);
+      this.logger.error('sendOtpEmail: ', JSON.stringify(err));
     }
   }
 
@@ -123,7 +126,7 @@ export class SmsAuthService {
       await this.gqlService.client.request(query, { phoneCountryCode, phoneNumber: phoneNumber });
     } catch (err) {
       // user might already exist.
-      console.log('insertUser:err', err);
+      this.logger.error('insertUser: ' + JSON.stringify(err));
     }
   }
 
@@ -159,7 +162,7 @@ export class SmsAuthService {
         },
       });
     } catch (err) {
-      console.log('updatePatientOtp:err', err);
+      this.logger.error('updateUserOtp: ' + JSON.stringify(err));
     }
   }
 

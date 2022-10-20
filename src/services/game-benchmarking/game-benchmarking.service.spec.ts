@@ -3,13 +3,20 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { ExtractInformationService } from '../extract-information/extract-information.service';
 import { GqlService } from '../clients/gql/gql.service';
 import { GameBenchmarkingService } from './game-benchmarking.service';
+import { Logger } from '@nestjs/common';
 
 describe('GameBenchmarkingService', () => {
   let service: GameBenchmarkingService;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
-      providers: [GameBenchmarkingService, GqlService, ConfigService, ExtractInformationService],
+      providers: [
+        GameBenchmarkingService,
+        GqlService,
+        ConfigService,
+        ExtractInformationService,
+        Logger,
+      ],
     }).compile();
 
     service = module.get<GameBenchmarkingService>(GameBenchmarkingService);
@@ -42,8 +49,6 @@ describe('GameBenchmarkingService', () => {
     // When
     const reportMetrics = await service.generateReport(newGameId, benchMarkConfigId);
     const report = await service.createExcelReport(reportMetrics);
-    // console.log(reportMetrics);
-    // console.log(report);
 
     // Then
     expect(reportMetrics).toBeDefined();

@@ -420,7 +420,7 @@ export class StatsService {
       [patientId, startDate, endDate, dbTimezone],
     );
 
-    console.log('results:', results);
+    // console.log('results:', results);
 
     // just a sanity check.
     if (!results || !Array.isArray(results) || results.length === 0) {

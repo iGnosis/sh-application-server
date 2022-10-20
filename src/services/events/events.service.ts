@@ -1,5 +1,5 @@
 import { EventsRequest, Pinpoint, SendMessagesCommandInput } from '@aws-sdk/client-pinpoint';
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PatientFeedback } from 'src/types/patient';
 
@@ -21,10 +21,12 @@ export class EventsService {
   private projectId: string;
   private REGION: string;
   private eventsRequest: EventsRequest;
-  constructor(private configService: ConfigService) {
+
+  constructor(private configService: ConfigService, private readonly logger: Logger) {
     this.REGION = this.configService.get('AWS_DEFAULT_REGION') || 'us-east-1';
     this.projectId = this.configService.get('PINPOINT_PROJECT_ID');
     this.pinpoint = new Pinpoint({ region: this.REGION });
+    this.logger = new Logger(ConfigService.name);
   }
 
   async updateEndpoint(details: Details, endpointId: string, type: 'patient' | 'therapist') {
@@ -93,7 +95,7 @@ export class EventsService {
       });
       return response;
     } catch (err) {
-      console.log('Error', err);
+      this.logger.error('startAddedFirstPatientJourney: ' + JSON.stringify(err));
     }
   }
 
@@ -161,7 +163,7 @@ export class EventsService {
       ApplicationId: this.projectId,
       EventsRequest: this.eventsRequest,
     });
-    console.log(`_updateEvents:eventType: ${eventType}`, res);
+    this.logger.log(`_updateEvents:eventType: ${eventType}` + JSON.stringify(res));
   }
 
   async sendFeedbackEmail(patientFeedback: PatientFeedback) {

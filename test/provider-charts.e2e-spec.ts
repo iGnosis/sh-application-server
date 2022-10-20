@@ -189,7 +189,6 @@ describe('Provider Charts Controller (e2e)', () => {
           '2022-09-11T18:30:00.000Z': 66.67,
           '2022-09-12T18:30:00.000Z': 100,
         });
-        console.log(res.body.data.results);
       });
   });
 

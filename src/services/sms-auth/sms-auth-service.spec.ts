@@ -1,3 +1,4 @@
+import { Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Test, TestingModule } from '@nestjs/testing';
 import { GqlService } from 'src/services/clients/gql/gql.service';
@@ -11,7 +12,7 @@ describe('SmsAuthService', () => {
   let service: SmsAuthService;
   beforeAll(async () => {
     const module: TestingModule = await Test.createTestingModule({
-      providers: [SmsAuthService, GqlService, ConfigService, SmsService, EmailService],
+      providers: [SmsAuthService, GqlService, ConfigService, SmsService, EmailService, Logger],
     }).compile();
     service = module.get<SmsAuthService>(SmsAuthService);
   });

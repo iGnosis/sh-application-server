@@ -4,9 +4,10 @@ import { Pool, QueryResult } from 'pg';
 @Injectable()
 export class DatabaseService {
   // so we can log queries as they happen.
-  private readonly logger = new Logger(DatabaseService.name);
 
-  constructor(@Inject('DATABASE_POOL') private pool: Pool) {}
+  constructor(@Inject('DATABASE_POOL') private pool: Pool, private readonly logger: Logger) {
+    this.logger = new Logger(DatabaseService.name);
+  }
 
   async executeQuery(queryText: string, values: any[] = []): Promise<any[]> {
     // this.logger.debug(`Executing query: ${queryText} (${values})`);

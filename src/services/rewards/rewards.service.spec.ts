@@ -1,3 +1,4 @@
+import { Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Test, TestingModule } from '@nestjs/testing';
 import { GqlService } from 'src/services/clients/gql/gql.service';
@@ -10,7 +11,7 @@ describe('RewardsService', () => {
 
   beforeAll(async () => {
     const module: TestingModule = await Test.createTestingModule({
-      providers: [RewardsService, GqlService, EventsService, ConfigService],
+      providers: [RewardsService, GqlService, EventsService, ConfigService, Logger],
     }).compile();
     service = module.get<RewardsService>(RewardsService);
   });

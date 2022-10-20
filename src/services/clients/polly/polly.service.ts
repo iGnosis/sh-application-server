@@ -10,7 +10,6 @@ export class PollyService {
   private pollyClient;
   constructor(private configService: ConfigService) {
     const REGION = this.configService.get('AWS_DEFAULT_REGION') || 'us-east-1';
-    // console.log('REGION:', REGION);
     this.pollyClient = new Polly({ region: REGION });
   }
 
@@ -38,9 +37,6 @@ export class PollyService {
       await fs.writeFile(filePath, audio.AudioStream);
       return this._createStreamableFile(filePath);
     }
-
-    console.log('some errors whilst using Polly');
-    console.log(audio);
   }
 
   _createStreamableFile(filePath: string): StreamableFile {

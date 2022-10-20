@@ -17,7 +17,9 @@ import { PoseDataMessageBody } from 'src/types/global';
 export class MediapipePoseGateway
   implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect
 {
-  private logger: Logger = new Logger('PoseDataGateway');
+  constructor(private readonly logger: Logger) {
+    this.logger = new Logger(MediapipePoseGateway.name);
+  }
 
   afterInit(server: any) {
     this.logger.log('Gateway Initialized');

@@ -22,12 +22,12 @@ export class StatsController {
     @Query('userTimezone') userTimezone: string,
     @User() userId: string,
   ) {
-    console.log('userId:', userId);
+    // console.log('userId:', userId);
     // since endDate is exclusive, we add one day.
     const addOneDayToendDate = this.statsService.getFutureDate(endDate, 1);
 
-    console.log('startDate:', startDate);
-    console.log('endDate:', addOneDayToendDate);
+    // console.log('startDate:', startDate);
+    // console.log('endDate:', addOneDayToendDate);
 
     const results = await this.statsService.getMonthlyGoalsNew(
       userId,
@@ -49,7 +49,7 @@ export class StatsController {
     }
 
     const { daysCompleted, groupByCreatedAtDayGames } = results;
-    console.log('groupByCreatedAtDayGames:', groupByCreatedAtDayGames);
+    // console.log('groupByCreatedAtDayGames:', groupByCreatedAtDayGames);
     const response = {
       status: 'success',
       data: {

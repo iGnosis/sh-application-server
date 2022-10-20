@@ -1,5 +1,5 @@
 import { PutObjectCommand } from '@aws-sdk/client-s3';
-import { Body, Controller, HttpCode, Post, UseGuards } from '@nestjs/common';
+import { Body, Controller, HttpCode, Logger, Post, UseGuards } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { ApiBearerAuth } from '@nestjs/swagger';
 import { createReadStream } from 'fs';
@@ -20,8 +20,6 @@ import * as readLine from 'readline';
 import { ExtractInformationService } from 'src/services/extract-information/extract-information.service';
 import { PoseDataMessageBody } from 'src/types/global';
 
-// console.log(Intl.DateTimeFormat().resolvedOptions().timeZone)
-
 @Controller('events/game')
 export class GameController {
   private envName: string;
@@ -32,8 +30,10 @@ export class GameController {
     private configService: ConfigService,
     private extractInformationService: ExtractInformationService,
     private aggregateAnalyticsService: AggregateAnalyticsService,
+    private logger: Logger,
   ) {
     this.envName = configService.get('ENV_NAME');
+    this.logger = new Logger(GameController.name);
   }
 
   // called whenever a 'game' is inserted in the table.
@@ -78,7 +78,7 @@ export class GameController {
         StorageClass: 'STANDARD_IA', // infrequent access
       });
       await this.s3Service.client.send(command);
-      console.log('file successfully uploaded to s3');
+      this.logger.log('file successfully uploaded to s3');
 
       // runing calculations on pose data files & saving it to Hasura.
       const extractedInfo = {
@@ -115,7 +115,7 @@ export class GameController {
         ...extractedInfo.angles,
       });
     } catch (err) {
-      console.log(err);
+      this.logger.error('gameEnded: ' + JSON.stringify(err));
     }
 
     return {
@@ -153,9 +153,6 @@ export class GameController {
 
     const addOneDayToendDate = this.statsService.getFutureDate(endDate, 1);
 
-    console.log('startDate:', startDate);
-    console.log('endedAtDate:', endDate);
-
     const results = await this.statsService.getMonthlyGoalsNew(
       userId,
       startDate,
@@ -169,7 +166,6 @@ export class GameController {
     }
 
     const { daysCompleted, groupByCreatedAtDayGames } = results;
-    // console.log('groupByCreatedAtDayGames:', groupByCreatedAtDayGames);
 
     const index = Object.keys(groupByCreatedAtDayGames).length - 1;
     const key = Object.keys(groupByCreatedAtDayGames)[index];
@@ -188,10 +184,6 @@ export class GameController {
       numOfActivitesCompletedToday,
       totalDailyDurationInMin: totalDailyDurationInMin,
     });
-
-    console.log('numOfActiveDays:', daysCompleted);
-    console.log('numOfActivitesCompletedToday:', numOfActivitesCompletedToday);
-    console.log('totalDailyDurationInMin:', totalDailyDurationInMin);
 
     return {
       status: 'success',
