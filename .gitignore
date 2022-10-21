@@ -399,3 +399,5 @@ Temporary Items
 dist
 downloads/*
 pose-documents/*
+
+!**/.gitkeep
