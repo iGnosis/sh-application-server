@@ -38,7 +38,7 @@ import { PatientController } from './controllers/events/patient/patient.controll
 import { SmsAuthController } from './controllers/sms-auth/sms-auth.controller';
 
 const winstonDailyRotateTransport = new winstonDailyRotateFile({
-  dirname: 'logs',
+  dirname: '../nestjs-app-logs',
   filename: '%DATE%.log',
   datePattern: 'YYYY-MM-DD',
   maxFiles: '30d',
