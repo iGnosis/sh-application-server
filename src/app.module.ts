@@ -43,6 +43,10 @@ const winstonDailyRotateTransport = new winstonDailyRotateFile({
   datePattern: 'YYYY-MM-DD',
   maxFiles: '30d',
   utc: true,
+  format: winston.format.combine(
+    winston.format.timestamp({ format: 'YYYY-MM-DDTHH:mm:ssZ' }),
+    winston.format.json(),
+  ),
 });
 
 const alignColorsAndTime = winston.format.combine(
