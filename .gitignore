@@ -397,11 +397,5 @@ Temporary Items
 # Local
 .env
 dist
-
-
 downloads/*
 pose-documents/*
-logs/*
-
-# So that we can include 'empty' dirs.
-!**/dont_delete
