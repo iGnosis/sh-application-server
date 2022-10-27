@@ -47,7 +47,7 @@ export class SmsAuthController {
     } else if (userRole === 'benchmark') {
       // Only patients having `canBenchmark` set are allowed to login.
       patient = await this.smsAuthService.fetchPatient(phoneCountryCode, phoneNumber);
-      if (!patient.canBenchmark) {
+      if (!patient || !patient.canBenchmark) {
         throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
       }
     }
