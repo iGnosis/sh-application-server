@@ -80,11 +80,6 @@ export class SmsAuthService {
       }`;
 
     const resp = await this.gqlService.client.request(query, { phoneCountryCode, phoneNumber });
-
-    if (!resp || !IsArray(resp.patient) || !resp.patient.length) {
-      throw new HttpException('Invalid Request', HttpStatus.BAD_REQUEST);
-    }
-
     return resp.patient[0];
   }
 
