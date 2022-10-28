@@ -397,6 +397,7 @@ Temporary Items
 # Local
 .env
 dist
+temp
 downloads/*
 pose-documents/*
 
