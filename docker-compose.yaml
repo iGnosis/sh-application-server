@@ -1,0 +1,29 @@
+version: '3.9'
+services:
+  sh_application_server_prod:
+    build:
+      context: .
+      dockerfile: docker/Prod.Dockerfile
+    profiles:
+      - prod
+    env_file: .env
+    restart: unless-stopped
+    ports:
+      - 9000:9000
+
+  sh_application_server_local:
+    build:
+      context: .
+      dockerfile: docker/Local.Dockerfile
+    profiles:
+      - local
+    env_file: .env
+    restart: unless-stopped
+    ports:
+      - 9000:9000
+    # For hot reloading
+    volumes:
+      - ./:/usr/src/sh-application-server/local
+      - ignore://usr/src/sh-application-server/local/node_modules
+volumes:
+  ignore:

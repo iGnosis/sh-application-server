@@ -5,7 +5,7 @@ curl --location --request POST "https://api.dev.pointmotioncontrol.com/v1alpha1/
 --header "x-hasura-admin-secret: $HASURA_ADMIN_SECRET" \
 --header 'Content-Type: application/json' \
 --data-raw '{
-    "opts": ["-O", "-x", "--data-only", "--column-inserts", "--table", "patient", "--schema", "public"],
+    "opts": ["-O", "-x", "--data-only", "--column-inserts", "-U", "soundhealth"],
     "clean_output": true,
     "source": "default"
 }' > src/scripts/temp/sql_data.sql
