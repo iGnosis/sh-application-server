@@ -3,6 +3,7 @@ RUN apk add --update python3 make g++ && rm -rf /var/cache/apk/*
 
 WORKDIR /usr/src/sh-application-server
 COPY package*.json .
+RUN npm config set unsafe-perm true
 RUN npm ci
 ENV PATH=/usr/src/sh-application-server/node_modules/.bin:$PATH
 
