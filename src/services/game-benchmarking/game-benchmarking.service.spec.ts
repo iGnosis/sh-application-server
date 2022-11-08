@@ -26,7 +26,7 @@ describe('GameBenchmarkingService', () => {
     expect(service).toBeDefined();
   });
 
-  it('should fetch game benchmarks', async () => {
+  xit('should fetch game benchmarks', async () => {
     // Given
     const newGameId = '798ff028-daa1-4c1b-a52d-286a1e0f4286';
 
@@ -41,7 +41,7 @@ describe('GameBenchmarkingService', () => {
     expect(resp.analytics).toBeDefined();
   });
 
-  it('should generate report', async () => {
+  xit('should generate report', async () => {
     // Given
     const newGameId = '798ff028-daa1-4c1b-a52d-286a1e0f4286';
     const benchMarkConfigId = '5ed3bb8f-bd99-4282-8edd-1f1f070432b5';
@@ -55,7 +55,7 @@ describe('GameBenchmarkingService', () => {
     expect(report).toBeDefined();
   });
 
-  it('should update game benchmark config with download URLs ', async () => {
+  xit('should update game benchmark config with download URLs ', async () => {
     // Given
     const benchmarkConfigId = '5ed3bb8f-bd99-4282-8edd-1f1f070432b5';
     const rawVideoUrl =
