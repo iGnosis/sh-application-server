@@ -8,6 +8,8 @@ import { User } from 'src/types/user';
 import { EmailService } from '../clients/email/email.service';
 import { SmsAuthService } from './sms-auth.service';
 
+jest.mock('src/services/clients/sms/sms.service');
+
 describe('SmsAuthService', () => {
   let service: SmsAuthService;
   beforeAll(async () => {
