@@ -161,8 +161,16 @@ export class SmsAuthService {
     }
   }
 
-  generateJwtToken(userRole: 'patient' | 'therapist' | 'benchmark', user: Patient | User) {
-    const key = JSON.parse(this.configService.get('JWT_SECRET'));
+  generateJwtToken(
+    userRole: 'patient' | 'therapist' | 'benchmark',
+    user: Patient | User,
+    jwtSecret?: string,
+  ) {
+    if (!jwtSecret) {
+      jwtSecret = this.configService.get('JWT_SECRET');
+    }
+
+    const key = JSON.parse(jwtSecret);
 
     // JWT token remains valid for 30 days.
     const expOffset = 60 * 60 * 24 * 30;
@@ -186,8 +194,11 @@ export class SmsAuthService {
     return jwt.sign(payload, key.key);
   }
 
-  verifyToken(token: string) {
-    const key = JSON.parse(this.configService.get('JWT_SECRET'));
+  verifyToken(token: string, jwtSecret?: string) {
+    if (!jwtSecret) {
+      jwtSecret = this.configService.get('JWT_SECRET');
+    }
+    const key = JSON.parse(jwtSecret);
     try {
       const decodedToken = jwt.verify(token, key.key);
       return decodedToken;

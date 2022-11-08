@@ -63,10 +63,11 @@ describe('SmsAuthService', () => {
     const userObj = {
       id: 'patient-abc',
     };
+    const testJwtSecret = '{"type":"HS256","key":"test_jwt_secret"}';
 
     // when
-    const jwt = service.generateJwtToken(userType, userObj as Patient);
-    const verifiedToken = service.verifyToken(jwt);
+    const jwt = service.generateJwtToken(userType, userObj as Patient, testJwtSecret);
+    const verifiedToken = service.verifyToken(jwt, testJwtSecret);
 
     // then
     expect(typeof jwt).toBe('string');
@@ -93,10 +94,11 @@ describe('SmsAuthService', () => {
     const userObj = {
       id: 'therapist-abc',
     };
+    const testJwtSecret = '{"type":"HS256","key":"test_jwt_secret"}';
 
     // when
-    const jwt = service.generateJwtToken(userType, userObj as User);
-    const verifiedToken = service.verifyToken(jwt);
+    const jwt = service.generateJwtToken(userType, userObj as User, testJwtSecret);
+    const verifiedToken = service.verifyToken(jwt, testJwtSecret);
 
     // then
     expect(typeof jwt).toBe('string');
@@ -123,10 +125,11 @@ describe('SmsAuthService', () => {
     const userObj = {
       id: 'benchmark-abc',
     };
+    const testJwtSecret = '{"type":"HS256","key":"test_jwt_secret"}';
 
     // when
-    const jwt = service.generateJwtToken(userType, userObj as User);
-    const verifiedToken = service.verifyToken(jwt);
+    const jwt = service.generateJwtToken(userType, userObj as User, testJwtSecret);
+    const verifiedToken = service.verifyToken(jwt, testJwtSecret);
 
     // then
     expect(typeof jwt).toBe('string');
