@@ -106,3 +106,15 @@ jobs:
           (. ~/.pmc-secrets; \
           cd $SSH_REMOTE_PATH; \
           nohup node main.js > /dev/null 2>&1 &)"
+
+  coverage:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: ArtiomTr/jest-coverage-report-action@v2
+        id: coverage
+        with:
+          output: report-markdown
+      - uses: marocchino/sticky-pull-request-comment@v2
+        with:
+          message: ${{ steps.coverage.outputs.report }}
