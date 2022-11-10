@@ -5,6 +5,7 @@ import {
   HttpCode,
   HttpException,
   HttpStatus,
+  Logger,
   Post,
   UseInterceptors,
 } from '@nestjs/common';
@@ -18,7 +19,9 @@ import { SmsAuthService } from '../../services/sms-auth/sms-auth.service';
 @UseInterceptors(new TransformResponseInterceptor())
 @Controller('sms-auth')
 export class SmsAuthController {
-  constructor(private smsAuthService: SmsAuthService) {}
+  constructor(private smsAuthService: SmsAuthService, private readonly logger: Logger) {
+    this.logger = new Logger(SmsAuthController.name);
+  }
 
   @HttpCode(200)
   @Post('login')
@@ -32,16 +35,19 @@ export class SmsAuthController {
 
     const { phoneCountryCode, phoneNumber } = body;
     const otp = this.smsAuthService.generateOtp();
+    let patient: Patient;
 
     // only the phone numbers added to the user table should be allowed to enter the provider portal.
     if (userRole === 'therapist') {
       await this.smsAuthService.fetchTherapist(phoneCountryCode, phoneNumber).catch(() => {
         throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
       });
+    } else if (userRole === 'patient') {
+      patient = await this.smsAuthService.fetchPatient(phoneCountryCode, phoneNumber);
     } else if (userRole === 'benchmark') {
       // Only patients having `canBenchmark` set are allowed to login.
-      const patient = await this.smsAuthService.fetchPatient(phoneCountryCode, phoneNumber);
-      if (!patient.canBenchmark) {
+      patient = await this.smsAuthService.fetchPatient(phoneCountryCode, phoneNumber);
+      if (!patient || !patient.canBenchmark) {
         throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
       }
     }
@@ -49,9 +55,13 @@ export class SmsAuthController {
     await this.smsAuthService.insertUser(userRole, phoneCountryCode, phoneNumber);
     await this.smsAuthService.updateUserOtp(userRole, phoneCountryCode, phoneNumber, otp);
     await this.smsAuthService.sendOtp(phoneCountryCode, phoneNumber, otp);
+    if (patient && patient.email) {
+      this.logger.log(`sending Login OTP email to ${patient.email}`);
+      await this.smsAuthService.sendOtpEmail(patient.email, otp);
+    }
     return {
       message: 'OTP sent successfully.',
-      // otp: otp,
+      isExistingUser: patient && patient.email ? true : false,
     };
   }
 
@@ -81,7 +91,7 @@ export class SmsAuthController {
       });
     }
 
-    // If OTP is not expired, send the same OTP and update issued at time.
+    // If OTP is not expired, send the same OTP.
     const isOtpExpired = this.smsAuthService.isOtpExpired(user.auth.issuedAt);
     const otp = isOtpExpired ? this.smsAuthService.generateOtp() : user.auth.otp;
 
@@ -90,9 +100,13 @@ export class SmsAuthController {
     }
 
     await this.smsAuthService.sendOtp(phoneCountryCode, phoneNumber, otp);
+    if (user && user.email) {
+      this.logger.log(`sending resend OTP email to ${user.email}`);
+      await this.smsAuthService.sendOtpEmail(user.email, otp);
+    }
     return {
       message: 'OTP sent successfully.',
-      // otp: otp,
+      isExistingUser: user && user.email ? true : false,
     };
   }
 

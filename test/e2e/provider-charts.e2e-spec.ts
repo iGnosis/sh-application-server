@@ -1,11 +1,11 @@
 import * as request from 'supertest';
 import { Test } from '@nestjs/testing';
-import { AppModule } from '../src/app.module';
 import { ExecutionContext, INestApplication } from '@nestjs/common';
 import { AuthGuard } from 'src/common/guards/auth.guard';
 import { DatabaseService } from 'src/database/database.service';
 import { DatabaseModule } from 'src/database/database.module';
 import * as qs from 'qs';
+import { AppModule } from 'src/app.module';
 
 describe('Provider Charts Controller (e2e)', () => {
   let app: INestApplication;
@@ -189,7 +189,6 @@ describe('Provider Charts Controller (e2e)', () => {
           '2022-09-11T18:30:00.000Z': 66.67,
           '2022-09-12T18:30:00.000Z': 100,
         });
-        console.log(res.body.data.results);
       });
   });
 

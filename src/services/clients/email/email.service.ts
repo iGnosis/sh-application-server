@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { SESClient } from '@aws-sdk/client-ses';
 import { SendEmailCommand } from '@aws-sdk/client-ses';
@@ -6,15 +6,16 @@ import { Email } from 'src/types/email';
 
 @Injectable()
 export class EmailService {
-  private sesClient;
+  private readonly sesClient: SESClient;
 
-  constructor(private configService: ConfigService) {
-    const REGION = this.configService.get('AWS_DEFAULT_REGION');
+  constructor(private configService: ConfigService, private readonly logger: Logger) {
+    const REGION = this.configService.get('AWS_DEFAULT_REGION') || 'us-east-1';
     this.sesClient = new SESClient({ region: REGION });
+    this.logger = new Logger(EmailService.name);
   }
 
   async send(email: Email) {
-    const from = email.from || 'no-reply@pointmotioncontrol.com';
+    const from = email.from || 'no-reply@pointmotion.us';
 
     const params = {
       Destination: {
@@ -36,16 +37,18 @@ export class EmailService {
           Data: email.subject,
         },
       },
-      Source: from, // SENDER_ADDRESS
-      ReplyToAddresses: [email.replyTo || from],
+      Source: from,
     };
+
+    if (email.replyTo) {
+      params['ReplyToAddresses'] = [email.replyTo];
+    }
 
     try {
       const data = await this.sesClient.send(new SendEmailCommand(params));
-      console.log('Success', data);
       return data; // For unit tests.
     } catch (err) {
-      console.log('Error', err);
+      this.logger.error('send: ' + JSON.stringify(err));
     }
   }
 }

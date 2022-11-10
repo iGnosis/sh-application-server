@@ -26,7 +26,6 @@ describe('S3Service', () => {
     const signedUrl = await service.putObjectSignedUrl(bucketName, completeFilePath);
 
     // Then
-    console.log(signedUrl);
     expect(signedUrl).toBeDefined();
   });
 

@@ -1,4 +1,4 @@
-import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
+import { HttpException, HttpStatus, Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { randomInt } from 'crypto';
 import { GqlService } from 'src/services/clients/gql/gql.service';
@@ -7,6 +7,8 @@ import { Patient } from 'src/types/patient';
 import { SmsService } from 'src/services/clients/sms/sms.service';
 import { IsArray } from 'class-validator';
 import { User } from 'src/types/user';
+import { EmailService } from '../clients/email/email.service';
+import { Email } from 'src/types/email';
 
 @Injectable()
 export class SmsAuthService {
@@ -14,7 +16,11 @@ export class SmsAuthService {
     private gqlService: GqlService,
     private configService: ConfigService,
     private smsService: SmsService,
-  ) {}
+    private emailService: EmailService,
+    private readonly logger: Logger,
+  ) {
+    this.logger = new Logger(SmsAuthService.name);
+  }
 
   // generates a 6 digit random number.
   generateOtp() {
@@ -33,11 +39,33 @@ export class SmsAuthService {
   }
 
   async sendOtp(phoneCountryCode: string, phoneNumber: string, otp: number) {
-    this.smsService.client.messages.create({
-      from: this.configService.get('TWILIO_PHONE_NUMBER'),
-      to: `${phoneCountryCode}${phoneNumber}`,
-      body: `Your PointMotion OTP is ${otp}`,
-    });
+    try {
+      await this.smsService.client.messages.create({
+        from: this.configService.get('TWILIO_PHONE_NUMBER'),
+        to: `${phoneCountryCode}${phoneNumber}`,
+        body: `Your PointMotion OTP is ${otp}`,
+      });
+    } catch (err) {
+      this.logger.error('sendOtp: ', JSON.stringify(err));
+      throw new HttpException(
+        'Unexpected error occurred while sending OTP via SMS',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+  async sendOtpEmail(patientEmail: string, otp: number) {
+    try {
+      const email: Email = {
+        to: [patientEmail],
+        subject: 'Your Pointmotion OTP',
+        body: `<h2>Your Pointmotion OTP is ${otp}<h2>`,
+        text: '', // doesn't matter if its empty.
+      };
+      return await this.emailService.send(email);
+    } catch (err) {
+      this.logger.error('sendOtpEmail: ', JSON.stringify(err));
+    }
   }
 
   async fetchPatient(phoneCountryCode: string, phoneNumber: string): Promise<Patient> {
@@ -47,15 +75,11 @@ export class SmsAuthService {
           id
           canBenchmark
           auth
+          email
         }
       }`;
 
     const resp = await this.gqlService.client.request(query, { phoneCountryCode, phoneNumber });
-
-    if (!resp || !IsArray(resp.patient) || !resp.patient.length) {
-      throw new HttpException('Invalid Request', HttpStatus.BAD_REQUEST);
-    }
-
     return resp.patient[0];
   }
 
@@ -97,7 +121,7 @@ export class SmsAuthService {
       await this.gqlService.client.request(query, { phoneCountryCode, phoneNumber: phoneNumber });
     } catch (err) {
       // user might already exist.
-      console.log('insertUser:err', err);
+      this.logger.error('insertUser: ' + JSON.stringify(err));
     }
   }
 
@@ -133,12 +157,20 @@ export class SmsAuthService {
         },
       });
     } catch (err) {
-      console.log('updatePatientOtp:err', err);
+      this.logger.error('updateUserOtp: ' + JSON.stringify(err));
     }
   }
 
-  generateJwtToken(userRole: 'patient' | 'therapist' | 'benchmark', user: Patient | User) {
-    const key = JSON.parse(this.configService.get('JWT_SECRET'));
+  generateJwtToken(
+    userRole: 'patient' | 'therapist' | 'benchmark',
+    user: Patient | User,
+    jwtSecret?: string,
+  ) {
+    if (!jwtSecret) {
+      jwtSecret = this.configService.get('JWT_SECRET');
+    }
+
+    const key = JSON.parse(jwtSecret);
 
     // JWT token remains valid for 30 days.
     const expOffset = 60 * 60 * 24 * 30;
@@ -162,8 +194,11 @@ export class SmsAuthService {
     return jwt.sign(payload, key.key);
   }
 
-  verifyToken(token: string) {
-    const key = JSON.parse(this.configService.get('JWT_SECRET'));
+  verifyToken(token: string, jwtSecret?: string) {
+    if (!jwtSecret) {
+      jwtSecret = this.configService.get('JWT_SECRET');
+    }
+    const key = JSON.parse(jwtSecret);
     try {
       const decodedToken = jwt.verify(token, key.key);
       return decodedToken;

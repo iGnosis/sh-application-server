@@ -1,4 +1,4 @@
-import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
+import { HttpException, HttpStatus, Injectable, Logger } from '@nestjs/common';
 import { groupBy as _groupBy, mean as _mean, isEmpty as _isEmpty } from 'lodash';
 import {
   BenchmarkConfig,
@@ -16,7 +16,10 @@ export class GameBenchmarkingService {
   constructor(
     private gqlService: GqlService,
     private extractInformationService: ExtractInformationService,
-  ) {}
+    private readonly logger: Logger,
+  ) {
+    this.logger = new Logger(GameBenchmarkingService.name);
+  }
 
   async fetchGameInfo(newGameId: string): Promise<GameInfo> {
     const query = `query FetchGameInfo($newGameId: uuid!) {
@@ -231,7 +234,7 @@ export class GameBenchmarkingService {
         },
         async (err: any, file: any) => {
           if (err) {
-            console.log(err);
+            this.logger.error('createExcelReport: ' + JSON.stringify(err));
             throw new HttpException('Internal server error', HttpStatus.INTERNAL_SERVER_ERROR);
           }
           workbook.xlsx
@@ -240,7 +243,7 @@ export class GameBenchmarkingService {
               resolve(file);
             })
             .catch((err) => {
-              console.log(err);
+              this.logger.error('createExcelReport: ', +JSON.stringify(err));
               throw new HttpException('Internal server error', HttpStatus.INTERNAL_SERVER_ERROR);
             });
         },

@@ -3,9 +3,9 @@ import { ConfigService } from '@nestjs/config';
 import axios from 'axios';
 @Injectable()
 export class CronService {
-  private readonly logger = new Logger(CronService.name);
-
-  constructor(private configService: ConfigService) {}
+  constructor(private configService: ConfigService, private readonly logger: Logger) {
+    this.logger = new Logger(CronService.name);
+  }
 
   async scheduleOneOffCron(scheduleAt: string, apiEndpoint: string, payload = {}, comment = '') {
     const scheduleEventBody = {
@@ -19,13 +19,13 @@ export class CronService {
     };
 
     const hasuraQueryEp = this.configService.get('HASURA_QUERY_ENDPOINT');
-    this.logger.debug('scheduleCron:hasuraQueryEp:', scheduleEventBody);
+    this.logger.debug('scheduleCron:hasuraQueryEp: ' + JSON.stringify(scheduleEventBody));
 
     const scheduleReq = await axios.post(hasuraQueryEp, JSON.stringify(scheduleEventBody), {
       headers: {
         'x-hasura-admin-secret': this.configService.get('GQL_API_ADMIN_SECRET'),
       },
     });
-    this.logger.debug('scheduleCron:response:', scheduleReq.data);
+    this.logger.debug('scheduleCron:response: ' + JSON.stringify(scheduleReq.data));
   }
 }

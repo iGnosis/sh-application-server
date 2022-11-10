@@ -14,10 +14,8 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-
     steps:
       - uses: actions/checkout@v2
-
       - name: Set production environment variables
         if: endsWith(github.ref, '/main')
         run: |
@@ -83,13 +81,20 @@ jobs:
         run: |
          echo "Listing files..."
          ls -la
-         npm install
+         npm ci --ignore-scripts
          npm run build
 
-      # TODO: Put tests in CI once you create a env file dynamically.
-      # - name: Run test cases
-      #   run: |
-      #    npm run test
+      - name: Run test cases
+        run: |
+         npm run test:cov
+
+      - name: Update code coverage badge
+        run: npx update-badge
+
+      - uses: mikeal/publish-to-github-action@master
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          BRANCH_NAME: ${{ github.ref_name }}
 
       - name: Copy Files Over Remote Server
         run: |
@@ -106,5 +111,16 @@ jobs:
           "pkill -15 node; \
           (. ~/.pmc-secrets; \
           cd $SSH_REMOTE_PATH; \
-          echo > /tmp/app-server.log; \
-          nohup node main.js >> /tmp/app-server.log 2>&1 &)"
+          nohup node main.js > /dev/null 2>&1 &)"
+
+  # coverage:
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - uses: actions/checkout@v3
+  #     - uses: ArtiomTr/jest-coverage-report-action@v2
+  #       id: coverage
+  #       with:
+  #         output: report-markdown
+  #     - uses: marocchino/sticky-pull-request-comment@v2
+  #       with:
+  #         message: ${{ steps.coverage.outputs.report }}

@@ -80,7 +80,7 @@ export class RewardsService {
       );
     }
 
-    const unlockedRewardsTier = new Set();
+    const unlockedRewardsTier: Set<RewardTypes> = new Set();
     for (let i = 0; i < oldRewards.length; i++) {
       const isOldRewardUnlocked = oldRewards[i].isUnlocked;
       const isNewRewardUnlocked = newRewards[i].isUnlocked;

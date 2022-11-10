@@ -1,16 +1,20 @@
+import { Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Test, TestingModule } from '@nestjs/testing';
 import { GqlService } from 'src/services/clients/gql/gql.service';
 import { SmsService } from 'src/services/clients/sms/sms.service';
 import { Patient } from 'src/types/patient';
 import { User } from 'src/types/user';
+import { EmailService } from '../clients/email/email.service';
 import { SmsAuthService } from './sms-auth.service';
+
+jest.mock('src/services/clients/sms/sms.service');
 
 describe('SmsAuthService', () => {
   let service: SmsAuthService;
   beforeAll(async () => {
     const module: TestingModule = await Test.createTestingModule({
-      providers: [SmsAuthService, GqlService, ConfigService, SmsService],
+      providers: [SmsAuthService, GqlService, ConfigService, SmsService, EmailService, Logger],
     }).compile();
     service = module.get<SmsAuthService>(SmsAuthService);
   });
@@ -59,10 +63,11 @@ describe('SmsAuthService', () => {
     const userObj = {
       id: 'patient-abc',
     };
+    const testJwtSecret = '{"type":"HS256","key":"test_jwt_secret"}';
 
     // when
-    const jwt = service.generateJwtToken(userType, userObj as Patient);
-    const verifiedToken = service.verifyToken(jwt);
+    const jwt = service.generateJwtToken(userType, userObj as Patient, testJwtSecret);
+    const verifiedToken = service.verifyToken(jwt, testJwtSecret);
 
     // then
     expect(typeof jwt).toBe('string');
@@ -89,10 +94,11 @@ describe('SmsAuthService', () => {
     const userObj = {
       id: 'therapist-abc',
     };
+    const testJwtSecret = '{"type":"HS256","key":"test_jwt_secret"}';
 
     // when
-    const jwt = service.generateJwtToken(userType, userObj as User);
-    const verifiedToken = service.verifyToken(jwt);
+    const jwt = service.generateJwtToken(userType, userObj as User, testJwtSecret);
+    const verifiedToken = service.verifyToken(jwt, testJwtSecret);
 
     // then
     expect(typeof jwt).toBe('string');
@@ -119,10 +125,11 @@ describe('SmsAuthService', () => {
     const userObj = {
       id: 'benchmark-abc',
     };
+    const testJwtSecret = '{"type":"HS256","key":"test_jwt_secret"}';
 
     // when
-    const jwt = service.generateJwtToken(userType, userObj as User);
-    const verifiedToken = service.verifyToken(jwt);
+    const jwt = service.generateJwtToken(userType, userObj as User, testJwtSecret);
+    const verifiedToken = service.verifyToken(jwt, testJwtSecret);
 
     // then
     expect(typeof jwt).toBe('string');

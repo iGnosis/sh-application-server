@@ -2,6 +2,7 @@ import {
   Body,
   Controller,
   Get,
+  Logger,
   Post,
   Query,
   Res,
@@ -34,7 +35,10 @@ export class GameBenchmarkingController {
     private gameBenchmarkingService: GameBenchmarkingService,
     private s3Service: S3Service,
     private videoTranscoderService: VideoTranscoderService,
-  ) {}
+    private readonly logger: Logger,
+  ) {
+    this.logger = new Logger(GameBenchmarkingController.name);
+  }
 
   @Get('report')
   async generateReport(
@@ -49,12 +53,12 @@ export class GameBenchmarkingController {
     const excelFilePath = await this.gameBenchmarkingService.createExcelReport(reportMetrics);
     res.download(excelFilePath, `${newGameId}-report.xlsx`, (err) => {
       if (err) {
-        console.log(err);
+        this.logger.error('generateReport: ' + JSON.stringify(err));
       }
 
       // file to be deleted after the transfer is complete.
       fs.unlink(excelFilePath, () => {
-        console.log(`file ${excelFilePath} was deleted`);
+        this.logger.log(`file ${excelFilePath} was deleted`);
       });
     });
   }
