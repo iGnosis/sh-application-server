@@ -71,7 +71,7 @@ describe('AggregateAnalyticsService', () => {
     });
   });
 
-  xit('should calculate avg completion time in milliseconds', () => {
+  it('should calculate avg completion time in milliseconds', () => {
     expect(service.averageCompletionTimeInMs(testData)).toEqual({
       key: 'avgCompletionTimeInMs',
       value: 1510.5,
