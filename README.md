@@ -12,7 +12,7 @@
 - cd to `sh-application-server`
 - create a new file `.env` with the contents of `.env.sample`
 - fill in `.env` example values
-- run `docker compose --profile local up -d` to build and start the container.
+- run `docker compose --profile local up -d` to build and start the container
 
 ## Test
 
