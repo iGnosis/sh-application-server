@@ -85,8 +85,8 @@ export class SmsAuthService {
 
   async fetchTherapist(phoneCountryCode: string, phoneNumber: string): Promise<User> {
     const query = `
-     query FetchUser($phoneCountryCode: String!, $phoneNumber: String!) {
-        user(where: {phoneCountryCode: {_eq: $phoneCountryCode}, phoneNumber: {_eq: $phoneNumber}, type: {_eq: therapist}}) {
+     query FetchStaff($phoneCountryCode: String!, $phoneNumber: String!) {
+        staff(where: {phoneCountryCode: {_eq: $phoneCountryCode}, phoneNumber: {_eq: $phoneNumber}, type: {_eq: therapist}}) {
           auth
           id
         }
@@ -94,11 +94,11 @@ export class SmsAuthService {
 
     const resp = await this.gqlService.client.request(query, { phoneCountryCode, phoneNumber });
 
-    if (!resp || !IsArray(resp.user) || !resp.user.length) {
+    if (!resp || !IsArray(resp.staff) || !resp.staff.length) {
       throw new HttpException('Invalid Request', HttpStatus.BAD_REQUEST);
     }
 
-    return resp.user[0];
+    return resp.staff[0];
   }
 
   async insertUser(userRole: string, phoneCountryCode: string, phoneNumber: string) {
@@ -111,7 +111,7 @@ export class SmsAuthService {
 
     if (userRole === 'therapist') {
       query = `mutation InsertTherapist($phoneCountryCode: String!, $phoneNumber: String!) {
-        insert_user(objects: {phoneCountryCode: $phoneCountryCode, phoneNumber: $phoneNumber, type: therapist}) {
+        insert_staff(objects: {phoneCountryCode: $phoneCountryCode, phoneNumber: $phoneNumber, type: therapist}) {
             affected_rows
         }
       }`;
@@ -141,7 +141,7 @@ export class SmsAuthService {
     if (userRole === 'therapist') {
       updateOtpQuery = `
         mutation UpdateUserOTP($phoneCountryCode: String!, $phoneNumber: String!, $auth: jsonb!) {
-          update_user(where: {phoneCountryCode: {_eq: $phoneCountryCode}, phoneNumber: {_eq: $phoneNumber}, type: {_eq: therapist}}, _set: {auth: $auth}) {
+          update_staff(where: {phoneCountryCode: {_eq: $phoneCountryCode}, phoneNumber: {_eq: $phoneNumber}, type: {_eq: therapist}}, _set: {auth: $auth}) {
             affected_rows
           }
         }`;
