@@ -5,7 +5,6 @@ import { GqlService } from 'src/services/clients/gql/gql.service';
 import * as jwt from 'jsonwebtoken';
 import { Patient } from 'src/types/patient';
 import { SmsService } from 'src/services/clients/sms/sms.service';
-import { IsArray } from 'class-validator';
 import { Staff } from 'src/types/user';
 import { EmailService } from '../clients/email/email.service';
 import { Email } from 'src/types/email';
@@ -73,7 +72,6 @@ export class SmsAuthService {
         patient(where: {phoneCountryCode: {_eq: $phoneCountryCode}, phoneNumber: {_eq: $phoneNumber}}) {
           id
           canBenchmark
-          auth
           email
         }
       }`;
@@ -86,15 +84,18 @@ export class SmsAuthService {
     const query = `
      query FetchStaff($phoneCountryCode: String!, $phoneNumber: String!) {
         staff(where: {phoneCountryCode: {_eq: $phoneCountryCode}, phoneNumber: {_eq: $phoneNumber}, type: {_eq: therapist}}) {
-          auth
           id
         }
       }`;
-    const resp = await this.gqlService.client.request(query, { phoneCountryCode, phoneNumber });
-    if (!resp || !IsArray(resp.staff) || !resp.staff.length) {
-      throw new HttpException('Invalid Request', HttpStatus.BAD_REQUEST);
+
+    try {
+      const resp = await this.gqlService.client.request(query, { phoneCountryCode, phoneNumber });
+      console.log('fetchStaff:resp:', resp);
+      return resp.staff[0];
+    } catch (err) {
+      console.log(err);
+      throw new HttpException('Bad Request', HttpStatus.INTERNAL_SERVER_ERROR);
     }
-    return resp.staff[0];
   }
 
   private async fetchStaffLatestOtp(staff: string): Promise<Auth> {

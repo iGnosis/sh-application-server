@@ -26,11 +26,7 @@ export class SmsAuthController {
 
   @HttpCode(200)
   @Post('login')
-  async login(
-    @Body() body: SMSLoginBody,
-    @Headers('x-pointmotion-user') userRole: UserRole,
-    @Headers('x-organization-id') organizationId: string,
-  ) {
+  async login(@Body() body: SMSLoginBody, @Headers('x-pointmotion-user') userRole: UserRole) {
     if (
       !userRole ||
       (userRole !== UserRole.PATIENT &&
