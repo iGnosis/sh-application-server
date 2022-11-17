@@ -1,4 +1,4 @@
-export class User {
+export class Staff {
   id: string;
   email: string;
   password: string;
@@ -12,10 +12,6 @@ export class User {
   provider: string;
   phoneCountryCode: string;
   phoneNumber: string;
-  auth: {
-    otp: number;
-    issuedAt: number;
-  };
 }
 
 export interface UserObjDecorator {

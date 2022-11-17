@@ -6,9 +6,11 @@ import * as jwt from 'jsonwebtoken';
 import { Patient } from 'src/types/patient';
 import { SmsService } from 'src/services/clients/sms/sms.service';
 import { IsArray } from 'class-validator';
-import { User } from 'src/types/user';
+import { Staff } from 'src/types/user';
 import { EmailService } from '../clients/email/email.service';
 import { Email } from 'src/types/email';
+import { UserRole } from 'src/common/enums/role.enum';
+import { Auth } from 'src/types/global';
 
 @Injectable()
 export class SmsAuthService {
@@ -22,20 +24,17 @@ export class SmsAuthService {
     this.logger = new Logger(SmsAuthService.name);
   }
 
-  // generates a 6 digit random number.
   generateOtp() {
+    // returns 6 digit random number
     return randomInt(100000, 1000000);
   }
 
-  isOtpExpired(issuedAt: number) {
-    const now = new Date().getTime();
-    const diffInMins = (now - issuedAt) / 1000 / 60;
-
-    // OTP remains valid for 30mins from the time it is issued.
-    if (diffInMins < 30) {
-      return false;
+  isOtpExpired(expiryAt: Date) {
+    const now = new Date();
+    if (now > expiryAt) {
+      return true;
     }
-    return true;
+    return false;
   }
 
   async sendOtp(phoneCountryCode: string, phoneNumber: string, otp: number) {
@@ -83,7 +82,7 @@ export class SmsAuthService {
     return resp.patient[0];
   }
 
-  async fetchTherapist(phoneCountryCode: string, phoneNumber: string): Promise<User> {
+  async fetchStaff(phoneCountryCode: string, phoneNumber: string): Promise<Staff> {
     const query = `
      query FetchStaff($phoneCountryCode: String!, $phoneNumber: String!) {
         staff(where: {phoneCountryCode: {_eq: $phoneCountryCode}, phoneNumber: {_eq: $phoneNumber}, type: {_eq: therapist}}) {
@@ -91,31 +90,60 @@ export class SmsAuthService {
           id
         }
       }`;
-
     const resp = await this.gqlService.client.request(query, { phoneCountryCode, phoneNumber });
-
     if (!resp || !IsArray(resp.staff) || !resp.staff.length) {
       throw new HttpException('Invalid Request', HttpStatus.BAD_REQUEST);
     }
-
     return resp.staff[0];
   }
 
-  async insertUser(userRole: string, phoneCountryCode: string, phoneNumber: string) {
-    let query = `
+  private async fetchStaffLatestOtp(staff: string): Promise<Auth> {
+    const query = `query GetLatestStaggOtp($staff: uuid!) {
+      auth(where: {staff: {_eq: $staff}}, limit: 1, order_by: {createdAt: desc}) {
+        id
+        createdAt
+        expiryAt
+        otp
+        staff
+        patient
+      }
+    }`;
+    const resp = await this.gqlService.client.request(query, { staff });
+    return resp.auth[0];
+  }
+
+  private async fetchPatientLatestOtp(patient: string): Promise<Auth> {
+    const query = `query GetLatestPatientOtp($patient: uuid!) {
+      auth(where: {patient: {_eq: $patient}}, limit: 1, order_by: {createdAt: desc}) {
+        id
+        createdAt
+        expiryAt
+        otp
+        staff
+        patient
+      }
+    }`;
+    const resp = await this.gqlService.client.request(query, { patient });
+    return resp.auth[0];
+  }
+
+  async fetchLatestOtp(userRole: UserRole, userId: string) {
+    let auth: Auth;
+    if (userRole === UserRole.PATIENT || userRole === UserRole.BENCHMARK) {
+      auth = await this.fetchPatientLatestOtp(userId);
+    } else if (userRole === UserRole.THERAPIST) {
+      auth = await this.fetchStaffLatestOtp(userId);
+    }
+    return auth;
+  }
+
+  async insertPatient(phoneCountryCode: string, phoneNumber: string) {
+    const query = `
       mutation InsertPatient($phoneCountryCode: String!, $phoneNumber: String!) {
         insert_patient(objects: {phoneCountryCode: $phoneCountryCode, phoneNumber: $phoneNumber}) {
           affected_rows
         }
       }`;
-
-    if (userRole === 'therapist') {
-      query = `mutation InsertTherapist($phoneCountryCode: String!, $phoneNumber: String!) {
-        insert_staff(objects: {phoneCountryCode: $phoneCountryCode, phoneNumber: $phoneNumber, type: therapist}) {
-            affected_rows
-        }
-      }`;
-    }
 
     try {
       await this.gqlService.client.request(query, { phoneCountryCode, phoneNumber: phoneNumber });
@@ -125,45 +153,33 @@ export class SmsAuthService {
     }
   }
 
-  async updateUserOtp(
-    userRole: string,
-    phoneCountryCode: string,
-    phoneNumber: string,
-    otp: number,
-  ) {
-    let updateOtpQuery = `
-      mutation UpdateOTP($phoneCountryCode: String!, $phoneNumber: String!, $auth: jsonb!) {
-        update_patient(where: {phoneCountryCode: {_eq: $phoneCountryCode}, phoneNumber: {_eq: $phoneNumber}}, _set: {auth: $auth}) {
-          affected_rows
-        }
-      }`;
+  async insertOtp(userRole: UserRole, userId: string, otp: number) {
+    const query = `mutation InsertOtp($patient: uuid = null, $staff: uuid = null, $otp: Int!, $expiryAt: timestamptz!) {
+      insert_auth(objects: {patient: $patient, staff: $staff, otp: $otp, expiryAt: $expiryAt}) {
+        affected_rows
+      }
+    }`;
 
-    if (userRole === 'therapist') {
-      updateOtpQuery = `
-        mutation UpdateUserOTP($phoneCountryCode: String!, $phoneNumber: String!, $auth: jsonb!) {
-          update_staff(where: {phoneCountryCode: {_eq: $phoneCountryCode}, phoneNumber: {_eq: $phoneNumber}, type: {_eq: therapist}}, _set: {auth: $auth}) {
-            affected_rows
-          }
-        }`;
-    }
+    // otp remains valid for 30 minutes
+    const expiryAtMins = 30;
+    const expiryAt = new Date(new Date().getTime() + 1000 * 60 * expiryAtMins).toISOString();
 
     try {
-      await this.gqlService.client.request(updateOtpQuery, {
-        phoneCountryCode,
-        phoneNumber,
-        auth: {
-          otp,
-          issuedAt: new Date().getTime(),
-        },
+      await this.gqlService.client.request(query, {
+        patient: userRole === UserRole.PATIENT || userRole === UserRole.BENCHMARK ? userId : null,
+        staff: userRole === UserRole.THERAPIST ? userId : null,
+        otp,
+        expiryAt,
       });
     } catch (err) {
-      this.logger.error('updateUserOtp: ' + JSON.stringify(err));
+      console.log(err);
+      throw new HttpException('[Login API] Something went wrong', HttpStatus.INTERNAL_SERVER_ERROR);
     }
   }
 
   generateJwtToken(
     userRole: 'patient' | 'therapist' | 'benchmark',
-    user: Patient | User,
+    user: Patient | Staff,
     jwtSecret?: string,
   ) {
     if (!jwtSecret) {

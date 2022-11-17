@@ -10,7 +10,7 @@ import {
 } from '@nestjs/common';
 import { ApiBearerAuth } from '@nestjs/swagger';
 import { Roles } from 'src/common/decorators/roles.decorator';
-import { Role } from 'src/common/enums/role.enum';
+import { UserRole } from 'src/common/enums/role.enum';
 import { AuthGuard } from 'src/common/guards/auth.guard';
 import { RolesGuard } from 'src/common/guards/roles.guard';
 import { ProviderChartsService } from 'src/services/provider-charts/provider-charts.service';
@@ -25,7 +25,7 @@ import {
 import { StatsService } from 'src/services/patient-stats/stats.service';
 import { TransformResponseInterceptor } from 'src/common/interceptors/transform-response.interceptor';
 
-@Roles(Role.THERAPIST)
+@Roles(UserRole.THERAPIST)
 @UseGuards(AuthGuard, RolesGuard)
 @ApiBearerAuth('access-token')
 @Controller('provider-charts')

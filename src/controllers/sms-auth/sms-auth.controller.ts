@@ -11,9 +11,10 @@ import {
 } from '@nestjs/common';
 import { TransformResponseInterceptor } from 'src/common/interceptors/transform-response.interceptor';
 import { Patient } from 'src/types/patient';
-import { User } from 'src/types/user';
+import { Staff } from 'src/types/user';
 import { SMSLoginBody, SMSVerifyBody } from './sms-auth.dto';
 import { SmsAuthService } from '../../services/sms-auth/sms-auth.service';
+import { UserRole } from 'src/common/enums/role.enum';
 
 // TODO: Apply rate limiters (?)
 @UseInterceptors(new TransformResponseInterceptor())
@@ -25,78 +26,99 @@ export class SmsAuthController {
 
   @HttpCode(200)
   @Post('login')
-  async login(@Body() body: SMSLoginBody, @Headers('x-pointmotion-user') userRole: string) {
+  async login(
+    @Body() body: SMSLoginBody,
+    @Headers('x-pointmotion-user') userRole: UserRole,
+    @Headers('x-organization-id') organizationId: string,
+  ) {
     if (
       !userRole ||
-      (userRole !== 'patient' && userRole !== 'therapist' && userRole !== 'benchmark')
+      (userRole !== UserRole.PATIENT &&
+        userRole !== UserRole.THERAPIST &&
+        userRole !== UserRole.BENCHMARK)
     ) {
       throw new HttpException('Invalid Request', HttpStatus.BAD_REQUEST);
     }
 
     const { phoneCountryCode, phoneNumber } = body;
     const otp = this.smsAuthService.generateOtp();
-    let patient: Patient;
+    let user: Patient | Staff;
 
     // only the phone numbers added to the user table should be allowed to enter the provider portal.
-    if (userRole === 'therapist') {
-      await this.smsAuthService.fetchTherapist(phoneCountryCode, phoneNumber).catch(() => {
+    if (userRole === UserRole.THERAPIST) {
+      user = await this.smsAuthService.fetchStaff(phoneCountryCode, phoneNumber).catch(() => {
         throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
       });
-    } else if (userRole === 'patient') {
-      patient = await this.smsAuthService.fetchPatient(phoneCountryCode, phoneNumber);
-    } else if (userRole === 'benchmark') {
+    } else if (userRole === UserRole.PATIENT) {
+      user = await this.smsAuthService.fetchPatient(phoneCountryCode, phoneNumber);
+    } else if (userRole === UserRole.BENCHMARK) {
       // Only patients having `canBenchmark` set are allowed to login.
-      patient = await this.smsAuthService.fetchPatient(phoneCountryCode, phoneNumber);
-      if (!patient || !patient.canBenchmark) {
+      user = await this.smsAuthService.fetchPatient(phoneCountryCode, phoneNumber);
+      if (!user || !user.canBenchmark) {
         throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
       }
     }
 
-    await this.smsAuthService.insertUser(userRole, phoneCountryCode, phoneNumber);
-    await this.smsAuthService.updateUserOtp(userRole, phoneCountryCode, phoneNumber, otp);
+    // TODO: patient sign-ups will depend on the type of organization configs.
+    if (userRole === UserRole.PATIENT) {
+      await this.smsAuthService.insertPatient(phoneCountryCode, phoneNumber);
+    }
+
+    await this.smsAuthService.insertOtp(userRole, user.id, otp);
     await this.smsAuthService.sendOtp(phoneCountryCode, phoneNumber, otp);
-    if (patient && patient.email) {
-      this.logger.log(`sending Login OTP email to ${patient.email}`);
-      await this.smsAuthService.sendOtpEmail(patient.email, otp);
+    if (user && user.email) {
+      this.logger.log(`sending Login OTP email to ${user.email}`);
+      await this.smsAuthService.sendOtpEmail(user.email, otp);
     }
     return {
       message: 'OTP sent successfully.',
-      isExistingUser: patient && patient.email ? true : false,
+      isExistingUser: user && user.email ? true : false,
     };
   }
 
   @Post('resend-otp')
-  async resendOtp(@Body() body: SMSLoginBody, @Headers('x-pointmotion-user') userRole: string) {
+  async resendOtp(
+    @Body() body: SMSLoginBody,
+    @Headers('x-pointmotion-user') userRole: UserRole,
+    @Headers('x-organization-id') organizationId: string,
+  ) {
     if (
       !userRole ||
-      (userRole !== 'patient' && userRole !== 'therapist' && userRole !== 'benchmark')
+      (userRole !== UserRole.PATIENT &&
+        userRole !== UserRole.THERAPIST &&
+        userRole !== UserRole.BENCHMARK)
     ) {
       throw new HttpException('Invalid Request', HttpStatus.BAD_REQUEST);
     }
 
     const { phoneCountryCode, phoneNumber } = body;
 
-    let user: User | Patient;
-    if (userRole === 'patient') {
+    let user: Staff | Patient;
+    if (userRole === UserRole.PATIENT) {
       user = await this.smsAuthService.fetchPatient(phoneCountryCode, phoneNumber);
-    } else if (userRole === 'benchmark') {
+    } else if (userRole === UserRole.BENCHMARK) {
       user = await this.smsAuthService.fetchPatient(phoneCountryCode, phoneNumber);
       if (!user.canBenchmark) {
         throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
       }
-    } else if (userRole === 'therapist') {
+    } else if (userRole === UserRole.THERAPIST) {
       // only the phone numbers added to the user table should be allowed to enter the provider portal.
-      user = await this.smsAuthService.fetchTherapist(phoneCountryCode, phoneNumber).catch(() => {
+      user = await this.smsAuthService.fetchStaff(phoneCountryCode, phoneNumber).catch(() => {
         throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
       });
     }
 
+    if (!user) {
+      throw new HttpException('Invalid request', HttpStatus.BAD_REQUEST);
+    }
+
     // If OTP is not expired, send the same OTP.
-    const isOtpExpired = this.smsAuthService.isOtpExpired(user.auth.issuedAt);
-    const otp = isOtpExpired ? this.smsAuthService.generateOtp() : user.auth.otp;
+    const auth = await this.smsAuthService.fetchLatestOtp(userRole, user.id);
+    const isOtpExpired = this.smsAuthService.isOtpExpired(auth.expiryAt);
+    const otp = isOtpExpired ? this.smsAuthService.generateOtp() : auth.otp;
 
     if (isOtpExpired) {
-      await this.smsAuthService.updateUserOtp(userRole, phoneCountryCode, phoneNumber, otp);
+      await this.smsAuthService.insertOtp(userRole, user.id, otp);
     }
 
     await this.smsAuthService.sendOtp(phoneCountryCode, phoneNumber, otp);
@@ -111,44 +133,53 @@ export class SmsAuthController {
   }
 
   @Post('verify-otp')
-  async verifyOtp(@Body() body: SMSVerifyBody, @Headers('x-pointmotion-user') userRole: string) {
+  async verifyOtp(
+    @Body() body: SMSVerifyBody,
+    @Headers('x-pointmotion-user') userRole: UserRole,
+    @Headers('x-organization-id') organizationId: string,
+  ) {
     if (
       !userRole ||
-      (userRole !== 'patient' && userRole !== 'therapist' && userRole !== 'benchmark')
+      (userRole !== UserRole.PATIENT &&
+        userRole !== UserRole.THERAPIST &&
+        userRole !== UserRole.BENCHMARK)
     ) {
       throw new HttpException('Invalid Request', HttpStatus.BAD_REQUEST);
     }
 
     const { otp: recievedOtp, phoneCountryCode, phoneNumber } = body;
-    let user: User | Patient;
-    if (userRole === 'patient') {
+    let user: Staff | Patient;
+    if (userRole === UserRole.PATIENT) {
       user = await this.smsAuthService.fetchPatient(phoneCountryCode, phoneNumber);
-    } else if (userRole === 'benchmark') {
+    } else if (userRole === UserRole.BENCHMARK) {
       user = await this.smsAuthService.fetchPatient(phoneCountryCode, phoneNumber);
       if (!user.canBenchmark) {
         throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
       }
-    } else if (userRole === 'therapist') {
-      user = await this.smsAuthService.fetchTherapist(phoneCountryCode, phoneNumber);
+    } else if (userRole === UserRole.THERAPIST) {
+      user = await this.smsAuthService.fetchStaff(phoneCountryCode, phoneNumber);
     }
 
-    // check if OTP has been expired.
-    const isExpired = this.smsAuthService.isOtpExpired(user.auth.issuedAt);
+    if (!user) {
+      throw new HttpException('Invalid request', HttpStatus.BAD_REQUEST);
+    }
+
+    const auth = await this.smsAuthService.fetchLatestOtp(userRole, user.id);
+    const isExpired = this.smsAuthService.isOtpExpired(auth.expiryAt);
+
     if (isExpired) {
       throw new HttpException('Invalid OTP', HttpStatus.BAD_REQUEST);
     }
 
     // check if OTP is correct or not.
-    if (recievedOtp !== user.auth.otp) {
+    if (recievedOtp !== auth.otp) {
       throw new HttpException('Invalid OTP', HttpStatus.BAD_REQUEST);
     }
-    // so that same OTP can't be used twice.
+    // so that the same OTP can't be used twice.
     const tempOtp = this.smsAuthService.generateOtp();
-    await this.smsAuthService.updateUserOtp(userRole, phoneCountryCode, phoneNumber, tempOtp);
+    await this.smsAuthService.insertOtp(userRole, user.id, tempOtp);
 
-    // generate JWT - 24hrs validity.
     const token = this.smsAuthService.generateJwtToken(userRole, user);
-
     return {
       token,
     };

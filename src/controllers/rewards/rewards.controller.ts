@@ -11,7 +11,7 @@ import {
 import { ApiBearerAuth } from '@nestjs/swagger';
 import { Roles } from 'src/common/decorators/roles.decorator';
 import { User } from 'src/common/decorators/user.decorator';
-import { Role } from 'src/common/enums/role.enum';
+import { UserRole } from 'src/common/enums/role.enum';
 import { AuthGuard } from 'src/common/guards/auth.guard';
 import { RolesGuard } from 'src/common/guards/roles.guard';
 import { StatsService } from '../../services/patient-stats/stats.service';
@@ -25,7 +25,7 @@ const couponCodes = {
   gold: 'PTMOPE',
 };
 
-@Roles(Role.PATIENT, Role.BENCHMARK)
+@Roles(UserRole.PATIENT, UserRole.BENCHMARK)
 @UseGuards(AuthGuard, RolesGuard)
 @ApiBearerAuth('access-token')
 @Controller('patient/rewards')

@@ -15,10 +15,6 @@ export class Patient {
   phoneCountryCode: string;
   phoneNumber: string;
   canBenchmark: boolean;
-  auth: {
-    otp: number;
-    issuedAt: number;
-  };
 }
 
 export class PatientFeedback {

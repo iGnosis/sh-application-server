@@ -62,3 +62,12 @@ export type PoseDataMessageBody = {
   u: string; // user UUID
   p: PoseLandmark[];
 };
+
+export type Auth = {
+  id: string;
+  patient: string;
+  staff: string;
+  createdAt: Date;
+  expiryAt: Date;
+  otp: number;
+};

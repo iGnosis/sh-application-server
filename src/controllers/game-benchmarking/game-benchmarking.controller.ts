@@ -10,8 +10,6 @@ import {
   UseInterceptors,
 } from '@nestjs/common';
 import { ApiBearerAuth } from '@nestjs/swagger';
-import { Roles } from 'src/common/decorators/roles.decorator';
-import { Role } from 'src/common/enums/role.enum';
 import { AuthGuard } from 'src/common/guards/auth.guard';
 import { RolesGuard } from 'src/common/guards/roles.guard';
 import { GameBenchmarkingService } from 'src/services/game-benchmarking/game-benchmarking.service';
@@ -22,8 +20,10 @@ import * as fs from 'fs';
 import { TranscodeVideoAPI } from './game-benchmarking.dto';
 import { VideoTranscoderService } from 'src/services/clients/video-transcoder/video-transcoder.service';
 import { CreateJobCommand } from '@aws-sdk/client-elastic-transcoder';
+import { Roles } from 'src/common/decorators/roles.decorator';
+import { UserRole } from 'src/common/enums/role.enum';
 
-@Roles(Role.BENCHMARK)
+@Roles(UserRole.BENCHMARK)
 @UseGuards(AuthGuard, RolesGuard)
 @ApiBearerAuth('access-token')
 @Controller('game-benchmarking')
