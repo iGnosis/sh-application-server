@@ -10,6 +10,7 @@ import { EmailService } from '../clients/email/email.service';
 import { Email } from 'src/types/email';
 import { UserRole } from 'src/common/enums/role.enum';
 import { Auth } from 'src/types/global';
+import { isArray } from 'lodash';
 
 @Injectable()
 export class SmsAuthService {
@@ -90,11 +91,13 @@ export class SmsAuthService {
 
     try {
       const resp = await this.gqlService.client.request(query, { phoneCountryCode, phoneNumber });
-      console.log('fetchStaff:resp:', resp);
+      if (!resp || !resp.staff || !isArray(resp.staff) || !resp.staff.length) {
+        throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
+      }
       return resp.staff[0];
     } catch (err) {
-      console.log(err);
-      throw new HttpException('Bad Request', HttpStatus.INTERNAL_SERVER_ERROR);
+      this.logger.error('error while calling fetchStaff' + JSON.stringify(err));
+      throw new HttpException('fetchStaff:Internal Server Error', HttpStatus.INTERNAL_SERVER_ERROR);
     }
   }
 
@@ -173,8 +176,8 @@ export class SmsAuthService {
         expiryAt,
       });
     } catch (err) {
-      console.log(err);
-      throw new HttpException('[Login API] Something went wrong', HttpStatus.INTERNAL_SERVER_ERROR);
+      this.logger.error('error while calling insertOtp' + JSON.stringify(err));
+      throw new HttpException('insertOtp:Internal server error', HttpStatus.INTERNAL_SERVER_ERROR);
     }
   }
 

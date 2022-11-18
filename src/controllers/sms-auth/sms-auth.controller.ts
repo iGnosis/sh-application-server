@@ -42,9 +42,7 @@ export class SmsAuthController {
 
     // only the phone numbers added to the user table should be allowed to enter the provider portal.
     if (userRole === UserRole.THERAPIST) {
-      user = await this.smsAuthService.fetchStaff(phoneCountryCode, phoneNumber).catch(() => {
-        throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
-      });
+      user = await this.smsAuthService.fetchStaff(phoneCountryCode, phoneNumber);
     } else if (userRole === UserRole.PATIENT) {
       user = await this.smsAuthService.fetchPatient(phoneCountryCode, phoneNumber);
     } else if (userRole === UserRole.BENCHMARK) {
