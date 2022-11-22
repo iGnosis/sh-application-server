@@ -10,8 +10,7 @@ import {
   UseInterceptors,
 } from '@nestjs/common';
 import { TransformResponseInterceptor } from 'src/common/interceptors/transform-response.interceptor';
-import { Patient } from 'src/types/patient';
-import { Staff } from 'src/types/user';
+import { Staff, Patient } from 'src/types/global';
 import { SMSLoginBody, SMSVerifyBody } from './sms-auth.dto';
 import { SmsAuthService } from '../../services/sms-auth/sms-auth.service';
 import { UserRole } from 'src/common/enums/role.enum';
@@ -31,7 +30,9 @@ export class SmsAuthController {
       !userRole ||
       (userRole !== UserRole.PATIENT &&
         userRole !== UserRole.THERAPIST &&
-        userRole !== UserRole.BENCHMARK)
+        userRole !== UserRole.BENCHMARK &&
+        userRole !== UserRole.ORG_ADMIN &&
+        userRole !== UserRole.SH_ADMIN)
     ) {
       throw new HttpException('Invalid Request', HttpStatus.BAD_REQUEST);
     }
@@ -41,7 +42,11 @@ export class SmsAuthController {
     let user: Patient | Staff;
 
     // only the phone numbers added to the user table should be allowed to enter the provider portal.
-    if (userRole === UserRole.THERAPIST) {
+    if (
+      userRole === UserRole.THERAPIST ||
+      userRole === UserRole.ORG_ADMIN ||
+      userRole === UserRole.SH_ADMIN
+    ) {
       user = await this.smsAuthService.fetchStaff(phoneCountryCode, phoneNumber);
     } else if (userRole === UserRole.PATIENT) {
       user = await this.smsAuthService.fetchPatient(phoneCountryCode, phoneNumber);

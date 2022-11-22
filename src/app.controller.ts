@@ -3,10 +3,10 @@ import { ApiBearerAuth } from '@nestjs/swagger';
 import { AppService } from './app.service';
 import { Roles } from './common/decorators/roles.decorator';
 import { User } from './common/decorators/user.decorator';
-import { UserRole } from './common/enums/role.enum';
 import { AuthGuard } from './common/guards/auth.guard';
 import { RolesGuard } from './common/guards/roles.guard';
 import { TransformResponseInterceptor } from 'src/common/interceptors/transform-response.interceptor';
+import { UserRole } from 'src/common/enums/role.enum';
 
 @UseInterceptors(new TransformResponseInterceptor())
 @Controller()

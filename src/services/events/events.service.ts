@@ -1,7 +1,7 @@
 import { EventsRequest, Pinpoint, SendMessagesCommandInput } from '@aws-sdk/client-pinpoint';
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { PatientFeedback } from 'src/types/patient';
+import { PatientFeedback } from 'src/types/global';
 
 interface Details {
   id: string;

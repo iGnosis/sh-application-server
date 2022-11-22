@@ -1,3 +1,5 @@
+import { UserRole } from 'src/common/enums/role.enum';
+
 export type AnalyticsDTO = {
   prompt: AnalyticsPromptDTO;
   reaction: AnalyticsReactionDTO;
@@ -71,3 +73,71 @@ export type Auth = {
   expiryAt: Date;
   otp: number;
 };
+
+export class Email {
+  to: Array<string>;
+  cc?: Array<string>;
+  bcc?: Array<string>;
+  subject: string;
+  text: string;
+  body: string;
+  from?: string;
+  replyTo?: string;
+}
+export interface JwtPayload {
+  id: string;
+  iat: number;
+  exp: number;
+  'https://hasura.io/jwt/claims': {
+    'x-hasura-allowed-roles': UserRole[];
+    'x-hasura-default-role': UserRole;
+    'x-hasura-user-id': string;
+    'x-hasura-organization-id'?: string;
+  };
+}
+
+export class Staff {
+  id: string;
+  organizationId: string;
+  email: string;
+  password: string;
+  createdAt: Date;
+  updatedAt: Date;
+  lastActive: Date;
+  firstName: string;
+  lastName: string;
+  type: string;
+  status: string;
+  provider: string;
+  phoneCountryCode: string;
+  phoneNumber: string;
+}
+
+export class Patient {
+  id: string;
+  organizationId: string;
+  createdAt: Date;
+  updatedAt: Date;
+  provider: string;
+  activeCareplan: string;
+  identifier: string;
+  nickname: string;
+  medicalConditions: any;
+  preferredGenres: any;
+  primaryTherapist: string;
+  onboardedBy: string;
+  email: string;
+  careGiverEmail: string;
+  phoneCountryCode: string;
+  phoneNumber: string;
+  canBenchmark: boolean;
+}
+
+export class PatientFeedback {
+  patientByPatient: Patient;
+  createdAt: Date;
+  updatedAt: Date;
+  description: string;
+  rating: number;
+  recommendationScore: number;
+}

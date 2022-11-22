@@ -3,14 +3,12 @@ import { ConfigService } from '@nestjs/config';
 import { randomInt } from 'crypto';
 import { GqlService } from 'src/services/clients/gql/gql.service';
 import * as jwt from 'jsonwebtoken';
-import { Patient } from 'src/types/patient';
 import { SmsService } from 'src/services/clients/sms/sms.service';
-import { Staff } from 'src/types/user';
+import { Staff, Patient } from 'src/types/global';
 import { EmailService } from '../clients/email/email.service';
-import { Email } from 'src/types/email';
-import { UserRole } from 'src/common/enums/role.enum';
-import { Auth } from 'src/types/global';
+import { Email, Auth, JwtPayload } from 'src/types/global';
 import { isArray } from 'lodash';
+import { UserRole } from 'src/common/enums/role.enum';
 
 @Injectable()
 export class SmsAuthService {
@@ -72,6 +70,7 @@ export class SmsAuthService {
       query FetchPatient($phoneCountryCode: String!, $phoneNumber: String!) {
         patient(where: {phoneCountryCode: {_eq: $phoneCountryCode}, phoneNumber: {_eq: $phoneNumber}}) {
           id
+          organizationId
           canBenchmark
           email
         }
@@ -86,6 +85,8 @@ export class SmsAuthService {
      query FetchStaff($phoneCountryCode: String!, $phoneNumber: String!) {
         staff(where: {phoneCountryCode: {_eq: $phoneCountryCode}, phoneNumber: {_eq: $phoneNumber}, type: {_eq: therapist}}) {
           id
+          organizationId
+          type
         }
       }`;
 
@@ -171,7 +172,12 @@ export class SmsAuthService {
     try {
       await this.gqlService.client.request(query, {
         patient: userRole === UserRole.PATIENT || userRole === UserRole.BENCHMARK ? userId : null,
-        staff: userRole === UserRole.THERAPIST ? userId : null,
+        staff:
+          userRole === UserRole.THERAPIST ||
+          userRole === UserRole.ORG_ADMIN ||
+          userRole === UserRole.SH_ADMIN
+            ? userId
+            : null,
         otp,
         expiryAt,
       });
@@ -181,11 +187,7 @@ export class SmsAuthService {
     }
   }
 
-  generateJwtToken(
-    userRole: 'patient' | 'therapist' | 'benchmark',
-    user: Patient | Staff,
-    jwtSecret?: string,
-  ) {
+  generateJwtToken(userRole: UserRole, user: Patient | Staff, jwtSecret?: string) {
     if (!jwtSecret) {
       jwtSecret = this.configService.get('JWT_SECRET');
     }
@@ -201,7 +203,7 @@ export class SmsAuthService {
     // expiry at in seconds (as per JWT standards).
     const exp = iat + expOffset;
 
-    const payload = {
+    let payload: JwtPayload = {
       id: user.id,
       iat,
       exp,
@@ -211,7 +213,26 @@ export class SmsAuthService {
         'x-hasura-user-id': user.id,
       },
     };
+
+    // Add Hasura custom fields
+    payload = this.addCustomJwtId(userRole, user, payload);
     return jwt.sign(payload, key.key);
+  }
+
+  addCustomJwtId(userRole: UserRole, user: Patient | Staff, jwtPayload: JwtPayload): JwtPayload {
+    switch (userRole) {
+      case UserRole.PATIENT:
+      case UserRole.THERAPIST:
+      case UserRole.ORG_ADMIN:
+        jwtPayload['https://hasura.io/jwt/claims']['x-hasura-organization-id'] =
+          user.organizationId;
+        break;
+      case UserRole.BENCHMARK:
+      // pass
+      case UserRole.SH_ADMIN:
+      // pass
+    }
+    return jwtPayload;
   }
 
   verifyToken(token: string, jwtSecret?: string) {
