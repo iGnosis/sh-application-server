@@ -1,7 +1,7 @@
 import { Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Test, TestingModule } from '@nestjs/testing';
-import { UserRole } from 'src/common/enums/role.enum';
+import { UserType } from 'src/common/enums/role.enum';
 import { GqlService } from 'src/services/clients/gql/gql.service';
 import { SmsService } from 'src/services/clients/sms/sms.service';
 import { Staff, Patient } from 'src/types/global';
@@ -59,7 +59,7 @@ describe('SmsAuthService', () => {
   // TODO: Look into parameterizing tests.
   it('should generate a valid patient JWT token', () => {
     // given
-    const userType = UserRole.PATIENT;
+    const userType = UserType.PATIENT;
     const userObj = {
       id: 'patient-abc',
     };
@@ -90,9 +90,10 @@ describe('SmsAuthService', () => {
 
   it('should generate a valid therapist JWT token', () => {
     // given
-    const userType = UserRole.THERAPIST;
+    const userType = UserType.STAFF;
     const userObj = {
-      id: 'therapist-abc',
+      id: 'some-uuid-id',
+      type: 'therapist',
     };
     const testJwtSecret = '{"type":"HS256","key":"test_jwt_secret"}';
 
@@ -111,7 +112,7 @@ describe('SmsAuthService', () => {
     ]);
     expect(verifiedToken['https://hasura.io/jwt/claims']).toHaveProperty(
       'x-hasura-default-role',
-      userType,
+      'therapist',
     );
     expect(verifiedToken['https://hasura.io/jwt/claims']).toHaveProperty(
       'x-hasura-user-id',
@@ -121,7 +122,7 @@ describe('SmsAuthService', () => {
 
   it('should generate a valid benchmark JWT token', () => {
     // given
-    const userType = UserRole.BENCHMARK;
+    const userType = UserType.BENCHMARK;
     const userObj = {
       id: 'benchmark-abc',
     };
