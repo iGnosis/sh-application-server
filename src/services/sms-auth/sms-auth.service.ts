@@ -8,7 +8,7 @@ import { Staff, Patient } from 'src/types/global';
 import { EmailService } from '../clients/email/email.service';
 import { Email, Auth, JwtPayload } from 'src/types/global';
 import { isArray } from 'lodash';
-import { UserRole } from 'src/common/enums/role.enum';
+import { UserRole, UserType } from 'src/common/enums/role.enum';
 
 @Injectable()
 export class SmsAuthService {
@@ -76,14 +76,25 @@ export class SmsAuthService {
         }
       }`;
 
-    const resp = await this.gqlService.client.request(query, { phoneCountryCode, phoneNumber });
-    return resp.patient[0];
+    try {
+      const resp = await this.gqlService.client.request(query, { phoneCountryCode, phoneNumber });
+      if (!resp || !resp.patient || !isArray(resp.patient) || !resp.patient.length) {
+        throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
+      }
+      return resp.patient[0];
+    } catch (err) {
+      this.logger.error('error while calling fetchPatient' + JSON.stringify(err));
+      throw new HttpException(
+        'fetchPatient:Internal Server Error',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
   }
 
   async fetchStaff(phoneCountryCode: string, phoneNumber: string): Promise<Staff> {
     const query = `
      query FetchStaff($phoneCountryCode: String!, $phoneNumber: String!) {
-        staff(where: {phoneCountryCode: {_eq: $phoneCountryCode}, phoneNumber: {_eq: $phoneNumber}, type: {_eq: therapist}}) {
+        staff(where: {phoneCountryCode: {_eq: $phoneCountryCode}, phoneNumber: {_eq: $phoneNumber}}) {
           id
           organizationId
           type
@@ -132,11 +143,11 @@ export class SmsAuthService {
     return resp.auth[0];
   }
 
-  async fetchLatestOtp(userRole: UserRole, userId: string) {
+  async fetchLatestOtp(userType: UserType, userId: string) {
     let auth: Auth;
-    if (userRole === UserRole.PATIENT || userRole === UserRole.BENCHMARK) {
+    if (userType === UserType.PATIENT || userType === UserType.BENCHMARK) {
       auth = await this.fetchPatientLatestOtp(userId);
-    } else if (userRole === UserRole.THERAPIST) {
+    } else if (userType === UserType.STAFF) {
       auth = await this.fetchStaffLatestOtp(userId);
     }
     return auth;
@@ -158,7 +169,7 @@ export class SmsAuthService {
     }
   }
 
-  async insertOtp(userRole: UserRole, userId: string, otp: number) {
+  async insertOtp(userType: UserType, userId: string, otp: number) {
     const query = `mutation InsertOtp($patient: uuid = null, $staff: uuid = null, $otp: Int!, $expiryAt: timestamptz!) {
       insert_auth(objects: {patient: $patient, staff: $staff, otp: $otp, expiryAt: $expiryAt}) {
         affected_rows
@@ -171,13 +182,8 @@ export class SmsAuthService {
 
     try {
       await this.gqlService.client.request(query, {
-        patient: userRole === UserRole.PATIENT || userRole === UserRole.BENCHMARK ? userId : null,
-        staff:
-          userRole === UserRole.THERAPIST ||
-          userRole === UserRole.ORG_ADMIN ||
-          userRole === UserRole.SH_ADMIN
-            ? userId
-            : null,
+        patient: userType === UserType.PATIENT || userType === UserType.BENCHMARK ? userId : null,
+        staff: userType === UserType.STAFF ? userId : null,
         otp,
         expiryAt,
       });
@@ -187,7 +193,7 @@ export class SmsAuthService {
     }
   }
 
-  generateJwtToken(userRole: UserRole, user: Patient | Staff, jwtSecret?: string) {
+  generateJwtToken(userType: UserType, user: Patient | Staff, jwtSecret?: string) {
     if (!jwtSecret) {
       jwtSecret = this.configService.get('JWT_SECRET');
     }
@@ -203,34 +209,38 @@ export class SmsAuthService {
     // expiry at in seconds (as per JWT standards).
     const exp = iat + expOffset;
 
+    const allowedRole =
+      userType === UserType.PATIENT
+        ? UserType.PATIENT
+        : userType === UserType.BENCHMARK
+        ? UserType.BENCHMARK
+        : userType === UserType.STAFF && user.type
+        ? user.type
+        : null;
+
     let payload: JwtPayload = {
       id: user.id,
       iat,
       exp,
       'https://hasura.io/jwt/claims': {
-        'x-hasura-allowed-roles': [userRole],
-        'x-hasura-default-role': userRole,
+        'x-hasura-allowed-roles': [allowedRole],
+        'x-hasura-default-role': allowedRole,
         'x-hasura-user-id': user.id,
       },
     };
 
     // Add Hasura custom fields
-    payload = this.addCustomJwtId(userRole, user, payload);
+    payload = this.addCustomJwtId(userType, user, payload);
     return jwt.sign(payload, key.key);
   }
 
-  addCustomJwtId(userRole: UserRole, user: Patient | Staff, jwtPayload: JwtPayload): JwtPayload {
-    switch (userRole) {
-      case UserRole.PATIENT:
-      case UserRole.THERAPIST:
-      case UserRole.ORG_ADMIN:
+  addCustomJwtId(userType: UserType, user: Patient | Staff, jwtPayload: JwtPayload): JwtPayload {
+    switch (userType) {
+      case UserType.PATIENT:
+      case UserType.STAFF:
         jwtPayload['https://hasura.io/jwt/claims']['x-hasura-organization-id'] =
-          user.organizationId;
+          user.organizationId || '';
         break;
-      case UserRole.BENCHMARK:
-      // pass
-      case UserRole.SH_ADMIN:
-      // pass
     }
     return jwtPayload;
   }

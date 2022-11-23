@@ -89,8 +89,8 @@ export interface JwtPayload {
   iat: number;
   exp: number;
   'https://hasura.io/jwt/claims': {
-    'x-hasura-allowed-roles': UserRole[];
-    'x-hasura-default-role': UserRole;
+    'x-hasura-allowed-roles': string[];
+    'x-hasura-default-role': string;
     'x-hasura-user-id': string;
     'x-hasura-organization-id'?: string;
   };
@@ -131,6 +131,7 @@ export class Patient {
   phoneCountryCode: string;
   phoneNumber: string;
   canBenchmark: boolean;
+  type?: UserRole; // workaround TS Unions.
 }
 
 export class PatientFeedback {
