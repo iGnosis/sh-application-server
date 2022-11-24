@@ -142,3 +142,9 @@ export class PatientFeedback {
   rating: number;
   recommendationScore: number;
 }
+
+export enum OrganizationTypeEnum {
+  CLINIC = 'clinic',
+  HOSPITAL = 'hospital',
+  PROVIDER = 'provider',
+}
