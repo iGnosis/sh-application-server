@@ -25,8 +25,13 @@ export class SmsAuthController {
 
   @HttpCode(200)
   @Post('login')
-  async login(@Body() body: SMSLoginBody, @Headers('x-pointmotion-user-type') userType: UserType) {
+  async login(
+    @Body() body: SMSLoginBody,
+    @Headers('x-pointmotion-user-type') userType: UserType,
+    @Headers('x-organization-name') orgName: string,
+  ) {
     if (
+      !orgName ||
       !userType ||
       (userType !== UserType.PATIENT &&
         userType !== UserType.BENCHMARK &&
@@ -40,11 +45,11 @@ export class SmsAuthController {
     let user: Patient | Staff;
 
     if (userType === UserType.STAFF) {
-      user = await this.smsAuthService.fetchStaff(phoneCountryCode, phoneNumber);
+      user = await this.smsAuthService.fetchStaff(phoneCountryCode, phoneNumber, orgName);
     } else if (userType === UserType.PATIENT) {
-      user = await this.smsAuthService.fetchPatient(phoneCountryCode, phoneNumber);
+      user = await this.smsAuthService.fetchPatient(phoneCountryCode, phoneNumber, orgName);
     } else if (userType === UserType.BENCHMARK) {
-      user = await this.smsAuthService.fetchPatient(phoneCountryCode, phoneNumber);
+      user = await this.smsAuthService.fetchPatient(phoneCountryCode, phoneNumber, orgName);
       if (!user || !user.canBenchmark) {
         throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
       }
@@ -66,8 +71,10 @@ export class SmsAuthController {
   async resendOtp(
     @Body() body: SMSLoginBody,
     @Headers('x-pointmotion-user-type') userType: UserType,
+    @Headers('x-organization-name') orgName: string,
   ) {
     if (
+      !orgName ||
       !userType ||
       (userType !== UserType.PATIENT &&
         userType !== UserType.BENCHMARK &&
@@ -80,15 +87,15 @@ export class SmsAuthController {
 
     let user: Staff | Patient;
     if (userType === UserType.PATIENT) {
-      user = await this.smsAuthService.fetchPatient(phoneCountryCode, phoneNumber);
+      user = await this.smsAuthService.fetchPatient(phoneCountryCode, phoneNumber, orgName);
     } else if (userType === UserType.BENCHMARK) {
-      user = await this.smsAuthService.fetchPatient(phoneCountryCode, phoneNumber);
+      user = await this.smsAuthService.fetchPatient(phoneCountryCode, phoneNumber, orgName);
       if (!user.canBenchmark) {
         throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
       }
     } else if (userType === UserType.STAFF) {
       // only the phone numbers added to the user table should be allowed to enter the provider portal.
-      user = await this.smsAuthService.fetchStaff(phoneCountryCode, phoneNumber);
+      user = await this.smsAuthService.fetchStaff(phoneCountryCode, phoneNumber, orgName);
     }
 
     if (!user) {
@@ -118,8 +125,10 @@ export class SmsAuthController {
   async verifyOtp(
     @Body() body: SMSVerifyBody,
     @Headers('x-pointmotion-user-type') userType: UserType,
+    @Headers('x-organization-name') orgName: string,
   ) {
     if (
+      !orgName ||
       !userType ||
       (userType !== UserType.PATIENT &&
         userType !== UserType.STAFF &&
@@ -132,14 +141,14 @@ export class SmsAuthController {
     let user: Staff | Patient;
 
     if (userType === UserType.PATIENT) {
-      user = await this.smsAuthService.fetchPatient(phoneCountryCode, phoneNumber);
+      user = await this.smsAuthService.fetchPatient(phoneCountryCode, phoneNumber, orgName);
     } else if (userType === UserType.BENCHMARK) {
-      user = await this.smsAuthService.fetchPatient(phoneCountryCode, phoneNumber);
+      user = await this.smsAuthService.fetchPatient(phoneCountryCode, phoneNumber, orgName);
       if (!user.canBenchmark) {
         throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
       }
     } else if (userType === UserType.STAFF) {
-      user = await this.smsAuthService.fetchStaff(phoneCountryCode, phoneNumber);
+      user = await this.smsAuthService.fetchStaff(phoneCountryCode, phoneNumber, orgName);
     }
 
     if (!user) {

@@ -96,42 +96,54 @@ export interface JwtPayload {
   };
 }
 
-export class Staff {
+export class Organization {
   id: string;
-  organizationId: string;
-  email: string;
-  password: string;
   createdAt: Date;
   updatedAt: Date;
-  lastActive: Date;
+  name: string;
+  configuration: any;
+  type: OrganizationTypeEnum;
+}
+
+export class Staff {
+  id?: string;
+  organizationId: string;
+  organization?: Organization;
+  email: string;
+  password?: string;
+  createdAt?: Date;
+  updatedAt?: Date;
+  lastActive?: Date;
   firstName: string;
   lastName: string;
-  type: string;
-  status: string;
-  provider: string;
+  type: UserRole;
+  status?: string;
   phoneCountryCode: string;
   phoneNumber: string;
 }
 
 export class Patient {
-  id: string;
+  id?: string;
   organizationId: string;
-  createdAt: Date;
-  updatedAt: Date;
-  provider: string;
-  activeCareplan: string;
-  identifier: string;
-  nickname: string;
-  medicalConditions: any;
-  preferredGenres: any;
-  primaryTherapist: string;
-  onboardedBy: string;
-  email: string;
-  careGiverEmail: string;
+  organization?: Organization;
+  createdAt?: Date;
+  updatedAt?: Date;
+  activeCareplan?: string;
+  identifier?: string;
+  nickname?: string;
+  medicalConditions?: any;
+  preferredGenres?: any;
+  primaryTherapist?: string;
+  onboardedBy?: string;
+  email?: string;
+  careGiverEmail?: string;
   phoneCountryCode: string;
   phoneNumber: string;
-  canBenchmark: boolean;
+  canBenchmark?: boolean;
   type?: UserRole; // workaround TS Unions.
+  firstName?: string;
+  lastName?: string;
+  namePrefix?: string;
 }
 
 export class PatientFeedback {

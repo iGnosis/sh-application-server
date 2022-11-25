@@ -1,4 +1,5 @@
 import { HttpException, HttpStatus, Injectable, Logger } from '@nestjs/common';
+import { UserRole } from 'src/common/enums/role.enum';
 import { GqlService } from 'src/services/clients/gql/gql.service';
 
 @Injectable()
@@ -79,7 +80,7 @@ export class CreateOrganizationService {
     }
   }
 
-  async decrementMaxUseCount(maxUseCount: number, inviteId: string) {
+  async decremenOrgMaxUseCount(maxUseCount: number, inviteId: string) {
     const query = `mutation DecrementMaxUseCount($maxUseCount: Int!, $inviteId: uuid!) {
       update_invite_organization_by_pk(_set: {maxUseCount: $maxUseCount}, pk_columns: {id: $inviteId}) {
         id
@@ -93,9 +94,59 @@ export class CreateOrganizationService {
     ) {
       this.logger.error(JSON.stringify(resp));
       throw new HttpException(
-        '[decrementMaxUseCount] Something went wrong',
+        '[decremenOrgMaxUseCount] Something went wrong',
         HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }
+  }
+
+  async decremenUserMaxUseCount(maxUseCount: number, inviteId: string) {
+    const query = `mutation DecrementMaxUseCount($maxUseCount: Int!, $inviteId: uuid!) {
+      update_invite_user_by_pk(_set: {maxUseCount: $maxUseCount}, pk_columns: {id: $inviteId}) {
+        id
+      }
+    }`;
+    const resp = await this.gqlService.client.request(query, { maxUseCount, inviteId });
+    if (!resp || !resp.update_invite_user_by_pk || !resp.update_invite_user_by_pk.id) {
+      this.logger.error(JSON.stringify(resp));
+      throw new HttpException(
+        '[decremenUserMaxUseCount] Something went wrong',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+  async lookUpUserInviteCode(inviteCode: string): Promise<{
+    id: string;
+    createdAt: Date;
+    expiryAt: Date;
+    inviteCode: string;
+    maxUseCount: number;
+    organizationId: string;
+    type: UserRole;
+  }> {
+    const query = `query LookUpUserInviteCode($inviteCode: uuid!) {
+      invite_user(where: {inviteCode: {_eq: $inviteCode}}) {
+        id
+        createdAt
+        expiryAt
+        inviteCode
+        maxUseCount
+        organizationId
+        type
+      }
+    }`;
+    const resp = await this.gqlService.client.request(query, { inviteCode });
+    if (
+      !resp ||
+      !resp.invite_user ||
+      !Array.isArray(resp.invite_user) ||
+      !resp.invite_user.length
+    ) {
+      this.logger.error(JSON.stringify(resp));
+      throw new HttpException('Invalid invite code', HttpStatus.FORBIDDEN);
+    }
+
+    return resp.invite_user[0];
   }
 }

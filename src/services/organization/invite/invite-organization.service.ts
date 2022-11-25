@@ -1,4 +1,5 @@
 import { HttpException, HttpStatus, Injectable, Logger } from '@nestjs/common';
+import { UserRole } from 'src/common/enums/role.enum';
 import { EmailService } from 'src/services/clients/email/email.service';
 import { GqlService } from 'src/services/clients/gql/gql.service';
 
@@ -43,5 +44,31 @@ export class InviteOrganizationService {
       body: `Please click on this URL to create an organization ${redirectUrl}?inviteCode=${inviteCode}`,
     });
     return true;
+  }
+
+  async createUserInviteCode(
+    organizationId: string,
+    maxUseCount: number,
+    userRole: UserRole,
+  ): Promise<string> {
+    const query = `mutation GenerateUserInviteCode($organizationId: uuid!, $maxUseCount: Int!, $userRole: user_type_enum!) {
+      insert_invite_user_one(object: {organizationId: $organizationId, maxUseCount: $maxUseCount, type: $userRole}) {
+        inviteCode
+      }
+    }`;
+    const resp = await this.gqlService.client.request(query, {
+      organizationId,
+      maxUseCount,
+      userRole,
+    });
+
+    if (!resp || !resp.insert_invite_user_one || !resp.insert_invite_user_one.inviteCode) {
+      this.logger.error(JSON.stringify(resp));
+      throw new HttpException(
+        '[createUserInviteCode] Something went wrong',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+    return resp.insert_invite_user_one.inviteCode;
   }
 }

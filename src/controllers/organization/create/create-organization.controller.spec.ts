@@ -4,7 +4,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { EmailService } from 'src/services/clients/email/email.service';
 import { GqlService } from 'src/services/clients/gql/gql.service';
 import { SmsService } from 'src/services/clients/sms/sms.service';
-import { CreateOrganizationService } from 'src/services/organization/create-organization/create-organization.service';
+import { CreateOrganizationService } from 'src/services/organization/create/create-organization.service';
 import { SmsAuthService } from 'src/services/sms-auth/sms-auth.service';
 import { CreateOrganizationController } from './create-organization.controller';
 

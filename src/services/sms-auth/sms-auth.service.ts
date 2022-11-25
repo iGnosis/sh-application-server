@@ -8,7 +8,7 @@ import { Staff, Patient } from 'src/types/global';
 import { EmailService } from '../clients/email/email.service';
 import { Email, Auth, JwtPayload } from 'src/types/global';
 import { isArray } from 'lodash';
-import { UserRole, UserType } from 'src/common/enums/role.enum';
+import { UserType } from 'src/common/enums/role.enum';
 
 @Injectable()
 export class SmsAuthService {
@@ -65,19 +65,32 @@ export class SmsAuthService {
     }
   }
 
-  async fetchPatient(phoneCountryCode: string, phoneNumber: string): Promise<Patient> {
-    const query = `
-      query FetchPatient($phoneCountryCode: String!, $phoneNumber: String!) {
-        patient(where: {phoneCountryCode: {_eq: $phoneCountryCode}, phoneNumber: {_eq: $phoneNumber}}) {
+  async fetchPatient(
+    phoneCountryCode: string,
+    phoneNumber: string,
+    orgName: string,
+  ): Promise<Patient> {
+    const query = `query FetchPatient($phoneCountryCode: String!, $phoneNumber: String!, $orgName: String!) {
+      patient(where: {phoneCountryCode: {_eq: $phoneCountryCode}, phoneNumber: {_eq: $phoneNumber}, organization: {name: {_eq: $orgName}}}) {
+        id
+        canBenchmark
+        email
+        organizationId
+        organization {
           id
-          organizationId
-          canBenchmark
-          email
+          createdAt
+          name
+          configuration
         }
-      }`;
+      }
+    }`;
 
     try {
-      const resp = await this.gqlService.client.request(query, { phoneCountryCode, phoneNumber });
+      const resp = await this.gqlService.client.request(query, {
+        phoneCountryCode,
+        phoneNumber,
+        orgName,
+      });
       if (!resp || !resp.patient || !isArray(resp.patient) || !resp.patient.length) {
         throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
       }
@@ -91,18 +104,25 @@ export class SmsAuthService {
     }
   }
 
-  async fetchStaff(phoneCountryCode: string, phoneNumber: string): Promise<Staff> {
-    const query = `
-     query FetchStaff($phoneCountryCode: String!, $phoneNumber: String!) {
-        staff(where: {phoneCountryCode: {_eq: $phoneCountryCode}, phoneNumber: {_eq: $phoneNumber}}) {
+  async fetchStaff(phoneCountryCode: string, phoneNumber: string, orgName: string): Promise<Staff> {
+    const query = `query FetchStaff($phoneCountryCode: String!, $phoneNumber: String!, $orgName: String!) {
+      staff(where: {phoneCountryCode: {_eq: $phoneCountryCode}, phoneNumber: {_eq: $phoneNumber}, organization: {name: {_eq: $orgName}}}) {
+        id
+        organizationId
+        organization {
           id
-          organizationId
-          type
+          name
         }
-      }`;
+        type
+      }
+    }`;
 
     try {
-      const resp = await this.gqlService.client.request(query, { phoneCountryCode, phoneNumber });
+      const resp = await this.gqlService.client.request(query, {
+        phoneCountryCode,
+        phoneNumber,
+        orgName,
+      });
       if (!resp || !resp.staff || !isArray(resp.staff) || !resp.staff.length) {
         throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
       }
@@ -153,19 +173,50 @@ export class SmsAuthService {
     return auth;
   }
 
-  async insertPatient(phoneCountryCode: string, phoneNumber: string) {
-    const query = `
-      mutation InsertPatient($phoneCountryCode: String!, $phoneNumber: String!) {
-        insert_patient(objects: {phoneCountryCode: $phoneCountryCode, phoneNumber: $phoneNumber}) {
-          affected_rows
-        }
-      }`;
+  async insertPatient(patientObj: Patient) {
+    const query = `mutation InsertPatient($phoneCountryCode: String!, $phoneNumber: String!, $email: String = null, $namePrefix: String = null, $firstName: String = null, $lastName: String = null, $organizationId: uuid!) {
+      insert_patient(objects: {phoneCountryCode: $phoneCountryCode, phoneNumber: $phoneNumber, email: $email, namePrefix: $namePrefix, firstName: $firstName, lastName: $lastName, organizationId: $organizationId}) {
+        affected_rows
+      }
+    }`;
+
+    const {
+      phoneCountryCode,
+      phoneNumber,
+      namePrefix,
+      firstName,
+      lastName,
+      email,
+      organizationId,
+    } = patientObj;
 
     try {
-      await this.gqlService.client.request(query, { phoneCountryCode, phoneNumber: phoneNumber });
+      await this.gqlService.client.request(query, {
+        phoneCountryCode,
+        phoneNumber: phoneNumber,
+        namePrefix,
+        firstName,
+        lastName,
+        email,
+        organizationId,
+      });
     } catch (err) {
-      // user might already exist.
       this.logger.error('insertUser: ' + JSON.stringify(err));
+      throw new HttpException('Error while signing up patient', HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+  }
+
+  async insertStaff(staffObj: Staff) {
+    const query = `mutation InsertStaff($firstName: String!, $lastName: String!, $email: String!, $organizationId: uuid!, $phoneCountryCode: String!, $phoneNumber: String!, $type: user_type_enum!) {
+      insert_staff_one(object: {firstName: $firstName, lastName: $lastName, email: $email, organizationId: $organizationId, phoneCountryCode: $phoneCountryCode, phoneNumber: $phoneNumber, type: $type}) {
+        id
+      }
+    }`;
+    try {
+      await this.gqlService.client.request(query, staffObj);
+    } catch (err) {
+      this.logger.error('insertStaff: ' + JSON.stringify(err));
+      throw new HttpException('Error while signing up Staff', HttpStatus.INTERNAL_SERVER_ERROR);
     }
   }
 

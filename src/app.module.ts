@@ -38,8 +38,8 @@ import { PatientController } from './controllers/events/patient/patient.controll
 import { SmsAuthController } from './controllers/sms-auth/sms-auth.controller';
 import { InviteOrganizationController } from './controllers/organization/invite/invite-organization.controller';
 import { CreateOrganizationController } from './controllers/organization/create/create-organization.controller';
-import { CreateOrganizationService } from './services/organization/create-organization/create-organization.service';
-import { InviteOrganizationService } from './services/organization/invite-organization/invite-organization.service';
+import { CreateOrganizationService } from './services/organization/create/create-organization.service';
+import { InviteOrganizationService } from './services/organization/invite/invite-organization.service';
 
 const winstonDailyRotateTransport = new winstonDailyRotateFile({
   dirname: '../nestjs-app-logs',
