@@ -11,6 +11,7 @@ import {
   UseInterceptors,
 } from '@nestjs/common';
 import { ApiBearerAuth } from '@nestjs/swagger';
+import { isEmail } from 'class-validator';
 import { Roles } from 'src/common/decorators/roles.decorator';
 import { OrgId } from 'src/common/decorators/user.decorator';
 import { UserRole } from 'src/common/enums/role.enum';
@@ -35,7 +36,7 @@ export class InviteOrganizationController {
     await this.inviteOrganizationService.sendEmailInvite(
       body.email,
       body.inviteCode,
-      body.redirectUrl,
+      'https://org.pointmotion.us',
     );
     return {
       message: 'success',
@@ -46,8 +47,12 @@ export class InviteOrganizationController {
   @UseGuards(AuthGuard, RolesGuard)
   @ApiBearerAuth('access-token')
   @Get('patient')
-  async generatePatientInviteCode(@OrgId() orgId: string) {
-    console.log('orgId: ', orgId);
+  async generatePatientInviteCode(
+    @OrgId() orgId: string,
+    @Query('shouldSendEmail') shouldSendEmail?: boolean,
+    @Query('email') email?: string,
+  ) {
+    // console.log('orgId: ', orgId);
 
     // by default, the Patient invite code will never expire
     const maxUseCount = -1;
@@ -56,18 +61,27 @@ export class InviteOrganizationController {
       maxUseCount,
       UserRole.PATIENT,
     );
+
+    if (shouldSendEmail && email && isEmail(email)) {
+      this.inviteOrganizationService.sendEmailInvite(
+        email,
+        inviteCode,
+        'https://org.pointmotion.us/invite/patient',
+      );
+    }
+
     return { inviteCode };
   }
 
   @Roles(UserRole.ORG_ADMIN)
   @Get('staff')
-  async generateStaffInviteCode(@OrgId() orgId: string, @Query('staffType') staffType: UserRole) {
-    console.log('orgId: ', orgId);
-    console.log('staffType: ', staffType);
-
+  async generateStaffInviteCode(
+    @OrgId() orgId: string,
+    @Query('staffType') staffType: UserRole,
+    @Query('shouldSendEmail') shouldSendEmail?: boolean,
+    @Query('email') email?: string,
+  ) {
     const allowedStaffRoles = [UserRole.ORG_ADMIN, UserRole.THERAPIST];
-    console.log('allowedStaffRoles:', allowedStaffRoles);
-
     if (!allowedStaffRoles.includes(staffType)) {
       throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
     }
@@ -79,6 +93,16 @@ export class InviteOrganizationController {
       maxUseCount,
       staffType,
     );
+
+    if (shouldSendEmail && email && isEmail(email)) {
+      console.log('sending an email');
+      await this.inviteOrganizationService.sendEmailInvite(
+        email,
+        inviteCode,
+        'https://org.pointmotion.us/invite/staff',
+      );
+    }
+
     return { inviteCode };
   }
 }

@@ -41,7 +41,7 @@ export class InviteOrganizationService {
       to: [email],
       subject: 'An invite from Pointmotion!',
       text: '',
-      body: `Please click on this URL to create an organization ${redirectUrl}?inviteCode=${inviteCode}`,
+      body: `Please click on ${redirectUrl}?inviteCode=${inviteCode} to create an account!`,
     });
     return true;
   }
