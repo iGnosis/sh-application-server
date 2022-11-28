@@ -96,13 +96,26 @@ export interface JwtPayload {
   };
 }
 
+export class OrganizationConfiguration {
+  colors: {
+    [key: string]: any;
+  };
+  font: {
+    family: string;
+    url: string;
+  };
+}
+
 export class Organization {
   id: string;
   createdAt: Date;
   updatedAt: Date;
   name: string;
-  configuration: any;
+  configuration: OrganizationConfiguration;
   type: OrganizationTypeEnum;
+  patientDomain: string;
+  organizationDomain: string;
+  logoUrl: string;
 }
 
 export class Staff {
