@@ -13,6 +13,12 @@ export class SMSLoginBody {
   })
   @IsNotEmpty()
   phoneNumber: string;
+
+  @ApiProperty({
+    description: 'Invite code if a user is invited',
+  })
+  @IsNotEmpty()
+  inviteCode?: string;
 }
 
 export class SMSVerifyBody {

@@ -19,7 +19,7 @@ export class CreateOrganizationController {
 
   @Post('organization')
   async createOrganization(@Body() body: CreateOrganizationBody) {
-    const inviteObj = await this.createOrganizationService.verifyInviteCode(body.inviteCode);
+    const inviteObj = await this.createOrganizationService.verifyOrgInviteCode(body.inviteCode);
 
     const now = new Date();
     if (inviteObj.expiryAt && now >= inviteObj.expiryAt) {
@@ -58,7 +58,7 @@ export class CreateOrganizationController {
   async createPatient(@Body() body: CreatePatientBody) {
     console.log('createPatient:body: ', body);
 
-    const inviteObj = await this.createOrganizationService.lookUpUserInviteCode(body.inviteCode);
+    const inviteObj = await this.createOrganizationService.verifyUserInviteCode(body.inviteCode);
 
     const now = new Date();
     if (inviteObj.expiryAt && now >= inviteObj.expiryAt) {
@@ -89,7 +89,7 @@ export class CreateOrganizationController {
 
   @Post('staff')
   async createStaff(@Body() body: CreateStaffBody) {
-    const inviteObj = await this.createOrganizationService.lookUpUserInviteCode(body.inviteCode);
+    const inviteObj = await this.createOrganizationService.verifyUserInviteCode(body.inviteCode);
 
     const now = new Date();
     if (inviteObj.expiryAt && now >= inviteObj.expiryAt) {

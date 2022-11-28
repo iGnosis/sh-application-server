@@ -6,8 +6,9 @@ import { GqlService } from 'src/services/clients/gql/gql.service';
 export class CreateOrganizationService {
   constructor(private gqlService: GqlService, private readonly logger: Logger) {}
 
-  async verifyInviteCode(inviteCode: string): Promise<{
+  async verifyOrgInviteCode(inviteCode: string): Promise<{
     id: string;
+    organizationId: string;
     createdAt: Date;
     expiryAt: Date;
     inviteCode: string;
@@ -16,6 +17,7 @@ export class CreateOrganizationService {
     const query = `query GetInviteCode($inviteCode: uuid!) {
       invite_organization(where: {inviteCode: {_eq: $inviteCode}}) {
         id
+        organizationId
         createdAt
         expiryAt
         inviteCode
@@ -116,7 +118,7 @@ export class CreateOrganizationService {
     }
   }
 
-  async lookUpUserInviteCode(inviteCode: string): Promise<{
+  async verifyUserInviteCode(inviteCode: string): Promise<{
     id: string;
     createdAt: Date;
     expiryAt: Date;
@@ -128,11 +130,11 @@ export class CreateOrganizationService {
     const query = `query LookUpUserInviteCode($inviteCode: uuid!) {
       invite_user(where: {inviteCode: {_eq: $inviteCode}}) {
         id
+        organizationId
         createdAt
         expiryAt
         inviteCode
         maxUseCount
-        organizationId
         type
       }
     }`;

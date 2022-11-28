@@ -290,7 +290,7 @@ export class SmsAuthService {
       case UserType.PATIENT:
       case UserType.STAFF:
         jwtPayload['https://hasura.io/jwt/claims']['x-hasura-organization-id'] =
-          user.organizationId || '';
+          user.organizationId;
         break;
     }
     return jwtPayload;

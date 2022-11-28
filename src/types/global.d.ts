@@ -109,13 +109,13 @@ export class Staff {
   id?: string;
   organizationId: string;
   organization?: Organization;
-  email: string;
+  email?: string;
   password?: string;
   createdAt?: Date;
   updatedAt?: Date;
   lastActive?: Date;
-  firstName: string;
-  lastName: string;
+  firstName?: string;
+  lastName?: string;
   type: UserRole;
   status?: string;
   phoneCountryCode: string;

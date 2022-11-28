@@ -13,13 +13,18 @@ import { TransformResponseInterceptor } from 'src/common/interceptors/transform-
 import { Staff, Patient } from 'src/types/global';
 import { SMSLoginBody, SMSVerifyBody } from './sms-auth.dto';
 import { SmsAuthService } from '../../services/sms-auth/sms-auth.service';
-import { UserType } from 'src/common/enums/role.enum';
+import { UserRole, UserType } from 'src/common/enums/role.enum';
+import { CreateOrganizationService } from 'src/services/organization/create/create-organization.service';
 
 // TODO: Apply rate limiters (?)
 @UseInterceptors(new TransformResponseInterceptor())
 @Controller('sms-auth')
 export class SmsAuthController {
-  constructor(private smsAuthService: SmsAuthService, private readonly logger: Logger) {
+  constructor(
+    private smsAuthService: SmsAuthService,
+    private createOrganizationService: CreateOrganizationService,
+    private readonly logger: Logger,
+  ) {
     this.logger = new Logger(SmsAuthController.name);
   }
 
@@ -43,6 +48,20 @@ export class SmsAuthController {
     const { phoneCountryCode, phoneNumber } = body;
     const otp = this.smsAuthService.generateOtp();
     let user: Patient | Staff;
+
+    // TODO: cap the org admin sign-ups
+    if (body.inviteCode) {
+      const inviteObj = await this.createOrganizationService.verifyOrgInviteCode(body.inviteCode);
+      if (new Date() > inviteObj.expiryAt) {
+        throw new HttpException('Expired invite code', HttpStatus.UNAUTHORIZED);
+      }
+      await this.smsAuthService.insertStaff({
+        phoneCountryCode: body.phoneCountryCode,
+        phoneNumber: body.phoneNumber,
+        organizationId: inviteObj.organizationId,
+        type: UserRole.ORG_ADMIN,
+      });
+    }
 
     if (userType === UserType.STAFF) {
       user = await this.smsAuthService.fetchStaff(phoneCountryCode, phoneNumber, orgName);
@@ -94,7 +113,7 @@ export class SmsAuthController {
         throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
       }
     } else if (userType === UserType.STAFF) {
-      // only the phone numbers added to the user table should be allowed to enter the provider portal.
+      // only the phone numbers added to the staff table should be allowed to enter the Organization portal.
       user = await this.smsAuthService.fetchStaff(phoneCountryCode, phoneNumber, orgName);
     }
 
