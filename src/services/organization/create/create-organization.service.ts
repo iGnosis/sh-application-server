@@ -32,11 +32,8 @@ export class CreateOrganizationService {
       !Array.isArray(resp.invite_organization) ||
       !resp.invite_organization.length
     ) {
-      this.logger.error(JSON.stringify(resp));
-      throw new HttpException(
-        '[verifyInviteCode] Something went wrong',
-        HttpStatus.INTERNAL_SERVER_ERROR,
-      );
+      this.logger.log(JSON.stringify(resp));
+      throw new HttpException('Invalid invite code', HttpStatus.UNAUTHORIZED);
     }
     return resp.invite_organization[0];
   }
@@ -145,7 +142,7 @@ export class CreateOrganizationService {
       !Array.isArray(resp.invite_user) ||
       !resp.invite_user.length
     ) {
-      this.logger.error(JSON.stringify(resp));
+      this.logger.log(JSON.stringify(resp));
       throw new HttpException('Invalid invite code', HttpStatus.FORBIDDEN);
     }
 

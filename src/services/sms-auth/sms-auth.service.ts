@@ -207,7 +207,7 @@ export class SmsAuthService {
   }
 
   async insertStaff(staffObj: Staff) {
-    const query = `mutation InsertStaff($firstName: String!, $lastName: String!, $email: String!, $organizationId: uuid!, $phoneCountryCode: String!, $phoneNumber: String!, $type: user_type_enum!) {
+    const query = `mutation InsertStaff($firstName: String = "", $lastName: String = "", $email: String = "", $organizationId: uuid!, $phoneCountryCode: String!, $phoneNumber: String!, $type: user_type_enum!) {
       insert_staff_one(object: {firstName: $firstName, lastName: $lastName, email: $email, organizationId: $organizationId, phoneCountryCode: $phoneCountryCode, phoneNumber: $phoneNumber, type: $type}) {
         id
       }

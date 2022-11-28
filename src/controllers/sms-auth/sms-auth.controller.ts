@@ -52,7 +52,7 @@ export class SmsAuthController {
     // TODO: cap the org admin sign-ups
     if (body.inviteCode) {
       const inviteObj = await this.createOrganizationService.verifyOrgInviteCode(body.inviteCode);
-      if (new Date() > inviteObj.expiryAt) {
+      if (inviteObj.expiryAt && new Date() > inviteObj.expiryAt) {
         throw new HttpException('Expired invite code', HttpStatus.UNAUTHORIZED);
       }
       await this.smsAuthService.insertStaff({
