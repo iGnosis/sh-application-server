@@ -38,20 +38,6 @@ export class CreateOrganizationService {
     return resp.invite_organization[0];
   }
 
-  async createOrganization(name: string, type: string): Promise<string> {
-    const query = `mutation InsertOrganization($name: String!, $type: organization_type_enum!) {
-      insert_organization_one(object: {name: $name, type: $type}) {
-        id
-      }
-    }`;
-    const resp = await this.gqlService.client.request(query, { name, type });
-    if (!resp || !resp.insert_organization_one || !resp.insert_organization_one.id) {
-      this.logger.error(JSON.stringify(resp));
-      throw new HttpException('[insertOrg] Something went wrong', HttpStatus.INTERNAL_SERVER_ERROR);
-    }
-    return resp.insert_organization_one.id;
-  }
-
   async createOrganizationAdmin(
     organizationId: string,
     phoneNumber: string,

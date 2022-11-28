@@ -3,11 +3,7 @@ import { TransformResponseInterceptor } from 'src/common/interceptors/transform-
 import { CreateOrganizationService } from 'src/services/organization/create/create-organization.service';
 import { SmsAuthService } from 'src/services/sms-auth/sms-auth.service';
 import { Patient, Staff } from 'src/types/global';
-import {
-  CreateOrganizationBody,
-  CreatePatientBody,
-  CreateStaffBody,
-} from './create-organization.dto';
+import { CreatePatientBody, CreateStaffBody } from './create-organization.dto';
 
 @Controller('create')
 @UseInterceptors(new TransformResponseInterceptor())
@@ -16,43 +12,6 @@ export class CreateOrganizationController {
     private createOrganizationService: CreateOrganizationService,
     private smsAuthService: SmsAuthService,
   ) {}
-
-  @Post('organization')
-  async createOrganization(@Body() body: CreateOrganizationBody) {
-    const inviteObj = await this.createOrganizationService.verifyOrgInviteCode(body.inviteCode);
-
-    const now = new Date();
-    if (inviteObj.expiryAt && now >= inviteObj.expiryAt) {
-      throw new HttpException('Unauthorized - Invite code has been expired', HttpStatus.FORBIDDEN);
-    }
-
-    if (inviteObj.maxUseCount <= 0) {
-      throw new HttpException('Unauthorized - Out of quota', HttpStatus.FORBIDDEN);
-    }
-
-    const orgId = await this.createOrganizationService.createOrganization(
-      body.orgDetails.name,
-      body.orgDetails.type,
-    );
-
-    const { email, phoneCountryCode, phoneNumber } = body.adminDetails;
-    await this.createOrganizationService.createOrganizationAdmin(
-      orgId,
-      phoneNumber,
-      phoneCountryCode,
-      email,
-    );
-
-    inviteObj.maxUseCount = inviteObj.maxUseCount - 1;
-    await this.createOrganizationService.decremenOrgMaxUseCount(
-      inviteObj.maxUseCount,
-      inviteObj.id,
-    );
-
-    return {
-      message: 'success',
-    };
-  }
 
   @Post('patient')
   async createPatient(@Body() body: CreatePatientBody) {
