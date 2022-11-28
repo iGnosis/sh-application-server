@@ -17,7 +17,6 @@ export class SMSLoginBody {
   @ApiProperty({
     description: 'Invite code if a user is invited',
   })
-  @IsNotEmpty()
   inviteCode?: string;
 }
 
