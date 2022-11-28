@@ -84,24 +84,15 @@ export class SmsAuthService {
         }
       }
     }`;
-
-    try {
-      const resp = await this.gqlService.client.request(query, {
-        phoneCountryCode,
-        phoneNumber,
-        orgName,
-      });
-      if (!resp || !resp.patient || !isArray(resp.patient) || !resp.patient.length) {
-        throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
-      }
-      return resp.patient[0];
-    } catch (err) {
-      this.logger.error('error while calling fetchPatient' + JSON.stringify(err));
-      throw new HttpException(
-        'fetchPatient:Internal Server Error',
-        HttpStatus.INTERNAL_SERVER_ERROR,
-      );
+    const resp = await this.gqlService.client.request(query, {
+      phoneCountryCode,
+      phoneNumber,
+      orgName,
+    });
+    if (!resp || !resp.patient || !isArray(resp.patient) || !resp.patient.length) {
+      throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
     }
+    return resp.patient[0];
   }
 
   async fetchStaff(phoneCountryCode: string, phoneNumber: string, orgName: string): Promise<Staff> {
@@ -117,20 +108,15 @@ export class SmsAuthService {
       }
     }`;
 
-    try {
-      const resp = await this.gqlService.client.request(query, {
-        phoneCountryCode,
-        phoneNumber,
-        orgName,
-      });
-      if (!resp || !resp.staff || !isArray(resp.staff) || !resp.staff.length) {
-        throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
-      }
-      return resp.staff[0];
-    } catch (err) {
-      this.logger.error('error while calling fetchStaff' + JSON.stringify(err));
-      throw new HttpException('fetchStaff:Internal Server Error', HttpStatus.INTERNAL_SERVER_ERROR);
+    const resp = await this.gqlService.client.request(query, {
+      phoneCountryCode,
+      phoneNumber,
+      orgName,
+    });
+    if (!resp || !resp.staff || !isArray(resp.staff) || !resp.staff.length) {
+      throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
     }
+    return resp.staff[0];
   }
 
   private async fetchStaffLatestOtp(staff: string): Promise<Auth> {
