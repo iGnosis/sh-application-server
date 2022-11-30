@@ -31,15 +31,15 @@ export class StatsService {
         DATE_TRUNC($5, timezone($4, aggregate_analytics."createdAt")) "createdAt",
         game.game,
         ROUND(SUM(aggregate_analytics.value * aggregate_analytics."noOfSamples") / SUM(aggregate_analytics."noOfSamples"), 2) "avgCompletionTimePerRepInMs"
-    FROM aggregate_analytics
-    JOIN game
+    FROM game
+    JOIN aggregate_analytics
     ON game.id = aggregate_analytics.game
     WHERE
-        aggregate_analytics.patient = $1 AND
+        game.patient = $1 AND
+        game."organizationId" = $6 AND
         aggregate_analytics."key" = 'avgCompletionTimeInMs' AND
         aggregate_analytics."createdAt" >= $2 AND
-        aggregate_analytics."createdAt" < $3 AND
-        game."organizationId" = $6
+        aggregate_analytics."createdAt" < $3
     GROUP BY
         DATE_TRUNC($5, timezone($4, aggregate_analytics."createdAt")),
         game.game
@@ -63,15 +63,15 @@ export class StatsService {
     SELECT
         DATE_TRUNC($5, timezone($4, aggregate_analytics."createdAt")) "createdAt",
         ROUND(SUM(aggregate_analytics.value * aggregate_analytics."noOfSamples") / SUM(aggregate_analytics."noOfSamples"), 2) "avgCompletionTimePerRepInMs"
-    FROM aggregate_analytics
-    JOIN game
+    FROM game
+    JOIN aggregate_analytics
     ON game.id = aggregate_analytics.game
     WHERE
-        aggregate_analytics.patient = $1 AND
+        game.patient = $1 AND
+        game."organizationId" = $6 AND
         aggregate_analytics."key" = 'avgCompletionTimeInMs' AND
         aggregate_analytics."createdAt" >= $2 AND
-        aggregate_analytics."createdAt" < $3 AND
-        game."organizationId" = $6
+        aggregate_analytics."createdAt" < $3
     GROUP BY
         DATE_TRUNC($5, timezone($4, aggregate_analytics."createdAt"))
     ORDER BY DATE_TRUNC($5, timezone($4, aggregate_analytics."createdAt"))`,
@@ -91,15 +91,15 @@ export class StatsService {
           DATE_TRUNC($5, timezone($4, aggregate_analytics."createdAt")) "createdAt",
           game.game,
           ROUND((SUM(aggregate_analytics.value * aggregate_analytics."noOfSamples") / SUM(aggregate_analytics."noOfSamples")) * 100, 2) "avgAchievementPercentage"
-      FROM aggregate_analytics
-      JOIN game
+      FROM game
+      JOIN aggregate_analytics
       ON game.id = aggregate_analytics.game
       WHERE
-          aggregate_analytics.patient = $1 AND
-          aggregate_analytics."key" = 'avgAchievementRatio' AND
+          game.patient = $1 AND
+          game."organizationId" = $6 AND
+          aggregate_analytics."key" = 'avgAchievementRatio'
           aggregate_analytics."createdAt" >= $2 AND
-          aggregate_analytics."createdAt" < $3 AND
-          game."organizationId" = $6
+          aggregate_analytics."createdAt" < $3
       GROUP BY
           DATE_TRUNC($5, timezone($4, aggregate_analytics."createdAt")),
           game.game
@@ -234,15 +234,15 @@ export class StatsService {
       SELECT
           DATE_TRUNC($5, timezone($4, aggregate_analytics."createdAt")) "createdAt",
           ROUND((SUM(aggregate_analytics.value * aggregate_analytics."noOfSamples") / SUM(aggregate_analytics."noOfSamples")) * 100, 2) "avgAchievementPercentage"
-      FROM aggregate_analytics
-      JOIN game
+      FROM game
+      JOIN aggregate_analytics
       ON game.id = aggregate_analytics.game
       WHERE
-          aggregate_analytics.patient = $1 AND
+          game.patient = $1 AND
+          game."organizationId" = $6 AND
           aggregate_analytics."key" = 'avgAchievementRatio' AND
           aggregate_analytics."createdAt" >= $2 AND
-          aggregate_analytics."createdAt" < $3 AND
-          game."organizationId" = $6
+          aggregate_analytics."createdAt" < $3
       GROUP BY
           DATE_TRUNC($5, timezone($4, aggregate_analytics."createdAt"))
       ORDER BY DATE_TRUNC($5, timezone($4, aggregate_analytics."createdAt"))`,
@@ -271,7 +271,7 @@ export class StatsService {
           COUNT(game.game) "gamesPlayedCount"
       FROM game
       WHERE
-          patient = $1 AND
+          game.patient = $1 AND
           game."endedAt" IS NOT NULL AND
           game."createdAt" >= $2 AND
           game."createdAt" < $3 AND
@@ -357,7 +357,7 @@ export class StatsService {
     return await this.databaseService.executeQuery(
       `
       SELECT DISTINCT ON (patient)
-          patient,
+          game.patient,
           DATE_TRUNC($3, game."createdAt") "createdAt",
           COUNT(game.game) "numOfGamesPlayed"
       FROM game
@@ -367,10 +367,10 @@ export class StatsService {
           game."endedAt" < $2 AND
           game."organizationId" = $4
       GROUP BY
-          patient,
+          game.patient,
           DATE_TRUNC($3, game."createdAt")
       ORDER BY
-          patient,
+          game.patient,
           DATE_TRUNC($3, game."createdAt") DESC`,
       [startDate, endDate, groupBy, orgId],
     );
