@@ -9,7 +9,7 @@ export class ProviderChartsService {
   numberOfGamesAvailable: number;
   constructor(private statService: StatsService, private gqlService: GqlService) {
     // TODO: get activity count dynamically!
-    this.numberOfGamesAvailable = 3;
+    this.numberOfGamesAvailable = 4;
   }
   async getGameAchievementRatio(gameId: string) {
     const query = `
@@ -35,24 +35,24 @@ export class ProviderChartsService {
     };
   }
 
-  async getPatientAvgCompletionTime(query: PlotChartDTO) {
+  async getPatientAvgCompletionTime(query: PlotChartDTO, orgId: string) {
     if (query.isGroupByGames) {
-      return await this.statService.getAvgCompletionTimeInMsGroupByGames(query);
+      return await this.statService.getAvgCompletionTimeInMsGroupByGames(query, orgId);
     } else {
-      return await this.statService.getAvgCompletionTimeInMs(query);
+      return await this.statService.getAvgCompletionTimeInMs(query, orgId);
     }
   }
 
-  async getPatientAvgAchievement(query: PlotChartDTO) {
+  async getPatientAvgAchievement(query: PlotChartDTO, orgId: string) {
     if (query.isGroupByGames) {
-      return await this.statService.getAvgAchievementPercentageGroupByGames(query);
+      return await this.statService.getAvgAchievementPercentageGroupByGames(query, orgId);
     } else {
-      return await this.statService.getAvgAchievementPercentage(query);
+      return await this.statService.getAvgAchievementPercentage(query, orgId);
     }
   }
 
-  async getPatientAvgEngagement(query: PlotChartDTO) {
-    const results = await this.statService.getAvgEngagementRatio(query);
+  async getPatientAvgEngagement(query: PlotChartDTO, orgId: string) {
+    const results = await this.statService.getAvgEngagementRatio(query, orgId);
     let numOfGamesToBePlayed: number;
 
     if (query.groupBy === 'day') {
@@ -89,7 +89,7 @@ export class ProviderChartsService {
     return engagementResultSet;
   }
 
-  async getAdheranceChart(startDate: Date, endDate: Date, groupBy: GroupBy) {
+  async getAdheranceChart(startDate: Date, endDate: Date, groupBy: GroupBy, orgId: string) {
     if (groupBy === 'day') {
       throw new HttpException('Not Implemented', HttpStatus.NOT_IMPLEMENTED);
     }
@@ -107,12 +107,12 @@ export class ProviderChartsService {
         this.numberOfGamesAvailable;
     }
 
-    const results = await this.statService.getPatientAdherence(startDate, endDate, groupBy);
+    const results = await this.statService.getPatientAdherence(startDate, endDate, groupBy, orgId);
     return results.filter((val) => val.numOfGamesPlayed >= numOfGamesToBePlayed);
   }
 
-  async getPatientsCompletionHeatmap(query: PlotHeatmapDTO) {
-    const result = await this.statService.getPatientsMonthlyCompletion(query);
+  async getPatientsCompletionHeatmap(query: PlotHeatmapDTO, orgId: string) {
+    const result = await this.statService.getPatientsMonthlyCompletion(query, orgId);
     return result;
   }
 }

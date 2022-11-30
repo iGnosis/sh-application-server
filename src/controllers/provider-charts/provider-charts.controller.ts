@@ -24,6 +24,7 @@ import {
 } from 'src/types/provider-charts';
 import { StatsService } from 'src/services/patient-stats/stats.service';
 import { TransformResponseInterceptor } from 'src/common/interceptors/transform-response.interceptor';
+import { OrgId } from 'src/common/decorators/user.decorator';
 
 @Roles(UserRole.THERAPIST)
 @UseGuards(AuthGuard, RolesGuard)
@@ -39,6 +40,7 @@ export class ProviderChartsController {
   @HttpCode(200)
   @Get('/')
   async plotChart(
+    @OrgId() orgId: string,
     @Query('startDate') startDate: Date,
     @Query('endDate') endDate: Date,
     @Query('userTimezone') userTimezone: string,
@@ -83,19 +85,19 @@ export class ProviderChartsController {
     };
 
     if (chartType === 'avgAchievementRatio') {
-      const results = await this.providerChartsService.getPatientAvgAchievement(query);
+      const results = await this.providerChartsService.getPatientAvgAchievement(query, orgId);
       return { results };
       // const groupedByResults = lodashGroupBy(results, 'createdAt');
       // const labels = Object.keys(groupedByResults).map(val => new Date(val).toISOString())
     }
 
     if (chartType === 'avgCompletionTime') {
-      const results = await this.providerChartsService.getPatientAvgCompletionTime(query);
+      const results = await this.providerChartsService.getPatientAvgCompletionTime(query, orgId);
       return { results };
     }
 
     if (chartType === 'avgEngagementRatio') {
-      const results = await this.providerChartsService.getPatientAvgEngagement(query);
+      const results = await this.providerChartsService.getPatientAvgEngagement(query, orgId);
       return { results };
     }
   }
@@ -103,6 +105,7 @@ export class ProviderChartsController {
   @HttpCode(200)
   @Get('patient-monthly-completion')
   async patientMonthlyCompletion(
+    @OrgId() orgId: string,
     @Query('startDate') startDate: Date,
     @Query('endDate') endDate: Date,
     @Query('userTimezone') userTimezone: string,
@@ -122,7 +125,7 @@ export class ProviderChartsController {
       offset,
       showInactive,
     };
-    const results = await this.providerChartsService.getPatientsCompletionHeatmap(query);
+    const results = await this.providerChartsService.getPatientsCompletionHeatmap(query, orgId);
     return { results };
   }
 
@@ -134,19 +137,29 @@ export class ProviderChartsController {
 
   @HttpCode(200)
   @Get('patient-overview')
-  async patientOverview(@Query('startDate') startDate: Date, @Query('endDate') endDate: Date) {
-    return this.statsService.getPatientOverview(startDate, endDate);
+  async patientOverview(
+    @OrgId() orgId: string,
+    @Query('startDate') startDate: Date,
+    @Query('endDate') endDate: Date,
+  ) {
+    return this.statsService.getPatientOverview(startDate, endDate, orgId);
   }
 
   @HttpCode(200)
   @Get('patient-adherence')
   async patientAdherence(
+    @OrgId() orgId: string,
     @Query('startDate') startDate: Date,
     @Query('endDate') endDate: Date,
     @Query('groupBy') groupBy: GroupBy,
   ) {
-    const results = await this.providerChartsService.getAdheranceChart(startDate, endDate, groupBy);
-    const totalNumOfPatients = await this.statsService.getTotalPatientCount();
+    const results = await this.providerChartsService.getAdheranceChart(
+      startDate,
+      endDate,
+      groupBy,
+      orgId,
+    );
+    const totalNumOfPatients = await this.statsService.getTotalPatientCount(orgId);
     const activePatientsCount = results.length;
     return { activePatientsCount, totalNumOfPatients };
   }
