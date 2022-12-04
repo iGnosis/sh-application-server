@@ -1,10 +1,10 @@
 import { Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Test, TestingModule } from '@nestjs/testing';
+import { UserType } from 'src/common/enums/role.enum';
 import { GqlService } from 'src/services/clients/gql/gql.service';
 import { SmsService } from 'src/services/clients/sms/sms.service';
-import { Patient } from 'src/types/patient';
-import { User } from 'src/types/user';
+import { Staff, Patient } from 'src/types/global';
 import { EmailService } from '../clients/email/email.service';
 import { SmsAuthService } from './sms-auth.service';
 
@@ -35,7 +35,7 @@ describe('SmsAuthService', () => {
     // given
     // otp remains valid for 30 minutes.
     const msInHalfHour = 31 * 60 * 1000;
-    const issuedAt = new Date().getTime() - msInHalfHour;
+    const issuedAt = new Date(new Date().getTime() - msInHalfHour);
 
     // when
     const isExpired = service.isOtpExpired(issuedAt);
@@ -47,7 +47,7 @@ describe('SmsAuthService', () => {
   it('should verify valid OTP issued at', () => {
     // given
     const msIn15Mins = 15 * 60 * 1000;
-    const issuedAt = new Date().getTime() - msIn15Mins;
+    const issuedAt = new Date(new Date().getTime() + msIn15Mins);
 
     // when
     const isExpired = service.isOtpExpired(issuedAt);
@@ -59,7 +59,7 @@ describe('SmsAuthService', () => {
   // TODO: Look into parameterizing tests.
   it('should generate a valid patient JWT token', () => {
     // given
-    const userType = 'patient';
+    const userType = UserType.PATIENT;
     const userObj = {
       id: 'patient-abc',
     };
@@ -90,14 +90,15 @@ describe('SmsAuthService', () => {
 
   it('should generate a valid therapist JWT token', () => {
     // given
-    const userType = 'therapist';
+    const userType = UserType.STAFF;
     const userObj = {
-      id: 'therapist-abc',
+      id: 'some-uuid-id',
+      type: 'therapist',
     };
     const testJwtSecret = '{"type":"HS256","key":"test_jwt_secret"}';
 
     // when
-    const jwt = service.generateJwtToken(userType, userObj as User, testJwtSecret);
+    const jwt = service.generateJwtToken(userType, userObj as Staff, testJwtSecret);
     const verifiedToken = service.verifyToken(jwt, testJwtSecret);
 
     // then
@@ -111,7 +112,7 @@ describe('SmsAuthService', () => {
     ]);
     expect(verifiedToken['https://hasura.io/jwt/claims']).toHaveProperty(
       'x-hasura-default-role',
-      userType,
+      'therapist',
     );
     expect(verifiedToken['https://hasura.io/jwt/claims']).toHaveProperty(
       'x-hasura-user-id',
@@ -121,14 +122,14 @@ describe('SmsAuthService', () => {
 
   it('should generate a valid benchmark JWT token', () => {
     // given
-    const userType = 'benchmark';
+    const userType = UserType.BENCHMARK;
     const userObj = {
       id: 'benchmark-abc',
     };
     const testJwtSecret = '{"type":"HS256","key":"test_jwt_secret"}';
 
     // when
-    const jwt = service.generateJwtToken(userType, userObj as User, testJwtSecret);
+    const jwt = service.generateJwtToken(userType, userObj as Staff, testJwtSecret);
     const verifiedToken = service.verifyToken(jwt, testJwtSecret);
 
     // then

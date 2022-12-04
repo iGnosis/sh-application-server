@@ -14,7 +14,10 @@ export class StatsService {
     this.numberOfGamesAvailable = 3;
   }
 
-  async getAvgCompletionTimeInMsGroupByGames(query: PlotChartDTO): Promise<
+  async getAvgCompletionTimeInMsGroupByGames(
+    query: PlotChartDTO,
+    orgId: string,
+  ): Promise<
     {
       createdAt: string;
       game: string;
@@ -28,11 +31,12 @@ export class StatsService {
         DATE_TRUNC($5, timezone($4, aggregate_analytics."createdAt")) "createdAt",
         game.game,
         ROUND(SUM(aggregate_analytics.value * aggregate_analytics."noOfSamples") / SUM(aggregate_analytics."noOfSamples"), 2) "avgCompletionTimePerRepInMs"
-    FROM aggregate_analytics
-    JOIN game
+    FROM game
+    JOIN aggregate_analytics
     ON game.id = aggregate_analytics.game
     WHERE
-        aggregate_analytics.patient = $1 AND
+        game.patient = $1 AND
+        game."organizationId" = $6 AND
         aggregate_analytics."key" = 'avgCompletionTimeInMs' AND
         aggregate_analytics."createdAt" >= $2 AND
         aggregate_analytics."createdAt" < $3
@@ -40,11 +44,14 @@ export class StatsService {
         DATE_TRUNC($5, timezone($4, aggregate_analytics."createdAt")),
         game.game
     ORDER BY DATE_TRUNC($5, timezone($4, aggregate_analytics."createdAt"))`,
-      [patientId, startDate, endDate, userTimezone, groupBy],
+      [patientId, startDate, endDate, userTimezone, groupBy, orgId],
     );
   }
 
-  async getAvgCompletionTimeInMs(query: PlotChartDTO): Promise<
+  async getAvgCompletionTimeInMs(
+    query: PlotChartDTO,
+    orgId: string,
+  ): Promise<
     {
       createdAt: string;
       avgCompletionTimePerRepInMs: number;
@@ -56,22 +63,23 @@ export class StatsService {
     SELECT
         DATE_TRUNC($5, timezone($4, aggregate_analytics."createdAt")) "createdAt",
         ROUND(SUM(aggregate_analytics.value * aggregate_analytics."noOfSamples") / SUM(aggregate_analytics."noOfSamples"), 2) "avgCompletionTimePerRepInMs"
-    FROM aggregate_analytics
-    JOIN game
+    FROM game
+    JOIN aggregate_analytics
     ON game.id = aggregate_analytics.game
     WHERE
-        aggregate_analytics.patient = $1 AND
+        game.patient = $1 AND
+        game."organizationId" = $6 AND
         aggregate_analytics."key" = 'avgCompletionTimeInMs' AND
         aggregate_analytics."createdAt" >= $2 AND
         aggregate_analytics."createdAt" < $3
     GROUP BY
         DATE_TRUNC($5, timezone($4, aggregate_analytics."createdAt"))
     ORDER BY DATE_TRUNC($5, timezone($4, aggregate_analytics."createdAt"))`,
-      [patientId, startDate, endDate, userTimezone, groupBy],
+      [patientId, startDate, endDate, userTimezone, groupBy, orgId],
     );
   }
 
-  async getAvgAchievementPercentageGroupByGames(query: PlotChartDTO) {
+  async getAvgAchievementPercentageGroupByGames(query: PlotChartDTO, orgId: string) {
     const { patientId, startDate, endDate, userTimezone, groupBy } = query;
     const result: {
       createdAt: string;
@@ -83,19 +91,20 @@ export class StatsService {
           DATE_TRUNC($5, timezone($4, aggregate_analytics."createdAt")) "createdAt",
           game.game,
           ROUND((SUM(aggregate_analytics.value * aggregate_analytics."noOfSamples") / SUM(aggregate_analytics."noOfSamples")) * 100, 2) "avgAchievementPercentage"
-      FROM aggregate_analytics
-      JOIN game
+      FROM game
+      JOIN aggregate_analytics
       ON game.id = aggregate_analytics.game
       WHERE
-          aggregate_analytics.patient = $1 AND
-          aggregate_analytics."key" = 'avgAchievementRatio' AND
+          game.patient = $1 AND
+          game."organizationId" = $6 AND
+          aggregate_analytics."key" = 'avgAchievementRatio'
           aggregate_analytics."createdAt" >= $2 AND
           aggregate_analytics."createdAt" < $3
       GROUP BY
           DATE_TRUNC($5, timezone($4, aggregate_analytics."createdAt")),
           game.game
       ORDER BY DATE_TRUNC($5, timezone($4, aggregate_analytics."createdAt"))`,
-      [patientId, startDate, endDate, userTimezone, groupBy],
+      [patientId, startDate, endDate, userTimezone, groupBy, orgId],
     );
     result.forEach((val) => {
       val.avgAchievementPercentage = parseFloat(`${val.avgAchievementPercentage}`);
@@ -103,85 +112,65 @@ export class StatsService {
     return result;
   }
 
-  async getPatientsMonthlyCompletion(query: PlotHeatmapDTO) {
+  async getPatientsMonthlyCompletion(query: PlotHeatmapDTO, orgId: string) {
     const { startDate, endDate, userTimezone, sortBy, sortDirection, showInactive, limit, offset } =
       query;
     let result: any[];
     if (sortBy === 'recentActivity') {
-      if (sortDirection === 'desc') {
-        result = await this.databaseService.executeQuery(
-          `
-            SELECT p.id, g."gamesCompleted", g.nickname, g."createdAt"
-              FROM (SELECT id from patient LIMIT $4 OFFSET $5) as p
-              LEFT OUTER JOIN
-                  (SELECT
-                      DATE_TRUNC('day', timezone($3, game."createdAt")) "createdAt",
-                      COUNT(*) FILTER(WHERE game."endedAt" IS NOT NULL) "gamesCompleted",
-                      patient.nickname, patient.id
-                  FROM game
-                  RIGHT JOIN patient
-                  ON game.patient = patient.id
-                  WHERE
-                    game."createdAt" BETWEEN $1 AND $2
-                  GROUP BY
-                        DATE_TRUNC('day', timezone($3, game."createdAt")),
-                        patient.id
-                  ORDER BY DATE_TRUNC('day', timezone($3, game."createdAt")) DESC) as g
-              ON g.id = p.id
-            `,
-          [startDate, endDate, userTimezone, limit, offset],
-        );
-      } else {
-        result = await this.databaseService.executeQuery(
-          `
-            SELECT p.id, g."gamesCompleted", g.nickname, g."createdAt"
-              FROM (SELECT id from patient LIMIT $4 OFFSET $5) as p
-              LEFT OUTER JOIN
-                  (SELECT
-                      DATE_TRUNC('day', timezone($3, game."createdAt")) "createdAt",
-                      COUNT(*) FILTER(WHERE game."endedAt" IS NOT NULL) "gamesCompleted",
-                      patient.nickname, patient.id
-                  FROM game
-                  RIGHT JOIN patient
-                  ON game.patient = patient.id
-                  WHERE
-                    game."createdAt" BETWEEN $1 AND $2
-                  GROUP BY
-                        DATE_TRUNC('day', timezone($3, game."createdAt")),
-                        patient.id
-                  ORDER BY DATE_TRUNC('day', timezone($3, game."createdAt")) ASC) as g
-              ON g.id = p.id
-            `,
-          [startDate, endDate, userTimezone, limit, offset],
-        );
-      }
-    } else {
       result = await this.databaseService.executeQuery(
         `
-        SELECT p.id, g."gamesCompleted", g.nickname, g."createdAt"
-          FROM (SELECT id from patient LIMIT $4 OFFSET $5) as p
-          LEFT OUTER JOIN
+          SELECT p.id, g."gamesCompleted", g.nickname, g."createdAt"
+            FROM (SELECT id from patient LIMIT $4 OFFSET $5 WHERE patient."organizationId" = $7) as p
+            LEFT OUTER JOIN
               (SELECT
-                  DATE_TRUNC('day', timezone($3, game."createdAt")) "createdAt",
-                  COUNT(*) FILTER(WHERE game."endedAt" IS NOT NULL) "gamesCompleted",
-                  patient.nickname, patient.id
+                DATE_TRUNC('day', timezone($3, game."createdAt")) "createdAt",
+                COUNT(*) FILTER(WHERE game."endedAt" IS NOT NULL) "gamesCompleted",
+                patient.nickname, patient.id
               FROM game
               RIGHT JOIN patient
               ON game.patient = patient.id
               WHERE
-                game."createdAt" BETWEEN $1 AND $2
+                game."createdAt" BETWEEN $1 AND $2 AND
+                game."organizationId" = $7
               GROUP BY
-                    DATE_TRUNC('day', timezone($3, game."createdAt")),
-                    patient.id
-              ORDER BY patient.id) as g
+                DATE_TRUNC('day', timezone($3, game."createdAt")),
+                patient.id
+              ORDER BY DATE_TRUNC('day', timezone($3, game."createdAt")) $6) as g
+            ON g.id = p.id
+          `,
+        [startDate, endDate, userTimezone, limit, offset, sortDirection, orgId],
+      );
+    } else {
+      result = await this.databaseService.executeQuery(
+        `
+        SELECT p.id, g."gamesCompleted", g.nickname, g."createdAt"
+          FROM (SELECT id from patient LIMIT $4 OFFSET $5 WHERE patient."organizationId" = $6) as p
+          LEFT OUTER JOIN
+            (SELECT
+                DATE_TRUNC('day', timezone($3, game."createdAt")) "createdAt",
+                COUNT(*) FILTER(WHERE game."endedAt" IS NOT NULL) "gamesCompleted",
+                patient.nickname, patient.id
+            FROM game
+            RIGHT JOIN patient
+            ON game.patient = patient.id
+            WHERE
+              game."createdAt" BETWEEN $1 AND $2 AND
+              game."organizationId" = $6
+            GROUP BY
+                DATE_TRUNC('day', timezone($3, game."createdAt")),
+                patient.id
+            ORDER BY patient.id) as g
           ON g.id = p.id`,
-        [startDate, endDate, userTimezone, limit, offset],
+        [startDate, endDate, userTimezone, limit, offset, orgId],
       );
     }
     const noOfPages = await this.databaseService.executeQuery(
       `
-      SELECT CEILING(CEILING(COUNT(*))/$1) FROM patient`,
-      [limit],
+      SELECT CEILING(CEILING(COUNT(*))/$1)
+      FROM patient
+      WHERE patient."organizationId" = $2
+      `,
+      [limit, orgId],
     );
     let groupedResult = [];
     if (result) {
@@ -235,7 +224,7 @@ export class StatsService {
     return groupedResult.filter(filterInactive);
   }
 
-  async getAvgAchievementPercentage(query: PlotChartDTO) {
+  async getAvgAchievementPercentage(query: PlotChartDTO, orgId: string) {
     const { patientId, startDate, endDate, userTimezone, groupBy } = query;
     const result: {
       createdAt: string;
@@ -245,18 +234,19 @@ export class StatsService {
       SELECT
           DATE_TRUNC($5, timezone($4, aggregate_analytics."createdAt")) "createdAt",
           ROUND((SUM(aggregate_analytics.value * aggregate_analytics."noOfSamples") / SUM(aggregate_analytics."noOfSamples")) * 100, 2) "avgAchievementPercentage"
-      FROM aggregate_analytics
-      JOIN game
+      FROM game
+      JOIN aggregate_analytics
       ON game.id = aggregate_analytics.game
       WHERE
-          aggregate_analytics.patient = $1 AND
+          game.patient = $1 AND
+          game."organizationId" = $6 AND
           aggregate_analytics."key" = 'avgAchievementRatio' AND
           aggregate_analytics."createdAt" >= $2 AND
           aggregate_analytics."createdAt" < $3
       GROUP BY
           DATE_TRUNC($5, timezone($4, aggregate_analytics."createdAt"))
       ORDER BY DATE_TRUNC($5, timezone($4, aggregate_analytics."createdAt"))`,
-      [patientId, startDate, endDate, userTimezone, groupBy],
+      [patientId, startDate, endDate, userTimezone, groupBy, orgId],
     );
     result.forEach((val) => {
       val.avgAchievementPercentage = parseFloat(`${val.avgAchievementPercentage}`);
@@ -264,7 +254,10 @@ export class StatsService {
     return result;
   }
 
-  async getAvgEngagementRatio(query: PlotChartDTO): Promise<
+  async getAvgEngagementRatio(
+    query: PlotChartDTO,
+    orgId: string,
+  ): Promise<
     {
       createdAt: string;
       gamesPlayedCount: number;
@@ -278,17 +271,18 @@ export class StatsService {
           COUNT(game.game) "gamesPlayedCount"
       FROM game
       WHERE
-          patient = $1 AND
+          game.patient = $1 AND
           game."endedAt" IS NOT NULL AND
           game."createdAt" >= $2 AND
-          game."createdAt" < $3
+          game."createdAt" < $3 AND
+          game."organizationId" = $6
       GROUP BY DATE_TRUNC($5, timezone($4, game."createdAt"))
       ORDER BY DATE_TRUNC($5, timezone($4, game."createdAt")) DESC`,
-      [patientId, startDate, endDate, userTimezone, groupBy],
+      [patientId, startDate, endDate, userTimezone, groupBy, orgId],
     );
   }
 
-  async getPatientOverview(startDate: Date, endDate: Date) {
+  async getPatientOverview(startDate: Date, endDate: Date, orgId: string) {
     const engagementResults: {
       patient: string;
       gamesPlayedCount: number;
@@ -302,12 +296,13 @@ export class StatsService {
       WHERE
         game."endedAt" IS NOT NULL AND
         game."createdAt" >= $1 AND
-        game."createdAt" < $2
+        game."createdAt" < $2 AND
+        game."organizationId" = $3
       GROUP BY
           game.patient
       ORDER BY
           game.patient`,
-      [startDate, endDate],
+      [startDate, endDate, orgId],
     );
 
     const noOfGamesToPlay = this.getDiffInDays(startDate, endDate) * this.numberOfGamesAvailable;
@@ -351,6 +346,7 @@ export class StatsService {
     startDate: Date,
     endDate: Date,
     groupBy: GroupBy,
+    orgId: string,
   ): Promise<
     {
       patient: string;
@@ -361,27 +357,31 @@ export class StatsService {
     return await this.databaseService.executeQuery(
       `
       SELECT DISTINCT ON (patient)
-          patient,
+          game.patient,
           DATE_TRUNC($3, game."createdAt") "createdAt",
           COUNT(game.game) "numOfGamesPlayed"
       FROM game
       WHERE
           game."endedAt" IS NOT NULL AND
           game."createdAt" >= $1 AND
-          game."endedAt" < $2
+          game."endedAt" < $2 AND
+          game."organizationId" = $4
       GROUP BY
-          patient,
+          game.patient,
           DATE_TRUNC($3, game."createdAt")
       ORDER BY
-          patient,
+          game.patient,
           DATE_TRUNC($3, game."createdAt") DESC`,
-      [startDate, endDate, groupBy],
+      [startDate, endDate, groupBy, orgId],
     );
   }
 
-  async getTotalPatientCount(): Promise<number> {
+  async getTotalPatientCount(orgId: string): Promise<number> {
     const results = await this.databaseService.executeQuery(
-      `SELECT count(*) "totalPatientCount" FROM patient`,
+      `SELECT count(*) "totalPatientCount"
+       FROM patient
+       WHERE patient."organizationId" = $1`,
+      [orgId],
     );
     return parseInt(results[0].totalPatientCount);
   }

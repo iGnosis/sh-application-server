@@ -1,4 +1,4 @@
-# sh-application-server ![check-code-coverage](https://img.shields.io/badge/code--coverage-29.96%25-red)
+# sh-application-server ![check-code-coverage](https://img.shields.io/badge/code--coverage-31.05%25-red)
 
 ## Installation steps
 
@@ -12,7 +12,7 @@
 - cd to `sh-application-server`
 - create a new file `.env` with the contents of `.env.sample`
 - fill in `.env` example values
-- run `docker compose --profile local up -d` to build and start the container.
+- run `docker compose --profile local up -d --force-recreate` to build and start the container.
 
 ## Test
 

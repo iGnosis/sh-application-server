@@ -36,6 +36,12 @@ import { TherapistController } from './controllers/events/therapist/therapist.co
 import { GameController } from './controllers/events/game/game.controller';
 import { PatientController } from './controllers/events/patient/patient.controller';
 import { SmsAuthController } from './controllers/sms-auth/sms-auth.controller';
+import { InviteOrganizationController } from './controllers/organization/invite/invite-organization.controller';
+import { CreateOrganizationController } from './controllers/organization/create/create-organization.controller';
+import { CreateOrganizationService } from './services/organization/create/create-organization.service';
+import { InviteOrganizationService } from './services/organization/invite/invite-organization.service';
+import { UploadOrganizationController } from './controllers/organization/upload/upload-organization.controller';
+import { UploadOrganizationService } from './services/organization/upload/upload-organization.service';
 
 const winstonDailyRotateTransport = new winstonDailyRotateFile({
   dirname: '../nestjs-app-logs',
@@ -107,6 +113,9 @@ const nestLikeFormatting = winston.format.combine(
     TherapistController,
     HelpAccessedController,
     SmsAuthController,
+    InviteOrganizationController,
+    CreateOrganizationController,
+    UploadOrganizationController,
   ],
   providers: [
     AppService,
@@ -127,6 +136,9 @@ const nestLikeFormatting = winston.format.combine(
     RewardsService,
     EventsService,
     Logger,
+    InviteOrganizationService,
+    CreateOrganizationService,
+    UploadOrganizationService,
   ],
 })
 export class AppModule {}

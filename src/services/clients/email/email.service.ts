@@ -2,7 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { SESClient } from '@aws-sdk/client-ses';
 import { SendEmailCommand } from '@aws-sdk/client-ses';
-import { Email } from 'src/types/email';
+import { Email } from 'src/types/global';
 
 @Injectable()
 export class EmailService {

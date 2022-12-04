@@ -3,10 +3,10 @@ import { ApiBearerAuth } from '@nestjs/swagger';
 import { AppService } from './app.service';
 import { Roles } from './common/decorators/roles.decorator';
 import { User } from './common/decorators/user.decorator';
-import { Role } from './common/enums/role.enum';
 import { AuthGuard } from './common/guards/auth.guard';
 import { RolesGuard } from './common/guards/roles.guard';
 import { TransformResponseInterceptor } from 'src/common/interceptors/transform-response.interceptor';
+import { UserRole } from 'src/common/enums/role.enum';
 
 @UseInterceptors(new TransformResponseInterceptor())
 @Controller()
@@ -18,7 +18,7 @@ export class AppController {
     return this.appService.ping();
   }
 
-  @Roles(Role.PATIENT)
+  @Roles(UserRole.PATIENT)
   @UseGuards(AuthGuard, RolesGuard)
   @ApiBearerAuth('access-token')
   @Get('auth-check/patient')
@@ -30,7 +30,7 @@ export class AppController {
     };
   }
 
-  @Roles(Role.BENCHMARK)
+  @Roles(UserRole.BENCHMARK)
   @UseGuards(AuthGuard, RolesGuard)
   @ApiBearerAuth('access-token')
   @HttpCode(200)
@@ -43,7 +43,7 @@ export class AppController {
     };
   }
 
-  @Roles(Role.THERAPIST)
+  @Roles(UserRole.THERAPIST)
   @UseGuards(AuthGuard, RolesGuard)
   @ApiBearerAuth('access-token')
   @HttpCode(200)

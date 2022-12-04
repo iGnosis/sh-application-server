@@ -1,17 +1,13 @@
 import { Body, Controller, HttpCode, Post } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { GqlService } from 'src/services/clients/gql/gql.service';
-import { PatientFeedback } from 'src/types/patient';
+import { PatientFeedback } from 'src/types/global';
 import { EventsService } from 'src/services/events/events.service';
 import { FeedbackReceivedEvent, NewPatientDto } from './patient.dto';
 
 @Controller('events/patient')
 export class PatientController {
-  constructor(
-    private eventsService: EventsService,
-    private configService: ConfigService,
-    private gqlService: GqlService,
-  ) {}
+  constructor(private eventsService: EventsService, private gqlService: GqlService) {}
 
   @HttpCode(200)
   @Post('new')

@@ -8,14 +8,14 @@ import {
 import { Reflector } from '@nestjs/core';
 import { Observable } from 'rxjs';
 import { ROLES_KEY } from '../decorators/roles.decorator';
-import { Role } from '../enums/role.enum';
+import { UserRole } from 'src/common/enums/role.enum';
 
 @Injectable()
 export class RolesGuard implements CanActivate {
   constructor(private reflector: Reflector) {}
 
   canActivate(context: ExecutionContext): boolean | Promise<boolean> | Observable<boolean> {
-    const requiredRoles = this.reflector.getAllAndOverride<Role[]>(ROLES_KEY, [
+    const requiredRoles = this.reflector.getAllAndOverride<UserRole[]>(ROLES_KEY, [
       context.getHandler(),
       context.getClass(),
     ]);
@@ -30,6 +30,8 @@ export class RolesGuard implements CanActivate {
     const hasuraCliams = user['https://hasura.io/jwt/claims'];
     const userRole = hasuraCliams['x-hasura-default-role'];
 
+    // console.log('requiredRoles: ', requiredRoles);
+    // console.log('userRole: ', userRole);
     if (requiredRoles.includes(userRole)) {
       return true;
     }

@@ -7,7 +7,7 @@ import * as fs from 'fs/promises';
 import { join } from 'path';
 import { Roles } from 'src/common/decorators/roles.decorator';
 import { User } from 'src/common/decorators/user.decorator';
-import { Role } from 'src/common/enums/role.enum';
+import { UserRole } from 'src/common/enums/role.enum';
 import { AuthGuard } from 'src/common/guards/auth.guard';
 import { RolesGuard } from 'src/common/guards/roles.guard';
 import { StatsService } from 'src/services/patient-stats/stats.service';
@@ -124,7 +124,7 @@ export class GameController {
   }
 
   // Call whenever a user lands on Patient Portal.
-  @Roles(Role.PATIENT, Role.BENCHMARK)
+  @Roles(UserRole.PATIENT, UserRole.BENCHMARK)
   @UseGuards(AuthGuard, RolesGuard)
   @ApiBearerAuth('access-token')
   @HttpCode(200)
@@ -139,7 +139,7 @@ export class GameController {
   // For pinpoint.
   // Called from activity-exp (since it was pain to manage user localtime server-side)
   // on completion of a game.
-  @Roles(Role.PATIENT, Role.BENCHMARK)
+  @Roles(UserRole.PATIENT, UserRole.BENCHMARK)
   @UseGuards(AuthGuard, RolesGuard)
   @ApiBearerAuth('access-token')
   @HttpCode(200)

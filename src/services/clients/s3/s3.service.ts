@@ -4,6 +4,7 @@ import {
   GetObjectCommand,
   PutObjectCommand,
   DeleteObjectCommand,
+  PutObjectCommandInput,
 } from '@aws-sdk/client-s3';
 import { ConfigService } from '@nestjs/config';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
@@ -30,14 +31,21 @@ export class S3Service {
   async putObjectSignedUrl(
     bucketName: string,
     completeFilePath: string,
+    contentType?: string,
     expiryInSec = 3600,
     StorageClass = 'STANDARD_IA',
   ) {
-    const command = new PutObjectCommand({
+    const commandInput: PutObjectCommandInput = {
       Bucket: bucketName,
       Key: completeFilePath,
       StorageClass,
-    });
+    };
+
+    if (contentType) {
+      commandInput.ContentType = contentType;
+    }
+
+    const command = new PutObjectCommand(commandInput);
 
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-ignore:next-line
