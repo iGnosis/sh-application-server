@@ -13,7 +13,7 @@ import {
 import { ApiBearerAuth } from '@nestjs/swagger';
 import { isEmail } from 'class-validator';
 import { Roles } from 'src/common/decorators/roles.decorator';
-import { OrgId } from 'src/common/decorators/user.decorator';
+import { User } from 'src/common/decorators/user.decorator';
 import { UserRole } from 'src/common/enums/role.enum';
 import { AuthGuard } from 'src/common/guards/auth.guard';
 import { RolesGuard } from 'src/common/guards/roles.guard';
@@ -48,7 +48,7 @@ export class InviteOrganizationController {
   @ApiBearerAuth('access-token')
   @Get('patient')
   async generatePatientInviteCode(
-    @OrgId() orgId: string,
+    @User('orgId') orgId: string,
     @Query('shouldSendEmail') shouldSendEmail?: boolean,
     @Query('email') email?: string,
   ) {
@@ -76,7 +76,7 @@ export class InviteOrganizationController {
   @Roles(UserRole.ORG_ADMIN)
   @Get('staff')
   async generateStaffInviteCode(
-    @OrgId() orgId: string,
+    @User('orgId') orgId: string,
     @Query('staffType') staffType: UserRole,
     @Query('shouldSendEmail') shouldSendEmail?: boolean,
     @Query('email') email?: string,

@@ -1,6 +1,10 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { Cron, CronExpression } from '@nestjs/schedule';
 import axios from 'axios';
+import * as fs from 'fs/promises';
+import { join } from 'path';
+
 @Injectable()
 export class CronService {
   constructor(private configService: ConfigService, private readonly logger: Logger) {
@@ -27,5 +31,25 @@ export class CronService {
       },
     });
     this.logger.debug('scheduleCron:response: ' + JSON.stringify(scheduleReq.data));
+  }
+
+  @Cron(CronExpression.EVERY_10_MINUTES)
+  async cleanUpRbacCache() {
+    const downloadsDir = join(process.cwd(), 'storage/hasura-metadata');
+    const dirContents = await fs.readdir(downloadsDir);
+
+    dirContents.forEach(async (file) => {
+      if (file.endsWith('.json')) {
+        const filePath = join(downloadsDir, file);
+        const stat = await fs.stat(filePath);
+
+        const thirtyMinsInMs = 30 * 60 * 1000;
+        const now = new Date().getTime();
+        const fileCreatedAt = new Date(stat.ctime).getTime() + thirtyMinsInMs;
+        if (now > fileCreatedAt) {
+          fs.unlink(filePath);
+        }
+      }
+    });
   }
 }

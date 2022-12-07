@@ -44,7 +44,7 @@ export class RewardsController {
     @Body('startDate') startDate: Date,
     @Body('endDate') endDate: Date,
     @Body('userTimezone') userTimezone: string,
-    @User() userId: string,
+    @User('id') userId: string,
   ) {
     try {
       startDate = new Date(startDate);
@@ -92,7 +92,7 @@ export class RewardsController {
 
   @HttpCode(200)
   @Post('viewed')
-  async markRewardAsViewed(@Body() body: MarkRewardAsViewedDto, @User() userId: string) {
+  async markRewardAsViewed(@Body() body: MarkRewardAsViewedDto, @User('id') userId: string) {
     const patientRewards = await this.rewardService.getRewards(userId);
     if (!patientRewards || !patientRewards.patient_by_pk || !patientRewards.patient_by_pk.rewards) {
       return {
@@ -116,7 +116,7 @@ export class RewardsController {
 
   @HttpCode(200)
   @Post('accessed')
-  async markRewardAsAccessed(@Body() body: MarkRewardAsAccessedDto, @User() userId: string) {
+  async markRewardAsAccessed(@Body() body: MarkRewardAsAccessedDto, @User('id') userId: string) {
     const { rewardTier } = body;
     const patientRewards = await this.rewardService.getRewards(userId);
     if (!patientRewards || !patientRewards.patient_by_pk || !patientRewards.patient_by_pk.rewards) {

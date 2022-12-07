@@ -15,7 +15,7 @@ export class HelpAccessedController {
   constructor(private eventsService: EventsService) {}
 
   @Post('soundhealth-faq')
-  async soundHealthFaqAccessed(@User() userId: string) {
+  async soundHealthFaqAccessed(@User('id') userId: string) {
     await this.eventsService.faqAccessed(userId);
     return {
       status: 'success',
@@ -24,7 +24,7 @@ export class HelpAccessedController {
   }
 
   @Post('free-resources')
-  async freeResourcesAccessed(@User() userId: string) {
+  async freeResourcesAccessed(@User('id') userId: string) {
     await this.eventsService.freeParkinsonResourceAccessed(userId);
     return {
       status: 'success',
@@ -33,7 +33,7 @@ export class HelpAccessedController {
   }
 
   @Post('free-reward-accessed')
-  async freeRewardAccessed(@User() userId: string) {
+  async freeRewardAccessed(@User('id') userId: string) {
     await this.eventsService.freeRewardAccessed(userId);
     return {
       status: 'success',

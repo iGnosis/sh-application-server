@@ -129,7 +129,7 @@ export class GameController {
   @ApiBearerAuth('access-token')
   @HttpCode(200)
   @Post('app-accessed')
-  async appAccessed(@User() userId: string) {
+  async appAccessed(@User('id') userId: string) {
     await this.eventsService.appAccessed(userId);
     return {
       status: 'success',
@@ -144,7 +144,7 @@ export class GameController {
   @ApiBearerAuth('access-token')
   @HttpCode(200)
   @Post('complete')
-  async gameComplete(@Body() body: GameCompletedPinpoint, @User() userId: string) {
+  async gameComplete(@Body() body: GameCompletedPinpoint, @User('id') userId: string) {
     const { userTimezone } = body;
 
     let { startDate, endDate } = body;

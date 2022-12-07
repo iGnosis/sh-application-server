@@ -42,6 +42,9 @@ import { CreateOrganizationService } from './services/organization/create/create
 import { InviteOrganizationService } from './services/organization/invite/invite-organization.service';
 import { UploadOrganizationController } from './controllers/organization/upload/upload-organization.controller';
 import { UploadOrganizationService } from './services/organization/upload/upload-organization.service';
+import { RbacController } from './controllers/rbac/rbac.controller';
+import { RbacService } from './services/rbac/rbac.service';
+import { ScheduleModule } from '@nestjs/schedule';
 
 const winstonDailyRotateTransport = new winstonDailyRotateFile({
   dirname: '../nestjs-app-logs',
@@ -87,6 +90,7 @@ const nestLikeFormatting = winston.format.combine(
     ConfigModule.forRoot({
       isGlobal: true,
     }),
+    ScheduleModule.forRoot(),
     WinstonModule.forRoot({
       level: 'debug',
       format: winston.format.json(),
@@ -116,6 +120,7 @@ const nestLikeFormatting = winston.format.combine(
     InviteOrganizationController,
     CreateOrganizationController,
     UploadOrganizationController,
+    RbacController,
   ],
   providers: [
     AppService,
@@ -139,6 +144,7 @@ const nestLikeFormatting = winston.format.combine(
     InviteOrganizationService,
     CreateOrganizationService,
     UploadOrganizationService,
+    RbacService,
   ],
 })
 export class AppModule {}

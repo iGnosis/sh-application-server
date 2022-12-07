@@ -22,7 +22,7 @@ export class AppController {
   @UseGuards(AuthGuard, RolesGuard)
   @ApiBearerAuth('access-token')
   @Get('auth-check/patient')
-  authCheckPatient(@User() userId: string) {
+  authCheckPatient(@User('id') userId: string) {
     return {
       status: 'success',
       role: 'patient',
@@ -35,7 +35,7 @@ export class AppController {
   @ApiBearerAuth('access-token')
   @HttpCode(200)
   @Get('auth-check/benchmark')
-  authCheckBenchmark(@User() userId: string) {
+  authCheckBenchmark(@User('id') userId: string) {
     return {
       status: 'success',
       role: 'benchmark',
@@ -48,7 +48,7 @@ export class AppController {
   @ApiBearerAuth('access-token')
   @HttpCode(200)
   @Get('auth-check/therapist')
-  authCheckTherapist(@User() userId: string) {
+  authCheckTherapist(@User('id') userId: string) {
     return {
       status: 'success',
       role: 'therapist',

@@ -20,7 +20,7 @@ export class StatsController {
     @Query('startDate') startDate: Date,
     @Query('endDate') endDate: Date,
     @Query('userTimezone') userTimezone: string,
-    @User() userId: string,
+    @User('id') userId: string,
   ) {
     // console.log('userId:', userId);
     // since endDate is exclusive, we add one day.

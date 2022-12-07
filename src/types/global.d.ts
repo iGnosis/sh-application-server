@@ -104,6 +104,15 @@ export class OrganizationConfiguration {
     family: string;
     url: string;
   };
+  uiRbac: {
+    [key: UserRole]: {
+      ui: {
+        top: any;
+        left: any;
+        route: any;
+      };
+    };
+  };
 }
 
 export class Organization {
