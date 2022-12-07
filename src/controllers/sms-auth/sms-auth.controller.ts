@@ -35,14 +35,17 @@ export class SmsAuthController {
     @Headers('x-pointmotion-user-type') userType: UserType,
     @Headers('x-organization-name') orgName: string,
   ) {
+    if (!orgName) {
+      throw new HttpException('Org name missing', HttpStatus.BAD_REQUEST);
+    }
+
     if (
-      !orgName ||
       !userType ||
       (userType !== UserType.PATIENT &&
         userType !== UserType.BENCHMARK &&
         userType !== UserType.STAFF)
     ) {
-      throw new HttpException('Invalid Request', HttpStatus.BAD_REQUEST);
+      throw new HttpException('Invalid userType', HttpStatus.BAD_REQUEST);
     }
 
     const { phoneCountryCode, phoneNumber } = body;
@@ -92,14 +95,17 @@ export class SmsAuthController {
     @Headers('x-pointmotion-user-type') userType: UserType,
     @Headers('x-organization-name') orgName: string,
   ) {
+    if (!orgName) {
+      throw new HttpException('Org name missing', HttpStatus.BAD_REQUEST);
+    }
+
     if (
-      !orgName ||
       !userType ||
       (userType !== UserType.PATIENT &&
         userType !== UserType.BENCHMARK &&
         userType !== UserType.STAFF)
     ) {
-      throw new HttpException('Invalid Request', HttpStatus.BAD_REQUEST);
+      throw new HttpException('Invalid userType', HttpStatus.BAD_REQUEST);
     }
 
     const { phoneCountryCode, phoneNumber } = body;
@@ -146,14 +152,17 @@ export class SmsAuthController {
     @Headers('x-pointmotion-user-type') userType: UserType,
     @Headers('x-organization-name') orgName: string,
   ) {
+    if (!orgName) {
+      throw new HttpException('Org name missing', HttpStatus.BAD_REQUEST);
+    }
+
     if (
-      !orgName ||
       !userType ||
       (userType !== UserType.PATIENT &&
-        userType !== UserType.STAFF &&
-        userType !== UserType.BENCHMARK)
+        userType !== UserType.BENCHMARK &&
+        userType !== UserType.STAFF)
     ) {
-      throw new HttpException('Invalid Request', HttpStatus.BAD_REQUEST);
+      throw new HttpException('Invalid userType', HttpStatus.BAD_REQUEST);
     }
 
     const { otp: recievedOtp, phoneCountryCode, phoneNumber } = body;
