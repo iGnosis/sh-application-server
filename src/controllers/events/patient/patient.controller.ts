@@ -1,5 +1,4 @@
 import { Body, Controller, HttpCode, Post } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
 import { GqlService } from 'src/services/clients/gql/gql.service';
 import { PatientFeedback } from 'src/types/global';
 import { EventsService } from 'src/services/events/events.service';

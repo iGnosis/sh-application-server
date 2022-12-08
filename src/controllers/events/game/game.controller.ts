@@ -124,10 +124,8 @@ export class GameController {
   }
 
   // Call whenever a user lands on Patient Portal.
-  @Roles(UserRole.PATIENT, UserRole.BENCHMARK)
-  @UseGuards(AuthGuard, RolesGuard)
-  @ApiBearerAuth('access-token')
   @HttpCode(200)
+  @ApiBearerAuth('access-token')
   @Post('app-accessed')
   async appAccessed(@User('id') userId: string) {
     await this.eventsService.appAccessed(userId);
@@ -139,10 +137,8 @@ export class GameController {
   // For pinpoint.
   // Called from activity-exp (since it was pain to manage user localtime server-side)
   // on completion of a game.
-  @Roles(UserRole.PATIENT, UserRole.BENCHMARK)
-  @UseGuards(AuthGuard, RolesGuard)
-  @ApiBearerAuth('access-token')
   @HttpCode(200)
+  @ApiBearerAuth('access-token')
   @Post('complete')
   async gameComplete(@Body() body: GameCompletedPinpoint, @User('id') userId: string) {
     const { userTimezone } = body;

@@ -45,6 +45,8 @@ import { UploadOrganizationService } from './services/organization/upload/upload
 import { RbacController } from './controllers/rbac/rbac.controller';
 import { RbacService } from './services/rbac/rbac.service';
 import { ScheduleModule } from '@nestjs/schedule';
+import { APP_GUARD } from '@nestjs/core';
+import { HasuraGuard } from './common/guards/hasura.guard';
 
 const winstonDailyRotateTransport = new winstonDailyRotateFile({
   dirname: '../nestjs-app-logs',
@@ -145,6 +147,10 @@ const nestLikeFormatting = winston.format.combine(
     CreateOrganizationService,
     UploadOrganizationService,
     RbacService,
+    {
+      provide: APP_GUARD,
+      useClass: HasuraGuard,
+    },
   ],
 })
 export class AppModule {}

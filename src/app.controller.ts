@@ -1,58 +1,13 @@
-import { Controller, Get, HttpCode, UseGuards, UseInterceptors } from '@nestjs/common';
-import { ApiBearerAuth } from '@nestjs/swagger';
+import { Controller, Get, UseInterceptors } from '@nestjs/common';
 import { AppService } from './app.service';
-import { Roles } from './common/decorators/roles.decorator';
-import { User } from './common/decorators/user.decorator';
-import { AuthGuard } from './common/guards/auth.guard';
-import { RolesGuard } from './common/guards/roles.guard';
 import { TransformResponseInterceptor } from 'src/common/interceptors/transform-response.interceptor';
-import { UserRole } from 'src/common/enums/role.enum';
-
 @UseInterceptors(new TransformResponseInterceptor())
 @Controller()
 export class AppController {
   constructor(private readonly appService: AppService) {}
-  @Get()
+  // used by Route53 to Heath Check.
+  @Get('')
   ping(): string {
-    // used by Route53 to Heath Check.
     return this.appService.ping();
-  }
-
-  @Roles(UserRole.PATIENT)
-  @UseGuards(AuthGuard, RolesGuard)
-  @ApiBearerAuth('access-token')
-  @Get('auth-check/patient')
-  authCheckPatient(@User('id') userId: string) {
-    return {
-      status: 'success',
-      role: 'patient',
-      userId,
-    };
-  }
-
-  @Roles(UserRole.BENCHMARK)
-  @UseGuards(AuthGuard, RolesGuard)
-  @ApiBearerAuth('access-token')
-  @HttpCode(200)
-  @Get('auth-check/benchmark')
-  authCheckBenchmark(@User('id') userId: string) {
-    return {
-      status: 'success',
-      role: 'benchmark',
-      userId,
-    };
-  }
-
-  @Roles(UserRole.THERAPIST)
-  @UseGuards(AuthGuard, RolesGuard)
-  @ApiBearerAuth('access-token')
-  @HttpCode(200)
-  @Get('auth-check/therapist')
-  authCheckTherapist(@User('id') userId: string) {
-    return {
-      status: 'success',
-      role: 'therapist',
-      userId,
-    };
   }
 }

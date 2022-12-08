@@ -5,14 +5,9 @@ import {
   HttpException,
   HttpStatus,
   Query,
-  UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
 import { ApiBearerAuth } from '@nestjs/swagger';
-import { Roles } from 'src/common/decorators/roles.decorator';
-import { UserRole } from 'src/common/enums/role.enum';
-import { AuthGuard } from 'src/common/guards/auth.guard';
-import { RolesGuard } from 'src/common/guards/roles.guard';
 import { ProviderChartsService } from 'src/services/provider-charts/provider-charts.service';
 import {
   ChartType,
@@ -26,8 +21,6 @@ import { StatsService } from 'src/services/patient-stats/stats.service';
 import { TransformResponseInterceptor } from 'src/common/interceptors/transform-response.interceptor';
 import { User } from 'src/common/decorators/user.decorator';
 
-@Roles(UserRole.THERAPIST)
-@UseGuards(AuthGuard, RolesGuard)
 @ApiBearerAuth('access-token')
 @Controller('provider-charts')
 @UseInterceptors(new TransformResponseInterceptor())

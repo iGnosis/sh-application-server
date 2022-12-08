@@ -1,18 +1,14 @@
-import { Controller, Get, UseGuards, UseInterceptors } from '@nestjs/common';
+import { Controller, Get, UseInterceptors } from '@nestjs/common';
 import { ApiBearerAuth } from '@nestjs/swagger';
 import * as fs from 'fs/promises';
 import { join } from 'path';
-import { Roles } from 'src/common/decorators/roles.decorator';
 import { User } from 'src/common/decorators/user.decorator';
 import { UserRole } from 'src/common/enums/role.enum';
-import { AuthGuard } from 'src/common/guards/auth.guard';
-import { RolesGuard } from 'src/common/guards/roles.guard';
 import { TransformResponseInterceptor } from 'src/common/interceptors/transform-response.interceptor';
 import { UploadOrganizationService } from 'src/services/organization/upload/upload-organization.service';
 import { RbacService } from 'src/services/rbac/rbac.service';
 
 @Controller('rbac')
-@UseGuards(AuthGuard, RolesGuard)
 @ApiBearerAuth('access-token')
 @UseInterceptors(new TransformResponseInterceptor())
 export class RbacController {
@@ -21,16 +17,14 @@ export class RbacController {
     private uploadOrganizationService: UploadOrganizationService,
   ) {}
 
-  @Roles(UserRole.ORG_ADMIN, UserRole.THERAPIST, UserRole.PATIENT, UserRole.SH_ADMIN)
   @Get()
   async exportRbacPermissions(@User('role') userRole: UserRole, @User('orgId') orgId: string) {
     const downloadsDir = join(process.cwd(), 'storage/hasura-metadata');
-    const fileName = `${userRole}.json`;
-    const filePath = join(downloadsDir, fileName);
+    const userRoleRbacFilePath = join(downloadsDir, `${userRole}.json`);
 
     const dirContents = await fs.readdir(downloadsDir);
-    if (dirContents.includes(fileName)) {
-      const rawData = await fs.readFile(filePath, { encoding: 'utf-8' });
+    if (dirContents.includes(userRoleRbacFilePath)) {
+      const rawData = await fs.readFile(userRoleRbacFilePath, { encoding: 'utf-8' });
       return JSON.parse(rawData);
     }
 
@@ -48,7 +42,8 @@ export class RbacController {
       uiRbac,
     };
 
-    await fs.writeFile(filePath, JSON.stringify(permissions), { encoding: 'utf-8' });
+    await fs.writeFile(userRoleRbacFilePath, JSON.stringify(permissions), { encoding: 'utf-8' });
+
     return permissions;
   }
 }

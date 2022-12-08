@@ -1,17 +1,5 @@
-import {
-  Body,
-  Controller,
-  Get,
-  Logger,
-  Post,
-  Query,
-  Res,
-  UseGuards,
-  UseInterceptors,
-} from '@nestjs/common';
+import { Body, Controller, Get, Logger, Post, Query, Res, UseInterceptors } from '@nestjs/common';
 import { ApiBearerAuth } from '@nestjs/swagger';
-import { AuthGuard } from 'src/common/guards/auth.guard';
-import { RolesGuard } from 'src/common/guards/roles.guard';
 import { GameBenchmarkingService } from 'src/services/game-benchmarking/game-benchmarking.service';
 import { Response } from 'express';
 import { S3Service } from 'src/services/clients/s3/s3.service';
@@ -20,11 +8,7 @@ import * as fs from 'fs';
 import { TranscodeVideoAPI } from './game-benchmarking.dto';
 import { VideoTranscoderService } from 'src/services/clients/video-transcoder/video-transcoder.service';
 import { CreateJobCommand } from '@aws-sdk/client-elastic-transcoder';
-import { Roles } from 'src/common/decorators/roles.decorator';
-import { UserRole } from 'src/common/enums/role.enum';
 
-@Roles(UserRole.BENCHMARK)
-@UseGuards(AuthGuard, RolesGuard)
 @ApiBearerAuth('access-token')
 @Controller('game-benchmarking')
 @UseInterceptors(new TransformResponseInterceptor())

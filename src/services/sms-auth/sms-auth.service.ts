@@ -282,14 +282,14 @@ export class SmsAuthService {
     return jwtPayload;
   }
 
-  verifyToken(token: string, jwtSecret?: string) {
+  verifyToken(token: string, jwtSecret?: string): JwtPayload {
     if (!jwtSecret) {
       jwtSecret = this.configService.get('JWT_SECRET');
     }
     const key = JSON.parse(jwtSecret);
     try {
       const decodedToken = jwt.verify(token, key.key);
-      return decodedToken;
+      return decodedToken as JwtPayload;
     } catch (error) {
       throw new HttpException('Invalid Token', HttpStatus.FORBIDDEN);
     }
