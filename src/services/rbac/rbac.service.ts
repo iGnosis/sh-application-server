@@ -25,28 +25,45 @@ export class RbacService {
 
   filterHasuraMetadata(metadata: any, userRole: UserRole) {
     metadata.sources[0].tables.forEach((table, index: number) => {
+      table.table = table.table.name;
+
       if (table.select_permissions) {
         table.select_permissions = table.select_permissions.filter(
           (table) => table.role === userRole,
         );
+        table.select_permissions = table.select_permissions
+          .map((perm) => perm.permission.columns)
+          .flat();
         if (table.select_permissions.length === 0) delete table.select_permissions;
       }
+
       if (table.update_permissions) {
         table.update_permissions = table.update_permissions.filter(
           (table) => table.role === userRole,
         );
+        table.update_permissions = table.update_permissions
+          .map((perm) => perm.permission.columns)
+          .flat();
         if (table.update_permissions.length === 0) delete table.update_permissions;
       }
+
       if (table.insert_permissions) {
         table.insert_permissions = table.insert_permissions.filter(
           (table) => table.role === userRole,
         );
+        table.insert_permissions = table.insert_permissions
+          .map((perm) => perm.permission.columns)
+          .flat();
         if (table.insert_permissions.length === 0) delete table.insert_permissions;
       }
+
       if (table.delete_permissions) {
         table.delete_permissions = table.delete_permissions.filter(
-          (table) => table.role === 'patient',
+          (table) => table.role === userRole,
         );
+        table.delete_permissions = table.delete_permissions
+          .map((perm) => perm.permission.columns)
+          .flat();
         if (table.delete_permissions.length === 0) delete table.delete_permissions;
       }
 
