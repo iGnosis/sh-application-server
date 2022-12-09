@@ -14,23 +14,33 @@ import { isEmail } from 'class-validator';
 import { User } from 'src/common/decorators/user.decorator';
 import { UserRole } from 'src/common/enums/role.enum';
 import { TransformResponseInterceptor } from 'src/common/interceptors/transform-response.interceptor';
+import { CreateOrganizationService } from 'src/services/organization/create/create-organization.service';
 import { InviteOrganizationService } from 'src/services/organization/invite/invite-organization.service';
+import { UploadOrganizationService } from 'src/services/organization/upload/upload-organization.service';
 import { EmailInviteBody } from './invite-organization.dto';
 
 @ApiBearerAuth('access-token')
 @Controller('invite')
 @UseInterceptors(new TransformResponseInterceptor())
 export class InviteOrganizationController {
-  constructor(private inviteOrganizationService: InviteOrganizationService) {}
+  constructor(
+    private inviteOrganizationService: InviteOrganizationService,
+    private createOrganizationService: CreateOrganizationService,
+    private uploadOrganizationService: UploadOrganizationService,
+  ) {}
 
   @Post('organization/email')
   @HttpCode(200)
   async sendEmailInvite(@Body() body: EmailInviteBody) {
-    // const inviteCode = await this.inviteOrganizationService.createOrganizationInviteCode();
+    const { organizationId } = await this.createOrganizationService.verifyOrgInviteCode(
+      body.inviteCode,
+    );
+    const { organizationDomain } = await this.uploadOrganizationService.getOrganization(
+      organizationId,
+    );
     await this.inviteOrganizationService.sendEmailInvite(
       body.email,
-      body.inviteCode,
-      'https://org.pointmotion.us',
+      `https://${organizationDomain}?inviteCode=${body.inviteCode}`,
     );
     return {
       message: 'success',
@@ -51,11 +61,11 @@ export class InviteOrganizationController {
       UserRole.PATIENT,
     );
 
+    const { organizationDomain } = await this.uploadOrganizationService.getOrganization(orgId);
     if (shouldSendEmail && email && isEmail(email)) {
       this.inviteOrganizationService.sendEmailInvite(
         email,
-        inviteCode,
-        'https://org.pointmotion.us/invite/patient',
+        `https://${organizationDomain}/invite/patient?inviteCode=${inviteCode}`,
       );
     }
 
@@ -82,11 +92,11 @@ export class InviteOrganizationController {
       staffType,
     );
 
+    const { organizationDomain } = await this.uploadOrganizationService.getOrganization(orgId);
     if (shouldSendEmail && email && isEmail(email)) {
       await this.inviteOrganizationService.sendEmailInvite(
         email,
-        inviteCode,
-        'https://org.pointmotion.us/invite/staff',
+        `https://${organizationDomain}/invite/staff?inviteCode=${inviteCode}`,
       );
     }
 
