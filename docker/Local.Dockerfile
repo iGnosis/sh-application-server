@@ -9,8 +9,7 @@ ENV PATH=/usr/src/sh-application-server/node_modules/.bin:$PATH
 WORKDIR /usr/src/sh-application-server/local
 COPY . .
 
-RUN mkdir /usr/src/sh-application-server/nestjs-app-logs \
-    && chown -R node:node /usr/src/sh-application-server
+RUN mkdir /usr/src/sh-application-server/nestjs-app-logs 
 
-USER node
+USER root
 CMD ["npm", "run", "start:debug"]

@@ -47,6 +47,9 @@ import { RbacService } from './services/rbac/rbac.service';
 import { ScheduleModule } from '@nestjs/schedule';
 import { APP_GUARD } from '@nestjs/core';
 import { HasuraGuard } from './common/guards/hasura.guard';
+import { StripeService } from './services/stripe/stripe.service';
+import { PatientPaymentController } from './controllers/payment/patient-payment/patient-payment.controller';
+import { OrganizationPaymentController } from './controllers/payment/organization-payment/organization-payment.controller';
 
 const winstonDailyRotateTransport = new winstonDailyRotateFile({
   dirname: '../nestjs-app-logs',
@@ -123,6 +126,8 @@ const nestLikeFormatting = winston.format.combine(
     CreateOrganizationController,
     UploadOrganizationController,
     RbacController,
+    PatientPaymentController,
+    OrganizationPaymentController,
   ],
   providers: [
     AppService,
@@ -147,6 +152,7 @@ const nestLikeFormatting = winston.format.combine(
     CreateOrganizationService,
     UploadOrganizationService,
     RbacService,
+    StripeService,
     {
       provide: APP_GUARD,
       useClass: HasuraGuard,
