@@ -27,45 +27,32 @@ export class RbacService {
     metadata.sources[0].tables.forEach((table, index: number) => {
       table.table = table.table.name;
 
-      if (table.select_permissions) {
-        table.select_permissions = table.select_permissions.filter(
-          (table) => table.role === userRole,
-        );
-        table.select_permissions = table.select_permissions
-          .map((perm) => perm.permission.columns)
-          .flat();
-        if (table.select_permissions.length === 0) delete table.select_permissions;
-      }
+      const permissionTypes = [
+        'select_permissions',
+        'insert_permissions',
+        'update_permissions',
+        'delete_permissions',
+      ];
 
-      if (table.update_permissions) {
-        table.update_permissions = table.update_permissions.filter(
-          (table) => table.role === userRole,
-        );
-        table.update_permissions = table.update_permissions
-          .map((perm) => perm.permission.columns)
-          .flat();
-        if (table.update_permissions.length === 0) delete table.update_permissions;
-      }
+      permissionTypes.forEach((permissionType) => {
+        if (Object.keys(table).includes(permissionType)) {
+          table[permissionType] = table[permissionType].filter((table) => table.role === userRole);
 
-      if (table.insert_permissions) {
-        table.insert_permissions = table.insert_permissions.filter(
-          (table) => table.role === userRole,
-        );
-        table.insert_permissions = table.insert_permissions
-          .map((perm) => perm.permission.columns)
-          .flat();
-        if (table.insert_permissions.length === 0) delete table.insert_permissions;
-      }
+          // delete permissions are always row-level
+          if (permissionType === 'delete_permissions') {
+            // eg. { delete_permissions: true }
+            table[permissionType] = true;
+          } else {
+            // eg. { select_permissions: ["column1", "column2", ...] }
+            table[permissionType] = table[permissionType]
+              .map((perm) => perm.permission.columns)
+              .flat();
+          }
 
-      if (table.delete_permissions) {
-        table.delete_permissions = table.delete_permissions.filter(
-          (table) => table.role === userRole,
-        );
-        table.delete_permissions = table.delete_permissions
-          .map((perm) => perm.permission.columns)
-          .flat();
-        if (table.delete_permissions.length === 0) delete table.delete_permissions;
-      }
+          // when no columns present for a permission type, delete that type for a clean response
+          if (table[permissionType].length === 0) delete table[permissionType];
+        }
+      });
 
       // info not necessary
       delete table.table.schema;
