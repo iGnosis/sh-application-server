@@ -5,7 +5,7 @@
   "description": "Nest TypeScript starter repository",
   "license": "MIT",
   "scripts": {
-    "build:local": "docker compose --profile local up -d --force-recreate",
+    "build:local": "docker compose --profile local up -d --build --force-recreate",
     "build-image:prod": "docker build -t sh_nest_server_prod . -f docker/Prod.Dockerfile",
     "start-image:prod": "docker run -d --env-file=.env -p 9000:9000 --add-host host.docker.internal:host-gateway sh_nest_server_prod",
     "start:dev": "nest build --webpack --webpackPath webpack-hmr.config.js --watch",
