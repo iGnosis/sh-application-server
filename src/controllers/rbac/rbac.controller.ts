@@ -33,8 +33,8 @@ export class RbacController {
 
     const orgConfig = (await this.uploadOrganizationService.getOrganization(orgId)).configuration;
     let uiRbac: any = {};
-    if (orgConfig && orgConfig.uiRbac && Object.keys(orgConfig.uiRbac).includes(userRole)) {
-      uiRbac = orgConfig.uiRbac[userRole];
+    if (orgConfig && orgConfig.uiRbac) {
+      uiRbac = orgConfig.uiRbac;
     }
 
     const permissions = {
