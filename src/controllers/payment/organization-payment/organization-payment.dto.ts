@@ -6,7 +6,7 @@ export class SubscriptionPlanBody {
     description: 'Subscription Fee for the organization (in dollars)',
   })
   @IsNumber({
-    maxDecimalPlaces: 0,
+    maxDecimalPlaces: 2,
   })
   @IsNotEmpty()
   subscriptionFee: number;
