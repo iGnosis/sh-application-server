@@ -3,7 +3,7 @@ import { IsNotEmpty, IsNumber } from 'class-validator';
 
 export class SubscriptionPlanBody {
   @ApiProperty({
-    description: 'Subscription Fee for the organization (in cents)',
+    description: 'Subscription Fee for the organization (in dollars)',
   })
   @IsNumber({
     maxDecimalPlaces: 0,

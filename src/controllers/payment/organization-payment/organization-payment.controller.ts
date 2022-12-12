@@ -15,12 +15,16 @@ export class OrganizationPaymentController {
   @Post()
   async createSubscriptionPlan(@Body() body: SubscriptionPlanBody, @User('orgId') orgId: string) {
     const { subscriptionFee, trialPeriod } = body;
+    const subscriptionFeeInCents = subscriptionFee * 100;
 
-    const priceObj = await this.stripeService.createProductWithPricing(orgId, subscriptionFee);
+    const priceObj = await this.stripeService.createProductWithPricing(
+      orgId,
+      subscriptionFeeInCents,
+    );
 
     const response = await this.subscriptionPlanService.createSubscriptionPlan(
       orgId,
-      subscriptionFee,
+      subscriptionFeeInCents,
       trialPeriod,
       priceObj.product,
       priceObj.id,
@@ -37,13 +41,15 @@ export class OrganizationPaymentController {
   async updateSubscriptionPlan(@Body() body: SubscriptionPlanBody, @User('orgId') orgId: string) {
     const { subscriptionFee, trialPeriod } = body;
 
+    const subscriptionFeeInCents = subscriptionFee * 100;
+
     const response = await this.subscriptionPlanService.getSubscriptionPlan();
 
-    await this.stripeService.updatePrice(response.priceId, subscriptionFee);
+    await this.stripeService.updatePrice(response.priceId, subscriptionFeeInCents);
 
     const updateResponse = await this.subscriptionPlanService.updateSubscriptionPlan(
       orgId,
-      subscriptionFee,
+      subscriptionFeeInCents,
       trialPeriod,
     );
 
