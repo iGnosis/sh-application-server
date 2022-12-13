@@ -182,3 +182,9 @@ export enum OrganizationTypeEnum {
   HOSPITAL = 'hospital',
   PROVIDER = 'provider',
 }
+
+export interface CardDetailsDTO {
+  exp_month: number;
+  exp_year: number;
+  number: string;
+}
