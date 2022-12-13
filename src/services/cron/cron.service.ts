@@ -65,9 +65,14 @@ export class CronService {
     const hasuraMetadata = await this.rbacService.exportHasuraMetadata();
 
     const actionsRbac = hasuraMetadata.actions.map((hasuraAction) => {
+      let fullUrl = `/${hasuraAction.definition.handler.split('/').splice(1).join('/')}`;
+      if (fullUrl.endsWith('/')) {
+        // remove trailing `/`
+        fullUrl = fullUrl.slice(0, fullUrl.length - 1);
+      }
       return {
         name: hasuraAction.name,
-        fullUrl: `/${hasuraAction.definition.handler.split('/').splice(1).join('/')}`,
+        fullUrl,
         roles: hasuraAction.permissions ? hasuraAction.permissions.map((roles) => roles.role) : [],
       };
     });
@@ -76,9 +81,14 @@ export class CronService {
       if (!table.event_triggers) return [];
 
       return table.event_triggers.map((eventTrigger) => {
+        let fullUrl = `/${eventTrigger.webhook.split('/').splice(1).join('/')}`;
+        if (fullUrl.endsWith('/')) {
+          // remove trailing `/`
+          fullUrl = fullUrl.slice(0, fullUrl.length - 1);
+        }
         return {
           name: eventTrigger.name,
-          fullUrl: `/${eventTrigger.webhook.split('/').splice(1).join('/')}`,
+          fullUrl,
         };
       });
     });
