@@ -97,7 +97,7 @@ export class StatsService {
       WHERE
           game.patient = $1 AND
           game."organizationId" = $6 AND
-          aggregate_analytics."key" = 'avgAchievementRatio'
+          aggregate_analytics."key" = 'avgAchievementRatio' AND
           aggregate_analytics."createdAt" >= $2 AND
           aggregate_analytics."createdAt" < $3
       GROUP BY
