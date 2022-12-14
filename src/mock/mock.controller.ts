@@ -20,10 +20,8 @@ export class MockController {
 
   @Get('auth/staff')
   async createTestJwt(@Query() body: CreateTestJwtBody) {
-    if (
-      this.configService.get('ENV_NAME') !== 'local' &&
-      this.configService.get('ENV_NAME') !== 'development'
-    ) {
+    const allowedEnvs = ['local', 'development'];
+    if (!allowedEnvs.includes(this.configService.get('ENV_NAME'))) {
       throw new HttpException('Operation Not Allowed', HttpStatus.FORBIDDEN);
     }
 
