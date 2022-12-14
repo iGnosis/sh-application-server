@@ -1,4 +1,4 @@
-import { Body, Controller, Get, HttpException, HttpStatus, Post } from '@nestjs/common';
+import { Body, Controller, HttpException, HttpStatus, Post } from '@nestjs/common';
 import { ApiBearerAuth } from '@nestjs/swagger';
 import { User } from 'src/common/decorators/user.decorator';
 import { GqlService } from 'src/services/clients/gql/gql.service';
@@ -36,6 +36,24 @@ export class PatientPaymentController {
 
     return {
       customerId: customer.id,
+    };
+  }
+
+  @ApiBearerAuth('access-token')
+  @Post('create-setup-intent')
+  async createSetupIntent(@User('id') userId: string): Promise<{ clientSecret: string }> {
+    const { customerId } = await this.getPatientDetails(userId);
+    if (!customerId) {
+      throw new HttpException('CustomerId Not Found', HttpStatus.BAD_REQUEST);
+    }
+
+    const { client_secret } = await this.stripeService.stripeClient.setupIntents.create({
+      customer: customerId,
+      payment_method_types: ['card'],
+    });
+
+    return {
+      clientSecret: client_secret,
     };
   }
 
