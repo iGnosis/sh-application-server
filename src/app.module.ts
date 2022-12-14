@@ -51,6 +51,7 @@ import { StripeService } from './services/stripe/stripe.service';
 import { PatientPaymentController } from './controllers/payment/patient-payment/patient-payment.controller';
 import { OrganizationPaymentController } from './controllers/payment/organization-payment/organization-payment.controller';
 import { SubscriptionPlanService } from './services/subscription-plan/subscription-plan.service';
+import { MockController } from './mock/mock.controller';
 
 const winstonDailyRotateTransport = new winstonDailyRotateFile({
   dirname: '../nestjs-app-logs',
@@ -129,6 +130,7 @@ const nestLikeFormatting = winston.format.combine(
     RbacController,
     PatientPaymentController,
     OrganizationPaymentController,
+    MockController,
   ],
   providers: [
     AppService,
