@@ -144,6 +144,19 @@ export class Staff {
   phoneNumber: string;
 }
 
+export class ShAdmin {
+  id: string;
+  createdAt: Date;
+  updatedAt: Date;
+  firstName: string;
+  lastName: string;
+  email: string;
+  phoneCountryCode: string;
+  phoneNumber: string;
+  type?: string;
+  organizationId?: string;
+}
+
 export class Patient {
   id?: string;
   organizationId: string;

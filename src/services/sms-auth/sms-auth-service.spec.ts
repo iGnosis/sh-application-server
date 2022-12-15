@@ -1,7 +1,7 @@
 import { Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Test, TestingModule } from '@nestjs/testing';
-import { UserType } from 'src/common/enums/role.enum';
+import { LoginUserType } from 'src/common/enums/role.enum';
 import { GqlService } from 'src/services/clients/gql/gql.service';
 import { SmsService } from 'src/services/clients/sms/sms.service';
 import { Staff, Patient } from 'src/types/global';
@@ -59,7 +59,7 @@ describe('SmsAuthService', () => {
   // TODO: Look into parameterizing tests.
   it('should generate a valid patient JWT token', () => {
     // given
-    const userType = UserType.PATIENT;
+    const userType = LoginUserType.PATIENT;
     const userObj = {
       id: 'patient-abc',
     };
@@ -90,7 +90,7 @@ describe('SmsAuthService', () => {
 
   it('should generate a valid therapist JWT token', () => {
     // given
-    const userType = UserType.STAFF;
+    const userType = LoginUserType.STAFF;
     const userObj = {
       id: 'some-uuid-id',
       type: 'therapist',
@@ -122,7 +122,7 @@ describe('SmsAuthService', () => {
 
   it('should generate a valid benchmark JWT token', () => {
     // given
-    const userType = UserType.BENCHMARK;
+    const userType = LoginUserType.BENCHMARK;
     const userObj = {
       id: 'benchmark-abc',
     };

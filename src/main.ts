@@ -23,7 +23,7 @@ async function bootstrap() {
   app.useLogger(loggerInstance);
   app.useGlobalFilters(new HttpExceptionFilter(loggerInstance));
 
-  if (process.env.NODE_ENV === 'development' || process.env.NODE_ENV === 'local') {
+  if (process.env.ENV_NAME === 'development' || process.env.ENV_NAME === 'local') {
     logger.log('Enabling Swagger APIs UI');
     const config = new DocumentBuilder()
       .setTitle('Point Motion API')

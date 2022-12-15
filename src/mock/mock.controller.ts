@@ -10,7 +10,7 @@ import {
 import { ConfigService } from '@nestjs/config';
 import { TransformResponseInterceptor } from 'src/common/interceptors/transform-response.interceptor';
 import { SmsAuthService } from 'src/services/sms-auth/sms-auth.service';
-import { UserRole, UserType } from 'src/common/enums/role.enum';
+import { UserRole, LoginUserType } from 'src/common/enums/role.enum';
 import { CreateTestJwtBody } from './mock-controller.dto';
 
 @Controller('mock')
@@ -55,7 +55,7 @@ export class MockController {
 
     const { phoneCountryCode, phoneNumber, orgName } = mockStaffRoles[body.userRole];
     const user = await this.smsAuthService.fetchStaff(phoneCountryCode, phoneNumber, orgName);
-    const jwt = this.smsAuthService.generateJwtToken('staff' as UserType, user);
+    const jwt = this.smsAuthService.generateJwtToken('staff' as LoginUserType, user);
     return { jwt };
   }
 }

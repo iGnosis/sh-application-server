@@ -4,11 +4,11 @@ import { randomInt } from 'crypto';
 import { GqlService } from 'src/services/clients/gql/gql.service';
 import * as jwt from 'jsonwebtoken';
 import { SmsService } from 'src/services/clients/sms/sms.service';
-import { Staff, Patient } from 'src/types/global';
+import { Staff, Patient, ShAdmin } from 'src/types/global';
 import { EmailService } from '../clients/email/email.service';
 import { Email, Auth, JwtPayload } from 'src/types/global';
 import { isArray } from 'lodash';
-import { UserType } from 'src/common/enums/role.enum';
+import { LoginUserType } from 'src/common/enums/role.enum';
 
 @Injectable()
 export class SmsAuthService {
@@ -95,6 +95,27 @@ export class SmsAuthService {
     return resp.patient[0];
   }
 
+  async fetchShAdmin(phoneCountryCode: string, phoneNumber: string): Promise<ShAdmin> {
+    const query = `query FetchShAdmin($phoneCountryCode: String!, $phoneNumber: String!) {
+      sh_admin(where: {phoneCountryCode: {_eq: $phoneCountryCode}, phoneNumber: {_eq: $phoneNumber}}) {
+        id
+        createdAt
+        updatedAt
+        firstName
+        lastName
+        email
+      }
+    }`;
+    const resp = await this.gqlService.client.request(query, {
+      phoneCountryCode,
+      phoneNumber,
+    });
+    if (!resp || !resp.sh_admin || !isArray(resp.sh_admin) || !resp.sh_admin.length) {
+      throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
+    }
+    return resp.sh_admin[0];
+  }
+
   async fetchStaff(phoneCountryCode: string, phoneNumber: string, orgName: string): Promise<Staff> {
     const query = `query FetchStaff($phoneCountryCode: String!, $phoneNumber: String!, $orgName: String!) {
       staff(where: {phoneCountryCode: {_eq: $phoneCountryCode}, phoneNumber: {_eq: $phoneNumber}, organization: {name: {_eq: $orgName}}}) {
@@ -149,12 +170,28 @@ export class SmsAuthService {
     return resp.auth[0];
   }
 
-  async fetchLatestOtp(userType: UserType, userId: string) {
+  private async fetchShAdminLatestOtp(userId: string): Promise<Auth> {
+    const query = `query GetLatestPatientOtp($shAdmin: uuid!) {
+      auth(where: {shAdmin: {_eq: $shAdmin}}, limit: 1, order_by: {createdAt: desc}) {
+        id
+        createdAt
+        expiryAt
+        otp
+        shAdmin
+      }
+    }`;
+    const resp = await this.gqlService.client.request(query, { shAdmin: userId });
+    return resp.auth[0];
+  }
+
+  async fetchLatestOtp(userType: LoginUserType, userId: string) {
     let auth: Auth;
-    if (userType === UserType.PATIENT || userType === UserType.BENCHMARK) {
+    if (userType === LoginUserType.PATIENT || userType === LoginUserType.BENCHMARK) {
       auth = await this.fetchPatientLatestOtp(userId);
-    } else if (userType === UserType.STAFF) {
+    } else if (userType === LoginUserType.STAFF) {
       auth = await this.fetchStaffLatestOtp(userId);
+    } else if (userType === LoginUserType.SH_ADMIN) {
+      auth = await this.fetchShAdminLatestOtp(userId);
     }
     return auth;
   }
@@ -206,9 +243,9 @@ export class SmsAuthService {
     }
   }
 
-  async insertOtp(userType: UserType, userId: string, otp: number) {
-    const query = `mutation InsertOtp($patient: uuid = null, $staff: uuid = null, $otp: Int!, $expiryAt: timestamptz!) {
-      insert_auth(objects: {patient: $patient, staff: $staff, otp: $otp, expiryAt: $expiryAt}) {
+  async insertOtp(userType: LoginUserType, userId: string, otp: number) {
+    const query = `mutation InsertOtp($patient: uuid = null, $staff: uuid = null, $shAdmin: uuid = null, $otp: Int!, $expiryAt: timestamptz!) {
+      insert_auth(objects: {patient: $patient, staff: $staff, otp: $otp, expiryAt: $expiryAt, shAdmin: $shAdmin}) {
         affected_rows
       }
     }`;
@@ -219,8 +256,12 @@ export class SmsAuthService {
 
     try {
       await this.gqlService.client.request(query, {
-        patient: userType === UserType.PATIENT || userType === UserType.BENCHMARK ? userId : null,
-        staff: userType === UserType.STAFF ? userId : null,
+        patient:
+          userType === LoginUserType.PATIENT || userType === LoginUserType.BENCHMARK
+            ? userId
+            : null,
+        staff: userType === LoginUserType.STAFF ? userId : null,
+        shAdmin: userType === LoginUserType.SH_ADMIN ? userId : null,
         otp,
         expiryAt,
       });
@@ -230,7 +271,7 @@ export class SmsAuthService {
     }
   }
 
-  generateJwtToken(userType: UserType, user: Patient | Staff, jwtSecret?: string) {
+  generateJwtToken(userType: LoginUserType, user: Patient | Staff | ShAdmin, jwtSecret?: string) {
     if (!jwtSecret) {
       jwtSecret = this.configService.get('JWT_SECRET');
     }
@@ -247,12 +288,14 @@ export class SmsAuthService {
     const exp = iat + expOffset;
 
     const allowedRole =
-      userType === UserType.PATIENT
-        ? UserType.PATIENT
-        : userType === UserType.BENCHMARK
-        ? UserType.BENCHMARK
-        : userType === UserType.STAFF && user.type
+      userType === LoginUserType.PATIENT
+        ? LoginUserType.PATIENT
+        : userType === LoginUserType.BENCHMARK
+        ? LoginUserType.BENCHMARK
+        : userType === LoginUserType.STAFF && user.type
         ? user.type
+        : userType === LoginUserType.SH_ADMIN
+        ? LoginUserType.SH_ADMIN
         : null;
 
     let payload: JwtPayload = {
@@ -271,10 +314,17 @@ export class SmsAuthService {
     return jwt.sign(payload, key.key);
   }
 
-  addCustomJwtId(userType: UserType, user: Patient | Staff, jwtPayload: JwtPayload): JwtPayload {
+  addCustomJwtId(
+    userType: LoginUserType,
+    user: Patient | Staff | ShAdmin,
+    jwtPayload: JwtPayload,
+  ): JwtPayload {
     switch (userType) {
-      case UserType.PATIENT:
-      case UserType.STAFF:
+      case LoginUserType.SH_ADMIN:
+        break;
+
+      case LoginUserType.PATIENT:
+      case LoginUserType.STAFF:
         jwtPayload['https://hasura.io/jwt/claims']['x-hasura-organization-id'] =
           user.organizationId;
         break;

@@ -9,8 +9,9 @@ export enum UserRole {
   GUEST = 'guest',
 }
 
-export enum UserType {
+export enum LoginUserType {
   PATIENT = 'patient',
   BENCHMARK = 'benchmark',
   STAFF = 'staff',
+  SH_ADMIN = 'sh_admin',
 }
