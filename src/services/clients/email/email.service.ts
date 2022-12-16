@@ -1,6 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { SESClient } from '@aws-sdk/client-ses';
+import { SendEmailCommandInput, SESClient } from '@aws-sdk/client-ses';
 import { SendEmailCommand } from '@aws-sdk/client-ses';
 import { Email } from 'src/types/global';
 
@@ -17,7 +17,7 @@ export class EmailService {
   async send(email: Email) {
     const from = email.from || 'no-reply@pointmotion.us';
 
-    const params = {
+    const params: SendEmailCommandInput = {
       Destination: {
         ToAddresses: email.to,
       },
@@ -38,6 +38,7 @@ export class EmailService {
         },
       },
       Source: from,
+      ConfigurationSetName: 'tls_only',
     };
 
     if (email.replyTo) {
