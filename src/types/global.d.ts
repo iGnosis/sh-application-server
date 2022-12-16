@@ -201,3 +201,12 @@ export interface CardDetailsDTO {
   exp_year: number;
   number: string;
 }
+
+type SubscriptionStatus =
+  | 'active'
+  | 'canceled'
+  | 'archived'
+  | 'blocked'
+  | 'trial_period'
+  | 'trial_expired'
+  | 'payment_pending';

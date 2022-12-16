@@ -52,6 +52,7 @@ import { PatientPaymentController } from './controllers/payment/patient-payment/
 import { OrganizationPaymentController } from './controllers/payment/organization-payment/organization-payment.controller';
 import { SubscriptionPlanService } from './services/subscription-plan/subscription-plan.service';
 import { MockController } from './mock/mock.controller';
+import { SubscriptionService } from './services/subscription/subscription.service';
 
 const winstonDailyRotateTransport = new winstonDailyRotateFile({
   dirname: '../nestjs-app-logs',
@@ -161,6 +162,7 @@ const nestLikeFormatting = winston.format.combine(
       useClass: HasuraGuard,
     },
     SubscriptionPlanService,
+    SubscriptionService,
   ],
 })
 export class AppModule {}
