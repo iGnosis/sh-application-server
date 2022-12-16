@@ -102,7 +102,7 @@ export class PatientPaymentController {
     const trialEnd = accountCreatedTimeStamp + trialPeriodInSeconds;
 
     let trialExpired = true;
-    let currentTimeStamp = Math.ceil(new Date().getTime() / 1000);
+    const currentTimeStamp = Math.ceil(new Date().getTime() / 1000);
 
     if (currentTimeStamp < trialEnd) {
       subscriptionPlan.trial_end = trialEnd;
