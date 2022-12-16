@@ -114,4 +114,13 @@ export class SubscriptionService {
       console.log(err);
     }
   }
+
+  async isTrialExpired(orgId: string, createdAt: string) {
+    const { subscription_plans } = await this.getSubscriptionPlan(orgId);
+    const { trialPeriod } = subscription_plans[0];
+    const accountCreatedTimeStamp = Math.ceil(new Date(createdAt).getTime() / 1000);
+    const trialPeriodInSeconds = trialPeriod * 24 * 3600;
+    const currentTimeStamp = Math.ceil(new Date().getTime() / 1000);
+    return currentTimeStamp > accountCreatedTimeStamp + trialPeriodInSeconds;
+  }
 }

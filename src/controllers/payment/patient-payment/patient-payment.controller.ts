@@ -1,6 +1,15 @@
-import { Body, Controller, HttpException, HttpStatus, Post } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  HttpException,
+  HttpStatus,
+  Post,
+  UseInterceptors,
+} from '@nestjs/common';
 import { ApiBearerAuth } from '@nestjs/swagger';
 import { User } from 'src/common/decorators/user.decorator';
+import { TransformResponseInterceptor } from 'src/common/interceptors/transform-response.interceptor';
 import { StripeService } from 'src/services/stripe/stripe.service';
 import { SubscriptionService } from 'src/services/subscription/subscription.service';
 import { SubscriptionStatus } from 'src/types/global';
@@ -22,7 +31,6 @@ export class PatientPaymentController {
   @Post('create-customer')
   async createCustomer(@User('id') userId: string): Promise<{ customerId: string }> {
     const { email } = await this.subsciptionService.getPatientDetails(userId);
-
     if (!email) {
       throw new HttpException('User Email Not Found', HttpStatus.BAD_REQUEST);
     }
@@ -53,23 +61,44 @@ export class PatientPaymentController {
 
   // WIP
   @ApiBearerAuth('access-token')
-  @Post('subscription-status')
-  async getSubscriptionStatus(@User('id') userId: string): Promise<SubscriptionStatus> {
-    const { subscriptionId, customerId } = await this.subsciptionService.getPatientDetails(userId);
+  @UseInterceptors(new TransformResponseInterceptor())
+  @Get('subscription-status')
+  async getSubscriptionStatus(@User('id') userId: string, @User('orgId') orgId: string) {
+    const { subscriptionId, customerId, createdAt } =
+      await this.subsciptionService.getPatientDetails(userId);
+
+    const customer: any = await this.stripeService.stripeClient.customers.retrieve(customerId);
+    const defaultPaymentMethod = customer.invoice_settings.default_payment_method;
+    const trialExpired = await this.subsciptionService.isTrialExpired(orgId, createdAt);
+
+    // TODO: list all edge-cases and make sure all of them are covered.
+
     if (!subscriptionId) {
-      return 'canceled';
+      if (trialExpired) {
+        if (defaultPaymentMethod) {
+          return 'payment_pending';
+        }
+        return 'trial_expired';
+      } else {
+        return 'trial_period';
+      }
     }
+
     const { status } = await this.stripeService.stripeClient.subscriptions.retrieve(subscriptionId);
-    // the subscription is in trailing period
+
     if (status === 'trialing') {
       return 'trial_period';
     }
+
     if (
       status === 'unpaid' ||
       status === 'past_due' ||
       status === 'incomplete' ||
       status === 'incomplete_expired'
     ) {
+      if (!defaultPaymentMethod) {
+        return 'trial_expired';
+      }
       return 'payment_pending';
     }
 
@@ -81,7 +110,7 @@ export class PatientPaymentController {
   async createSubscription(
     @User('id') userId: string,
     @User('orgId') orgId: string,
-  ): Promise<{ subscriptionId: string }> {
+  ): Promise<{ subscription: Stripe.Subscription }> {
     const { customerId, createdAt, subscriptionId } =
       await this.subsciptionService.getPatientDetails(userId);
 
@@ -129,12 +158,24 @@ export class PatientPaymentController {
       await this.subsciptionService.setSubscriptionId(userId, subscription.id);
 
       return {
-        subscriptionId: subscription.id,
+        subscription,
       };
     } catch (err) {
-      console.log(err);
       throw new HttpException('Unable to create subscription', HttpStatus.BAD_REQUEST);
     }
+  }
+
+  @ApiBearerAuth('access-token')
+  @UseInterceptors(new TransformResponseInterceptor())
+  @Get('get-default-paymentmethod')
+  async getDefaultPaymentMethod(@User('id') userId: string) {
+    const { customerId } = await this.subsciptionService.getPatientDetails(userId);
+    const customer: any = await this.stripeService.stripeClient.customers.retrieve(customerId);
+    const defaultPaymentMethodId: string = customer.invoice_settings.default_payment_method;
+    const paymentMethod = await this.stripeService.stripeClient.paymentMethods.retrieve(
+      defaultPaymentMethodId,
+    );
+    return paymentMethod;
   }
 
   @ApiBearerAuth('access-token')
