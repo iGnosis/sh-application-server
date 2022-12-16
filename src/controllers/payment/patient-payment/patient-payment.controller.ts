@@ -1,86 +1,92 @@
 import { Body, Controller, HttpException, HttpStatus, Post } from '@nestjs/common';
 import { ApiBearerAuth } from '@nestjs/swagger';
 import { User } from 'src/common/decorators/user.decorator';
-import { GqlService } from 'src/services/clients/gql/gql.service';
 import { StripeService } from 'src/services/stripe/stripe.service';
+import { SubscriptionService } from 'src/services/subscription/subscription.service';
+import { SubscriptionStatus } from 'src/types/global';
 import Stripe from 'stripe';
-import {
-  AddPaymentMethodDTO,
-  PaymentMethodId,
-  UpdatePaymentMethodDTO,
-} from './patient-payment.dto';
+import { PaymentMethodId, UpdatePaymentMethodDTO } from './patient-payment.dto';
 
 @Controller('patient-payment')
 export class PatientPaymentController {
-  constructor(private stripeService: StripeService, private gqlService: GqlService) {}
+  constructor(
+    private stripeService: StripeService,
+    private subsciptionService: SubscriptionService,
+  ) {}
 
   @ApiBearerAuth('access-token')
   @Post('create-customer')
   async createCustomer(@User('id') userId: string): Promise<{ customerId: string }> {
-    const query = `mutation SetCustomerId($id: uuid!, $customerId: String!) {
-        update_patient_by_pk(pk_columns: {id: $id}, _set: {customerId: $customerId}) {
-          customerId
-        }
-      }`;
+    const { email } = await this.subsciptionService.getPatientDetails(userId);
 
-    const { email } = await this.getPatientDetails(userId);
-
-    const customer = await this.stripeService.stripeClient.customers.create({
+    if (!email) {
+      throw new HttpException('User Email Not Found', HttpStatus.BAD_REQUEST);
+    }
+    const { id: customerId } = await this.stripeService.stripeClient.customers.create({
       email,
     });
-
-    await this.gqlService.client.request(query, {
-      id: userId,
-      customerId: customer.id,
-    });
-
+    await this.subsciptionService.setCustomerId(userId, customerId);
     return {
-      customerId: customer.id,
+      customerId,
     };
   }
 
   @ApiBearerAuth('access-token')
   @Post('create-setup-intent')
   async createSetupIntent(@User('id') userId: string): Promise<{ clientSecret: string }> {
-    const { customerId } = await this.getPatientDetails(userId);
+    const { customerId } = await this.subsciptionService.getPatientDetails(userId);
     if (!customerId) {
       throw new HttpException('CustomerId Not Found', HttpStatus.BAD_REQUEST);
     }
-
     const { client_secret } = await this.stripeService.stripeClient.setupIntents.create({
       customer: customerId,
       payment_method_types: ['card'],
     });
-
     return {
       clientSecret: client_secret,
     };
+  }
+
+  // WIP
+  @ApiBearerAuth('access-token')
+  @Post('subscription-status')
+  async getSubscriptionStatus(@User('id') userId: string): Promise<SubscriptionStatus> {
+    const { subscriptionId, customerId } = await this.subsciptionService.getPatientDetails(userId);
+    if (!subscriptionId) {
+      return 'canceled';
+    }
+    const { status } = await this.stripeService.stripeClient.subscriptions.retrieve(subscriptionId);
+    // the subscription is in trailing period
+    if (status === 'trialing') {
+      return 'trial_period';
+    }
+    if (
+      status === 'unpaid' ||
+      status === 'past_due' ||
+      status === 'incomplete' ||
+      status === 'incomplete_expired'
+    ) {
+      return 'payment_pending';
+    }
+
+    return status;
   }
 
   @ApiBearerAuth('access-token')
   @Post('create-subscription')
   async createSubscription(
     @User('id') userId: string,
-    @User('orgId') organizationId: string,
+    @User('orgId') orgId: string,
   ): Promise<{ subscriptionId: string }> {
-    const getSubscriptionPlanQuery = `
-      query GetSubscriptionPlan($org_id: uuid!) {
-        subscription_plans(where: {organization: {_eq: $org_id}}) {
-          priceId
-          productId
-          trialPeriod
-          id
-        }
-      }
-      `;
+    const { customerId, createdAt, subscriptionId } =
+      await this.subsciptionService.getPatientDetails(userId);
 
-    const resp: { subscription_plans: { priceId: string; trialPeriod: number; id: string }[] } =
-      await this.gqlService.client.request(getSubscriptionPlanQuery, {
-        org_id: organizationId,
-      });
+    if (subscriptionId) {
+      throw new HttpException('Subscription already exists', HttpStatus.BAD_REQUEST);
+    }
 
-    const { priceId, trialPeriod, id: subscriptionPlanId } = resp.subscription_plans[0];
-    const { customerId, createdAt } = await this.getPatientDetails(userId);
+    const { subscription_plans } = await this.subsciptionService.getSubscriptionPlan(orgId);
+    const { priceId, trialPeriod, id: subscriptionPlanId } = subscription_plans[0];
 
     const subscriptionPlan: Stripe.SubscriptionCreateParams = {
       customer: customerId,
@@ -91,17 +97,16 @@ export class PatientPaymentController {
       ],
     };
 
-    // to check if user is in trail
-    const accountCreatedDate = new Date(createdAt);
-    const accountPeriodInMS = accountCreatedDate.getTime() - new Date().getTime();
-    const accountPeriodInDays = accountPeriodInMS / (1000 * 3600 * 24);
+    const accountCreatedTimeStamp = Math.ceil(new Date(createdAt).getTime() / 1000);
+    const trialPeriodInSeconds = trialPeriod * 24 * 3600;
+    const trialEnd = accountCreatedTimeStamp + trialPeriodInSeconds;
 
-    let trailExpired = true;
+    let trialExpired = true;
+    let currentTimeStamp = Math.ceil(new Date().getTime() / 1000);
 
-    if (accountPeriodInDays < trialPeriod && accountPeriodInDays > 0) {
-      // user will be charged at the end of trail_period
-      subscriptionPlan.trial_period_days = accountPeriodInDays - trialPeriod;
-      trailExpired = false;
+    if (currentTimeStamp < trialEnd) {
+      subscriptionPlan.trial_end = trialEnd;
+      trialExpired = false;
     }
 
     try {
@@ -110,19 +115,20 @@ export class PatientPaymentController {
       );
 
       // setting the subscription data in subscription table
-      if (trailExpired) {
-        await this.setSubscription(subscriptionPlanId, subscription.id, 'active');
-      } else {
-        await this.setSubscription(subscriptionPlanId, subscription.id, 'trail_period');
-      }
-
+      const subscriptionStatus = trialExpired ? 'active' : 'trial_period';
+      await this.subsciptionService.setSubscription(
+        subscriptionPlanId,
+        subscription.id,
+        subscriptionStatus,
+      );
       // setting subscription data in patient table
-      await this.setSubscriptionId(userId, subscription.id);
+      await this.subsciptionService.setSubscriptionId(userId, subscription.id);
 
       return {
         subscriptionId: subscription.id,
       };
     } catch (err) {
+      console.log(err);
       throw new HttpException('Unable to create subscription', HttpStatus.BAD_REQUEST);
     }
   }
@@ -132,8 +138,14 @@ export class PatientPaymentController {
   async cancelSubscription(
     @User('id') userId: string,
   ): Promise<{ subscription: Stripe.Subscription }> {
-    const { subscriptionId } = await this.getPatientDetails(userId);
-    const subscription = await this.stripeService.stripeClient.subscriptions.cancel(subscriptionId);
+    const { subscriptionId } = await this.subsciptionService.getPatientDetails(userId);
+    const subscription = await this.stripeService.stripeClient.subscriptions.update(
+      subscriptionId,
+      {
+        cancel_at_period_end: true,
+      },
+    );
+    await this.subsciptionService.removeSubscription(userId, subscriptionId);
     return {
       subscription,
     };
@@ -144,7 +156,7 @@ export class PatientPaymentController {
   async getSubscriptionDetails(
     @User('id') userId: string,
   ): Promise<{ subscription: Stripe.Subscription }> {
-    const { subscriptionId } = await this.getPatientDetails(userId);
+    const { subscriptionId } = await this.subsciptionService.getPatientDetails(userId);
     const subscription = await this.stripeService.stripeClient.subscriptions.retrieve(
       subscriptionId,
     );
@@ -154,42 +166,21 @@ export class PatientPaymentController {
   }
 
   @ApiBearerAuth('access-token')
-  @Post('add-payment-method')
-  async addPaymentMethod(
+  @Post('set-default-paymentmethod')
+  async setDefaultPaymentMethod(
     @User('id') userId: string,
-    @Body() body: AddPaymentMethodDTO,
-  ): Promise<{ paymentMethod: string }> {
-    const { cardDetails } = body;
-    const paymentMethod = await this.stripeService.stripeClient.paymentMethods.create({
-      type: 'card',
-      card: cardDetails,
-    });
-
-    const { customerId } = await this.getPatientDetails(userId);
-    // attaching the paymentMethod to the customer
-    await this.stripeService.stripeClient.paymentMethods.attach(paymentMethod.id, {
-      customer: customerId,
-    });
-    //setting the paymentMethod as default paymentmethod for invoice/subscription payments.
-    await this.stripeService.stripeClient.customers.update(customerId, {
+    @Body() body: PaymentMethodId,
+  ): Promise<{ data: Stripe.Customer }> {
+    const { paymentMethodId } = body;
+    const { customerId } = await this.subsciptionService.getPatientDetails(userId);
+    //setting the paymentMethod as default paymentmethod which will be used for invoice/subscription payments.
+    const customer = await this.stripeService.stripeClient.customers.update(customerId, {
       invoice_settings: {
-        default_payment_method: paymentMethod.id,
+        default_payment_method: paymentMethodId,
       },
     });
-
-    const query = `
-      mutation SetPaymentMethod($customerId: String!, $paymentMethodId: String!) {
-        insert_payment_methods_one(object: {customerId: $customerId, paymentMethodId: $paymentMethodId}) {
-          id
-        }
-      }
-      `;
-    const setPaymentMethod = await this.gqlService.client.request(query, {
-      customerId,
-      paymentMethodId: paymentMethod.id,
-    });
     return {
-      paymentMethod: setPaymentMethod.insert_payment_methods_one.id,
+      data: customer,
     };
   }
 
@@ -197,9 +188,7 @@ export class PatientPaymentController {
   @Post('remove-payment-method')
   async removePaymentMethod(@Body() body: PaymentMethodId): Promise<{ status: string }> {
     const { paymentMethodId } = body;
-    const paymentMethod = await this.stripeService.stripeClient.paymentMethods.detach(
-      paymentMethodId,
-    );
+    await this.stripeService.stripeClient.paymentMethods.detach(paymentMethodId);
     return {
       status: 'success',
     };
@@ -239,77 +228,5 @@ export class PatientPaymentController {
     return {
       data: paymentMethod,
     };
-  }
-
-  async setSubscriptionId(userId: string, subscriptionId: string) {
-    const query = `
-        mutation SetSubscriptionId($id: uuid!, $subscription: String!) {
-          update_patient_by_pk(pk_columns: {id: $id}, _set: {subscription: $subscription}) {
-            subscription
-          }
-        }
-        `;
-    try {
-      await this.gqlService.client.request(query, {
-        id: userId,
-        subscription: subscriptionId,
-      });
-    } catch (err) {
-      console.log('Error::setSubscriptionId:', err);
-    }
-  }
-
-  async setSubscription(
-    subscriptionPlanId: string,
-    subscriptionId: string,
-    status: 'trail_period' | 'active',
-  ) {
-    const query = `
-      mutation SetSubscription($subscriptionId: String!, $subscriptionPlanId: uuid!, $status: subscription_status_enum!) {
-        insert_subscriptions_one(object: {status: $status, subscriptionId: $subscriptionId, subscriptionPlanId: $subscriptionPlanId}) {
-          id
-        }
-      }`;
-
-    await this.gqlService.client.request(query, {
-      status,
-      subscriptionId,
-      subscriptionPlanId,
-    });
-  }
-
-  async getPatientDetails(
-    userId: string,
-  ): Promise<{ subscriptionId: string; customerId: string; email: string; createdAt: string }> {
-    const query = `
-        query getPatientDetails($id: uuid!) {
-          patient_by_pk(id: $id) {
-            subscription
-            customerId
-            email
-            createdAt
-          }
-        } `;
-
-    try {
-      const resp: {
-        patient_by_pk: {
-          subscription: string;
-          customerId: string;
-          email: string;
-          createdAt: string;
-        };
-      } = await this.gqlService.client.request(query, {
-        id: userId,
-      });
-      return {
-        subscriptionId: resp.patient_by_pk.subscription,
-        customerId: resp.patient_by_pk.customerId,
-        email: resp.patient_by_pk.email,
-        createdAt: resp.patient_by_pk.createdAt,
-      };
-    } catch (err) {
-      console.log(err);
-    }
   }
 }
