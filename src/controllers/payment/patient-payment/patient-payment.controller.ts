@@ -5,7 +5,11 @@ import { StripeService } from 'src/services/stripe/stripe.service';
 import { SubscriptionService } from 'src/services/subscription/subscription.service';
 import { SubscriptionStatus } from 'src/types/global';
 import Stripe from 'stripe';
-import { PaymentMethodId, UpdatePaymentMethodDTO } from './patient-payment.dto';
+import {
+  PaymentMethodId,
+  UpdatePaymentMethodDTO,
+  GetBillingHistoryDTO,
+} from './patient-payment.dto';
 
 @Controller('patient-payment')
 export class PatientPaymentController {
@@ -228,5 +232,80 @@ export class PatientPaymentController {
     return {
       data: paymentMethod,
     };
+  }
+
+  @ApiBearerAuth('access-token')
+  @Post('get-billing-history')
+  async getBillingHistory(
+    @User('id') userId: string,
+    @Body() body: GetBillingHistoryDTO,
+  ): Promise<any> {
+    try {
+      const { endingBefore, startingAfter, limit } = body;
+      const { customerId } = await this.subsciptionService.getPatientDetails(userId);
+
+      if (!customerId) throw new HttpException('No customer', HttpStatus.NOT_IMPLEMENTED);
+
+      const invoices = await this.stripeService.stripeClient.invoices.list({
+        customer: customerId,
+        limit: limit,
+        ...(startingAfter ? { starting_after: startingAfter } : {}),
+        ...(endingBefore ? { ending_before: endingBefore } : {}),
+        status: 'paid',
+      });
+
+      const response = [];
+
+      for (const invoice of invoices.data) {
+        const rowData = {
+          id: invoice.id,
+          paymentDate: invoice.status_transitions.paid_at,
+          subscriptionPeriod: {
+            start: invoice.lines.data[0].period.start,
+            end: invoice.lines.data[0].period.end,
+          },
+          cardDetails: {},
+          amountPaid: invoice.amount_paid / 100,
+          url: invoice.hosted_invoice_url,
+        };
+
+        const fullInvoice = await this.stripeService.stripeClient.invoices.retrieve(invoice.id, {
+          expand: ['payment_intent'],
+        });
+
+        if (!fullInvoice || !fullInvoice.payment_intent) {
+          response.push(rowData);
+          continue;
+        }
+
+        const paymentMethodId = (fullInvoice.payment_intent as Stripe.PaymentIntent).payment_method;
+
+        if (paymentMethodId) {
+          const cardDetails = await this.stripeService.stripeClient.paymentMethods.retrieve(
+            paymentMethodId as string,
+          );
+          if (!cardDetails || !cardDetails.card)
+            throw new HttpException('No card details', HttpStatus.NOT_FOUND);
+          else {
+            rowData['cardDetails'] = {
+              last4: cardDetails.card.last4,
+              brand: cardDetails.card.brand,
+            };
+          }
+        } else {
+          throw new HttpException('No payment method', HttpStatus.NOT_FOUND);
+        }
+
+        response.push(rowData);
+      }
+
+      return {
+        invoices: response,
+        hasMore: invoices.has_more,
+      };
+    } catch (err) {
+      console.log(err);
+      throw new HttpException(err.message, HttpStatus.INTERNAL_SERVER_ERROR);
+    }
   }
 }
