@@ -1,11 +1,24 @@
-import { Body, Controller, HttpException, HttpStatus, Post } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  HttpException,
+  HttpStatus,
+  Post,
+  UseInterceptors,
+} from '@nestjs/common';
 import { ApiBearerAuth } from '@nestjs/swagger';
 import { User } from 'src/common/decorators/user.decorator';
+import { TransformResponseInterceptor } from 'src/common/interceptors/transform-response.interceptor';
 import { StripeService } from 'src/services/stripe/stripe.service';
 import { SubscriptionService } from 'src/services/subscription/subscription.service';
 import { SubscriptionStatus } from 'src/types/global';
 import Stripe from 'stripe';
-import { PaymentMethodId, UpdatePaymentMethodDTO } from './patient-payment.dto';
+import {
+  PaymentMethodId,
+  UpdatePaymentMethodDTO,
+  GetBillingHistoryDTO,
+} from './patient-payment.dto';
 
 @Controller('patient-payment')
 export class PatientPaymentController {
@@ -18,7 +31,6 @@ export class PatientPaymentController {
   @Post('create-customer')
   async createCustomer(@User('id') userId: string): Promise<{ customerId: string }> {
     const { email } = await this.subsciptionService.getPatientDetails(userId);
-
     if (!email) {
       throw new HttpException('User Email Not Found', HttpStatus.BAD_REQUEST);
     }
@@ -49,23 +61,54 @@ export class PatientPaymentController {
 
   // WIP
   @ApiBearerAuth('access-token')
-  @Post('subscription-status')
-  async getSubscriptionStatus(@User('id') userId: string): Promise<SubscriptionStatus> {
-    const { subscriptionId, customerId } = await this.subsciptionService.getPatientDetails(userId);
-    if (!subscriptionId) {
-      return 'canceled';
+  @UseInterceptors(new TransformResponseInterceptor())
+  @Get('subscription-status')
+  async getSubscriptionStatus(@User('id') userId: string, @User('orgId') orgId: string) {
+    const { subscriptionId, customerId, createdAt } =
+      await this.subsciptionService.getPatientDetails(userId);
+
+    const customer = await this.stripeService.stripeClient.customers.retrieve(customerId);
+    const trialExpired = await this.subsciptionService.isTrialExpired(orgId, createdAt);
+    const paymentMethodAdded = !!subscriptionId;
+
+    // archived
+    if (!customerId) {
+      return 'archived';
     }
+
+    // blocked - not implemented yet
+    if (customer.deleted) {
+      return 'blocked';
+    }
+
+    // trial expired
+    if (trialExpired) {
+      if (!paymentMethodAdded) {
+        return 'trial_expired';
+      }
+    }
+
+    // if subscription hasn't started and user is trialing
+    if (!subscriptionId) {
+      return 'trial_period';
+    }
+
+    // active, cancelled or unpaid
     const { status } = await this.stripeService.stripeClient.subscriptions.retrieve(subscriptionId);
-    // the subscription is in trailing period
+
     if (status === 'trialing') {
       return 'trial_period';
     }
+
     if (
       status === 'unpaid' ||
       status === 'past_due' ||
       status === 'incomplete' ||
       status === 'incomplete_expired'
     ) {
+      if (!paymentMethodAdded) {
+        return 'trial_expired';
+      }
       return 'payment_pending';
     }
 
@@ -77,7 +120,7 @@ export class PatientPaymentController {
   async createSubscription(
     @User('id') userId: string,
     @User('orgId') orgId: string,
-  ): Promise<{ subscriptionId: string }> {
+  ): Promise<{ subscription: Stripe.Subscription }> {
     const { customerId, createdAt, subscriptionId } =
       await this.subsciptionService.getPatientDetails(userId);
 
@@ -125,12 +168,24 @@ export class PatientPaymentController {
       await this.subsciptionService.setSubscriptionId(userId, subscription.id);
 
       return {
-        subscriptionId: subscription.id,
+        subscription,
       };
     } catch (err) {
-      console.log(err);
       throw new HttpException('Unable to create subscription', HttpStatus.BAD_REQUEST);
     }
+  }
+
+  @ApiBearerAuth('access-token')
+  @UseInterceptors(new TransformResponseInterceptor())
+  @Get('get-default-paymentmethod')
+  async getDefaultPaymentMethod(@User('id') userId: string) {
+    const { customerId } = await this.subsciptionService.getPatientDetails(userId);
+    const customer: any = await this.stripeService.stripeClient.customers.retrieve(customerId);
+    const defaultPaymentMethodId: string = customer.invoice_settings.default_payment_method;
+    const paymentMethod = await this.stripeService.stripeClient.paymentMethods.retrieve(
+      defaultPaymentMethodId,
+    );
+    return paymentMethod;
   }
 
   @ApiBearerAuth('access-token')
@@ -157,6 +212,10 @@ export class PatientPaymentController {
     @User('id') userId: string,
   ): Promise<{ subscription: Stripe.Subscription }> {
     const { subscriptionId } = await this.subsciptionService.getPatientDetails(userId);
+
+    if (!subscriptionId) {
+      throw new HttpException('Unable to get SubscriptionId', HttpStatus.BAD_REQUEST);
+    }
     const subscription = await this.stripeService.stripeClient.subscriptions.retrieve(
       subscriptionId,
     );
@@ -228,5 +287,80 @@ export class PatientPaymentController {
     return {
       data: paymentMethod,
     };
+  }
+
+  @ApiBearerAuth('access-token')
+  @Post('get-billing-history')
+  async getBillingHistory(
+    @User('id') userId: string,
+    @Body() body: GetBillingHistoryDTO,
+  ): Promise<any> {
+    try {
+      const { endingBefore, startingAfter, limit } = body;
+      const { customerId } = await this.subsciptionService.getPatientDetails(userId);
+
+      if (!customerId) throw new HttpException('No customer', HttpStatus.NOT_IMPLEMENTED);
+
+      const invoices = await this.stripeService.stripeClient.invoices.list({
+        customer: customerId,
+        limit: limit,
+        ...(startingAfter ? { starting_after: startingAfter } : {}),
+        ...(endingBefore ? { ending_before: endingBefore } : {}),
+        status: 'paid',
+      });
+
+      const response = [];
+
+      for (const invoice of invoices.data) {
+        const rowData = {
+          id: invoice.id,
+          paymentDate: invoice.status_transitions.paid_at,
+          subscriptionPeriod: {
+            start: invoice.lines.data[0].period.start,
+            end: invoice.lines.data[0].period.end,
+          },
+          cardDetails: {},
+          amountPaid: invoice.amount_paid / 100,
+          url: invoice.hosted_invoice_url,
+        };
+
+        const fullInvoice = await this.stripeService.stripeClient.invoices.retrieve(invoice.id, {
+          expand: ['payment_intent'],
+        });
+
+        if (!fullInvoice || !fullInvoice.payment_intent) {
+          response.push(rowData);
+          continue;
+        }
+
+        const paymentMethodId = (fullInvoice.payment_intent as Stripe.PaymentIntent).payment_method;
+
+        if (paymentMethodId) {
+          const cardDetails = await this.stripeService.stripeClient.paymentMethods.retrieve(
+            paymentMethodId as string,
+          );
+          if (!cardDetails || !cardDetails.card)
+            throw new HttpException('No card details', HttpStatus.NOT_FOUND);
+          else {
+            rowData['cardDetails'] = {
+              last4: cardDetails.card.last4,
+              brand: cardDetails.card.brand,
+            };
+          }
+        } else {
+          throw new HttpException('No payment method', HttpStatus.NOT_FOUND);
+        }
+
+        response.push(rowData);
+      }
+
+      return {
+        invoices: response,
+        hasMore: invoices.has_more,
+      };
+    } catch (err) {
+      console.log(err);
+      throw new HttpException(err.message, HttpStatus.INTERNAL_SERVER_ERROR);
+    }
   }
 }
