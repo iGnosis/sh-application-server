@@ -67,23 +67,33 @@ export class PatientPaymentController {
     const { subscriptionId, customerId, createdAt } =
       await this.subsciptionService.getPatientDetails(userId);
 
-    const customer: any = await this.stripeService.stripeClient.customers.retrieve(customerId);
-    const defaultPaymentMethod = customer.invoice_settings.default_payment_method;
+    const customer = await this.stripeService.stripeClient.customers.retrieve(customerId);
     const trialExpired = await this.subsciptionService.isTrialExpired(orgId, createdAt);
+    const paymentMethodAdded = !!subscriptionId;
 
-    // TODO: list all edge-cases and make sure all of them are covered.
+    // archived
+    if (!customerId) {
+      return 'archived';
+    }
 
-    if (!subscriptionId) {
-      if (trialExpired) {
-        if (defaultPaymentMethod) {
-          return 'payment_pending';
-        }
+    // blocked - not implemented yet
+    if (customer.deleted) {
+      return 'blocked';
+    }
+
+    // trial expired
+    if (trialExpired) {
+      if (!paymentMethodAdded) {
         return 'trial_expired';
-      } else {
-        return 'trial_period';
       }
     }
 
+    // if subscription hasn't started and user is trialing
+    if (!subscriptionId) {
+      return 'trial_period';
+    }
+
+    // active, cancelled or unpaid
     const { status } = await this.stripeService.stripeClient.subscriptions.retrieve(subscriptionId);
 
     if (status === 'trialing') {
@@ -96,7 +106,7 @@ export class PatientPaymentController {
       status === 'incomplete' ||
       status === 'incomplete_expired'
     ) {
-      if (!defaultPaymentMethod) {
+      if (!paymentMethodAdded) {
         return 'trial_expired';
       }
       return 'payment_pending';
