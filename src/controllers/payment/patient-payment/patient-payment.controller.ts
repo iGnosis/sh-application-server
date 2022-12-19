@@ -212,6 +212,10 @@ export class PatientPaymentController {
     @User('id') userId: string,
   ): Promise<{ subscription: Stripe.Subscription }> {
     const { subscriptionId } = await this.subsciptionService.getPatientDetails(userId);
+
+    if (!subscriptionId) {
+      throw new HttpException('Unable to get SubscriptionId', HttpStatus.BAD_REQUEST);
+    }
     const subscription = await this.stripeService.stripeClient.subscriptions.retrieve(
       subscriptionId,
     );
