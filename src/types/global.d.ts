@@ -210,3 +210,8 @@ type SubscriptionStatus =
   | 'trial_period'
   | 'trial_expired'
   | 'payment_pending';
+
+interface HttpErrorWithReason {
+  msg: string;
+  reason: string;
+}

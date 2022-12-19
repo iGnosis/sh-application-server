@@ -90,7 +90,13 @@ export class SmsAuthService {
       orgName,
     });
     if (!resp || !resp.patient || !isArray(resp.patient) || !resp.patient.length) {
-      throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
+      throw new HttpException(
+        {
+          msg: 'Unauthorized',
+          reason: 'Account does not exist. Please ask your provider to create an account for you.',
+        },
+        HttpStatus.UNAUTHORIZED,
+      );
     }
     return resp.patient[0];
   }
@@ -111,7 +117,13 @@ export class SmsAuthService {
       phoneNumber,
     });
     if (!resp || !resp.sh_admin || !isArray(resp.sh_admin) || !resp.sh_admin.length) {
-      throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
+      throw new HttpException(
+        {
+          msg: 'Unauthorized',
+          reason: 'Account does not exist.',
+        },
+        HttpStatus.UNAUTHORIZED,
+      );
     }
     return resp.sh_admin[0];
   }
@@ -135,7 +147,13 @@ export class SmsAuthService {
       orgName,
     });
     if (!resp || !resp.staff || !isArray(resp.staff) || !resp.staff.length) {
-      throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
+      throw new HttpException(
+        {
+          msg: 'Unauthorized',
+          reason: 'Account does not exist. Please ask your provider to create an account for you.',
+        },
+        HttpStatus.UNAUTHORIZED,
+      );
     }
     return resp.staff[0];
   }
