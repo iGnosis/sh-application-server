@@ -11,7 +11,7 @@ export class StatsService {
   numberOfGamesAvailable: number;
   constructor(private databaseService: DatabaseService, private gqlService: GqlService) {
     // TODO: get activity count dynamically!
-    this.numberOfGamesAvailable = 3;
+    this.numberOfGamesAvailable = 4;
   }
 
   async getAvgCompletionTimeInMsGroupByGames(
@@ -285,23 +285,27 @@ export class StatsService {
   async getPatientOverview(startDate: Date, endDate: Date, orgId: string) {
     const engagementResults: {
       patient: string;
+      nickname: string;
       gamesPlayedCount: number;
       engagementRatio: number;
     }[] = await this.databaseService.executeQuery(
       `
       SELECT
-        game.patient,
-        COUNT(game.game) "gamesPlayedCount"
-      FROM game
+        g.patient,
+        p.nickname,
+        COUNT(g.game) "gamesPlayedCount"
+      FROM game g
+      JOIN patient p
+      ON g.patient = p.id
       WHERE
-        game."endedAt" IS NOT NULL AND
-        game."createdAt" >= $1 AND
-        game."createdAt" < $2 AND
-        game."organizationId" = $3
+        g."endedAt" IS NOT NULL AND
+        g."createdAt" >= $1 AND
+        g."createdAt" < $2 AND
+        g."organizationId" = $3
       GROUP BY
-          game.patient
+          g.patient, p.nickname
       ORDER BY
-          game.patient`,
+          g.patient`,
       [startDate, endDate, orgId],
     );
 
