@@ -45,7 +45,12 @@ export class AggregateAnalyticsService {
     };
   }
 
-  async insertAggregatedAnalytics(patientId: string, gameId: string, data: object) {
+  async insertAggregatedAnalytics(
+    patientId: string,
+    gameId: string,
+    organizationId: string,
+    data: object,
+  ) {
     const query = `mutation InsertAggregateAnalytics($objects: [aggregate_analytics_insert_input!] = {}) {
       insert_aggregate_analytics(objects: $objects) {
         affected_rows
@@ -58,6 +63,7 @@ export class AggregateAnalyticsService {
         objects.push({
           patient: patientId,
           game: gameId,
+          organizationId,
           key,
           value,
         });
@@ -65,6 +71,7 @@ export class AggregateAnalyticsService {
         objects.push({
           patient: patientId,
           game: gameId,
+          organizationId,
           key: value.key,
           value: value.value,
           noOfSamples: value.noOfSamples,

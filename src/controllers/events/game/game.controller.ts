@@ -50,7 +50,7 @@ export class GameController {
   // called whenever `endedAt` is set.
   @Post('end')
   async gameEnded(@Body() body: GameEnded) {
-    const { gameId, patientId, endedAt, analytics } = body;
+    const { gameId, patientId, endedAt, analytics, organizationId } = body;
     if (!endedAt) return;
 
     // aggregating analytics for a game.
@@ -58,9 +58,14 @@ export class GameController {
       avgAchievementRatio: this.aggregateAnalyticsService.averageAchievementRatio(analytics),
       avgCompletionTimeInMs: this.aggregateAnalyticsService.averageCompletionTimeInMs(analytics),
     };
-    await this.aggregateAnalyticsService.insertAggregatedAnalytics(patientId, gameId, {
-      ...aggregatedInfo,
-    });
+    await this.aggregateAnalyticsService.insertAggregatedAnalytics(
+      patientId,
+      gameId,
+      organizationId,
+      {
+        ...aggregatedInfo,
+      },
+    );
 
     const downloadsDir = join(process.cwd(), 'pose-documents');
     const fileName = `${patientId}.${gameId}.json`;
@@ -111,9 +116,14 @@ export class GameController {
       }
       // clean up the file after upload
       await fs.unlink(filePath);
-      await this.aggregateAnalyticsService.insertAggregatedAnalytics(patientId, gameId, {
-        ...extractedInfo.angles,
-      });
+      await this.aggregateAnalyticsService.insertAggregatedAnalytics(
+        patientId,
+        gameId,
+        organizationId,
+        {
+          ...extractedInfo.angles,
+        },
+      );
     } catch (err) {
       this.logger.error('gameEnded: ' + JSON.stringify(err));
     }

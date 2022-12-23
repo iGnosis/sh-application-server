@@ -45,6 +45,7 @@ export type Shape = 'circle' | 'triangle' | 'rectangle' | 'wrong' | 'hexagon';
 
 export type AggregatedObject = {
   patient: string;
+  organizationId: string;
   game: string;
   key: string;
   value: number;
