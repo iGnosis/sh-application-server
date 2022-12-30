@@ -57,4 +57,35 @@ export class StripeService {
       );
     }
   }
+
+  async getSubscriptionsForPrice(priceId: string): Promise<Stripe.Subscription[]> {
+    try {
+      const response = await this.stripeClient.subscriptions.list({
+        price: priceId,
+      });
+
+      return response.data;
+    } catch (err: any) {
+      throw new HttpException(
+        'Unable to get subscriptions for the price',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+  async getInvoicesForSubscription(subscriptionId: string): Promise<Stripe.Invoice[]> {
+    try {
+      const response = await this.stripeClient.invoices.list({
+        subscription: subscriptionId,
+        status: 'paid',
+      });
+
+      return response.data;
+    } catch (err: any) {
+      throw new HttpException(
+        'Unable to get invoices for the price',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
 }

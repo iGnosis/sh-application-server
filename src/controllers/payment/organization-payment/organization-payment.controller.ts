@@ -59,4 +59,15 @@ export class OrganizationPaymentController {
       },
     };
   }
+
+  @Get('report')
+  async generateReport(@User('orgId') orgId: string, @Res() res: Response) {
+    const report = await this.subscriptionPlanService.generateReport(orgId);
+    const data = await this.subscriptionPlanService.createTxtReport(report);
+    res.set({
+      'Content-Type': 'text/plain',
+      'Content-Disposition': 'attachment; filename="finance-report.txt"',
+    });
+    res.send(data);
+  }
 }
