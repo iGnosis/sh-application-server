@@ -129,7 +129,7 @@ export class SubscriptionPlanService {
     const accountCreatedTimeStamp = Math.ceil(new Date(createdAt).getTime() / 1000);
     const trialPeriodInSeconds = trialPeriod * 24 * 3600;
     const currentTimeStamp = Math.ceil(new Date().getTime() / 1000);
-    return currentTimeStamp > accountCreatedTimeStamp + trialPeriodInSeconds;
+    return currentTimeStamp < accountCreatedTimeStamp + trialPeriodInSeconds;
   }
 
   async generateReport(organizationId: string) {
