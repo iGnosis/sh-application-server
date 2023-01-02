@@ -18,3 +18,17 @@ export class SubscriptionPlanBody {
   @IsNotEmpty()
   trialPeriod: number;
 }
+
+export class GenerateReportBody {
+  @ApiProperty({
+    description: 'Start date of the report',
+  })
+  @IsNotEmpty()
+  startDate: string;
+
+  @ApiProperty({
+    description: 'End date of the report',
+  })
+  @IsNotEmpty()
+  endDate: string;
+}

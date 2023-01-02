@@ -132,7 +132,7 @@ export class SubscriptionPlanService {
     return currentTimeStamp < accountCreatedTimeStamp + trialPeriodInSeconds;
   }
 
-  async generateReport(organizationId: string) {
+  async generateReport(organizationId: string, startDate: string, endDate: string) {
     try {
       const query = `
       query PatientDetails($orgId: uuid!) {
@@ -169,13 +169,26 @@ export class SubscriptionPlanService {
 
       for (const subscription of subscriptions) {
         if (subscription.status === 'active') {
-          const invoices = await this.stripeService.getInvoicesForSubscription(subscription.id);
+          const invoices = await this.stripeService.getInvoicesForSubscription(
+            subscription.id,
+            startDate,
+            endDate,
+          );
           totalRevenue += invoices.reduce((acc, invoice) => {
             currency = invoice.currency || currency;
             return acc + invoice.amount_paid / 100;
           }, 0);
         }
       }
+
+      const revenue = (currency || '$') + ' ' + totalRevenue;
+      const trialingPatientsCount =
+        patients.filter(
+          (patient) =>
+            !patient.subscription &&
+            this.isPatientTrialing(patient.createdAt, subscription_plans[0].trialPeriod),
+        ).length +
+        subscriptions.filter((subscription) => subscription.status === 'trialing').length;
 
       const overview = [];
       overview.push([
@@ -187,15 +200,10 @@ export class SubscriptionPlanService {
       ]);
       overview.push([
         patients.length,
-        patients.filter(
-          (patient) =>
-            !patient.subscription &&
-            this.isPatientTrialing(patient.createdAt, subscription_plans[0].trialPeriod),
-        ).length +
-          subscriptions.filter((subscription) => subscription.status === 'trialing').length,
+        trialingPatientsCount,
         subscriptions.filter((subscription) => subscription.status === 'active').length,
         subscriptions.filter((subscription) => subscription.status === 'canceled').length,
-        currency + ' ' + totalRevenue,
+        revenue,
       ]);
 
       const patientsWithBillingCycle = this.getSubscriptionsForPatient(subscriptions, patients);

@@ -73,11 +73,19 @@ export class StripeService {
     }
   }
 
-  async getInvoicesForSubscription(subscriptionId: string): Promise<Stripe.Invoice[]> {
+  async getInvoicesForSubscription(
+    subscriptionId: string,
+    startDate: string,
+    endDate: string,
+  ): Promise<Stripe.Invoice[]> {
     try {
       const response = await this.stripeClient.invoices.list({
         subscription: subscriptionId,
         status: 'paid',
+        created: {
+          gte: new Date(startDate).getTime() / 1000,
+          lt: new Date(endDate).getTime() / 1000,
+        },
       });
 
       return response.data;

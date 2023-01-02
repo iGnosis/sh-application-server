@@ -3,7 +3,7 @@ import { ApiBearerAuth } from '@nestjs/swagger';
 import { User } from 'src/common/decorators/user.decorator';
 import { StripeService } from 'src/services/stripe/stripe.service';
 import { SubscriptionPlanService } from 'src/services/subscription-plan/subscription-plan.service';
-import { SubscriptionPlanBody } from './organization-payment.dto';
+import { GenerateReportBody, SubscriptionPlanBody } from './organization-payment.dto';
 import { Response } from 'express';
 @ApiBearerAuth('access-token')
 @Controller('organization-payment')
@@ -61,10 +61,17 @@ export class OrganizationPaymentController {
     };
   }
 
-  @Get('report')
-  async generateReport(@User('orgId') orgId: string, @Res() res: Response) {
-    const report = await this.subscriptionPlanService.generateReport(orgId);
+  @Post('report')
+  async generateReport(
+    @User('orgId') orgId: string,
+    @Body() body: GenerateReportBody,
+    @Res() res: Response,
+  ) {
+    const { startDate, endDate } = body;
+
+    const report = await this.subscriptionPlanService.generateReport(orgId, startDate, endDate);
     const data = await this.subscriptionPlanService.createTxtReport(report);
+
     res.set({
       'Content-Type': 'text/plain',
       'Content-Disposition': 'attachment; filename="finance-report.txt"',
