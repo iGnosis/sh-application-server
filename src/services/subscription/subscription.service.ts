@@ -80,15 +80,20 @@ export class SubscriptionService {
     });
   }
 
-  async getPatientDetails(
-    userId: string,
-  ): Promise<{ subscriptionId: string; customerId: string; email: string; createdAt: string }> {
+  async getPatientDetails(userId: string): Promise<{
+    subscriptionId: string;
+    customerId: string;
+    email: string;
+    createdAt: string;
+    nickname: string;
+  }> {
     const query = `
         query getPatientDetails($id: uuid!) {
           patient_by_pk(id: $id) {
             subscription
             customerId
             email
+            nickname
             createdAt
           }
         } `;
@@ -99,16 +104,24 @@ export class SubscriptionService {
           customerId: string;
           email: string;
           createdAt: string;
+          nickname: string;
         };
       } = await this.gqlService.client.request(query, {
         id: userId,
       });
-      const { subscription: subscriptionId, customerId, email, createdAt } = resp.patient_by_pk;
+      const {
+        subscription: subscriptionId,
+        customerId,
+        email,
+        createdAt,
+        nickname,
+      } = resp.patient_by_pk;
       return {
         subscriptionId,
         customerId,
         email,
         createdAt,
+        nickname,
       };
     } catch (err) {
       console.log(err);

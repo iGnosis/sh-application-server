@@ -1,6 +1,7 @@
 import { ConfigService } from '@nestjs/config';
 import { Test, TestingModule } from '@nestjs/testing';
 import { GqlService } from 'src/services/clients/gql/gql.service';
+import { EventsService } from 'src/services/events/events.service';
 import { StripeService } from 'src/services/stripe/stripe.service';
 import { SubscriptionService } from 'src/services/subscription/subscription.service';
 import { PatientPaymentController } from './patient-payment.controller';
@@ -11,7 +12,7 @@ describe('PatientPaymentController', () => {
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       controllers: [PatientPaymentController],
-      providers: [StripeService, ConfigService, SubscriptionService, GqlService],
+      providers: [StripeService, ConfigService, SubscriptionService, GqlService, EventsService],
     }).compile();
 
     controller = module.get<PatientPaymentController>(PatientPaymentController);

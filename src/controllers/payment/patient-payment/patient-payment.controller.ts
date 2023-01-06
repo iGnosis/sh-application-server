@@ -10,9 +10,9 @@ import {
 import { ApiBearerAuth } from '@nestjs/swagger';
 import { User } from 'src/common/decorators/user.decorator';
 import { TransformResponseInterceptor } from 'src/common/interceptors/transform-response.interceptor';
+import { EventsService } from 'src/services/events/events.service';
 import { StripeService } from 'src/services/stripe/stripe.service';
 import { SubscriptionService } from 'src/services/subscription/subscription.service';
-import { SubscriptionStatus } from 'src/types/global';
 import Stripe from 'stripe';
 import {
   PaymentMethodId,
@@ -25,6 +25,7 @@ export class PatientPaymentController {
   constructor(
     private stripeService: StripeService,
     private subsciptionService: SubscriptionService,
+    private eventsService: EventsService,
   ) {}
 
   @ApiBearerAuth('access-token')
@@ -193,7 +194,10 @@ export class PatientPaymentController {
   async cancelSubscription(
     @User('id') userId: string,
   ): Promise<{ subscription: Stripe.Subscription }> {
-    const { subscriptionId } = await this.subsciptionService.getPatientDetails(userId);
+    const { subscriptionId, email, nickname } = await this.subsciptionService.getPatientDetails(
+      userId,
+    );
+    await this.eventsService.sendCancellationEmail(email, nickname);
     const subscription = await this.stripeService.stripeClient.subscriptions.update(
       subscriptionId,
       {
