@@ -1,15 +1,26 @@
-import { createParamDecorator, ExecutionContext } from '@nestjs/common';
+import { createParamDecorator, ExecutionContext, HttpException, HttpStatus } from '@nestjs/common';
 
-export const User = createParamDecorator((data: unknown, ctx: ExecutionContext) => {
+export const User = createParamDecorator((data: string, ctx: ExecutionContext) => {
   const request = ctx.switchToHttp().getRequest();
-  const claims = request.user['https://hasura.io/jwt/claims'];
-  const userId = claims['x-hasura-user-id'];
-  return userId;
-});
 
-export const OrgId = createParamDecorator((data: unknown, ctx: ExecutionContext) => {
-  const request = ctx.switchToHttp().getRequest();
-  const claims = request.user['https://hasura.io/jwt/claims'];
-  const orgId = claims['x-hasura-organization-id'];
-  return orgId;
+  if (!request || !request.user || !request.user['https://hasura.io/jwt/claims']) {
+    throw new HttpException(
+      'Hasura claims not set for this route',
+      HttpStatus.INTERNAL_SERVER_ERROR,
+    );
+  }
+
+  const hasuraClaims = request.user['https://hasura.io/jwt/claims'];
+
+  request.user = {
+    ...request.user,
+    orgId: hasuraClaims['x-hasura-organization-id'],
+    role: hasuraClaims['x-hasura-default-role'],
+  };
+
+  if (data) {
+    return request.user[data];
+  }
+
+  return request.user;
 });

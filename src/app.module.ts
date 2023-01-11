@@ -42,6 +42,17 @@ import { CreateOrganizationService } from './services/organization/create/create
 import { InviteOrganizationService } from './services/organization/invite/invite-organization.service';
 import { UploadOrganizationController } from './controllers/organization/upload/upload-organization.controller';
 import { UploadOrganizationService } from './services/organization/upload/upload-organization.service';
+import { RbacController } from './controllers/rbac/rbac.controller';
+import { RbacService } from './services/rbac/rbac.service';
+import { ScheduleModule } from '@nestjs/schedule';
+import { APP_GUARD } from '@nestjs/core';
+import { HasuraGuard } from './common/guards/hasura.guard';
+import { StripeService } from './services/stripe/stripe.service';
+import { PatientPaymentController } from './controllers/payment/patient-payment/patient-payment.controller';
+import { OrganizationPaymentController } from './controllers/payment/organization-payment/organization-payment.controller';
+import { SubscriptionPlanService } from './services/subscription-plan/subscription-plan.service';
+import { MockController } from './mock/mock.controller';
+import { SubscriptionService } from './services/subscription/subscription.service';
 
 const winstonDailyRotateTransport = new winstonDailyRotateFile({
   dirname: '../nestjs-app-logs',
@@ -87,6 +98,7 @@ const nestLikeFormatting = winston.format.combine(
     ConfigModule.forRoot({
       isGlobal: true,
     }),
+    ScheduleModule.forRoot(),
     WinstonModule.forRoot({
       level: 'debug',
       format: winston.format.json(),
@@ -116,6 +128,10 @@ const nestLikeFormatting = winston.format.combine(
     InviteOrganizationController,
     CreateOrganizationController,
     UploadOrganizationController,
+    RbacController,
+    PatientPaymentController,
+    OrganizationPaymentController,
+    MockController,
   ],
   providers: [
     AppService,
@@ -139,6 +155,14 @@ const nestLikeFormatting = winston.format.combine(
     InviteOrganizationService,
     CreateOrganizationService,
     UploadOrganizationService,
+    RbacService,
+    StripeService,
+    {
+      provide: APP_GUARD,
+      useClass: HasuraGuard,
+    },
+    SubscriptionPlanService,
+    SubscriptionService,
   ],
 })
 export class AppModule {}

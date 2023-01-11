@@ -4,6 +4,7 @@ import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
 import { AppModule } from './app.module';
 import { HttpExceptionFilter } from './common/filters/httpexception.filter';
+import { CronService } from './services/cron/cron.service';
 declare const module: any;
 
 async function bootstrap() {
@@ -22,7 +23,7 @@ async function bootstrap() {
   app.useLogger(loggerInstance);
   app.useGlobalFilters(new HttpExceptionFilter(loggerInstance));
 
-  if (process.env.NODE_ENV === 'development' || process.env.NODE_ENV === 'local') {
+  if (process.env.ENV_NAME === 'development' || process.env.ENV_NAME === 'local') {
     logger.log('Enabling Swagger APIs UI');
     const config = new DocumentBuilder()
       .setTitle('Point Motion API')
@@ -49,6 +50,9 @@ async function bootstrap() {
     module.hot.accept();
     module.hot.dispose(() => app.close());
   }
+
+  const cronService = app.get(CronService);
+  await cronService.reloadActionsMetadata();
 
   // react to termination signal so we can clean up database connection pool.
   app.enableShutdownHooks();

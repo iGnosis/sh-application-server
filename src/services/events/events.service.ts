@@ -209,4 +209,39 @@ export class EventsService {
       status: 'success',
     };
   }
+  async sendCancellationEmail(patientEmail: string, nickname?: string, reason?: string) {
+    const input: SendMessagesCommandInput = {
+      ApplicationId: this.projectId,
+      MessageRequest: {
+        MessageConfiguration: {
+          EmailMessage: {
+            FromAddress: 'no-reply@pointmotion.us',
+            ReplyToAddresses: ['support@pointmotion.us'],
+            SimpleEmail: {
+              Subject: {
+                Data: `Cancellation request from Patient ${nickname || ''}`,
+              },
+              TextPart: {
+                Data: `
+                Patient Email: ${patientEmail}
+                Patient Nickname: ${nickname || 'unknown'}
+  
+                Feedback Received =>
+                  Reason for cancellation: ${reason || 'none'}`,
+              },
+            },
+          },
+        },
+        Addresses: {
+          'support@pointmotion.us': {
+            ChannelType: 'EMAIL',
+          },
+        },
+      },
+    };
+    await this.pinpoint.sendMessages(input);
+    return {
+      status: 'success',
+    };
+  }
 }

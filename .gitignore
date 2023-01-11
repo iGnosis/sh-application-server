@@ -398,7 +398,5 @@ Temporary Items
 .env
 dist
 temp
-downloads/*
-pose-documents/*
-
+storage/*/*
 !**/.gitkeep

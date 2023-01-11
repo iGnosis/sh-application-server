@@ -10,10 +10,10 @@ import {
   UseInterceptors,
 } from '@nestjs/common';
 import { TransformResponseInterceptor } from 'src/common/interceptors/transform-response.interceptor';
-import { Staff, Patient } from 'src/types/global';
+import { Staff, Patient, ShAdmin } from 'src/types/global';
 import { SMSLoginBody, SMSVerifyBody } from './sms-auth.dto';
 import { SmsAuthService } from '../../services/sms-auth/sms-auth.service';
-import { UserRole, UserType } from 'src/common/enums/role.enum';
+import { UserRole, LoginUserType } from 'src/common/enums/role.enum';
 import { CreateOrganizationService } from 'src/services/organization/create/create-organization.service';
 
 // TODO: Apply rate limiters (?)
@@ -32,22 +32,27 @@ export class SmsAuthController {
   @Post('login')
   async login(
     @Body() body: SMSLoginBody,
-    @Headers('x-pointmotion-user-type') userType: UserType,
+    @Headers('x-pointmotion-user-type') userType: LoginUserType,
     @Headers('x-organization-name') orgName: string,
   ) {
+    // SH ADMIN does not require a Organization.
+    if (userType !== LoginUserType.SH_ADMIN && !orgName) {
+      throw new HttpException('Org name missing', HttpStatus.BAD_REQUEST);
+    }
+
     if (
-      !orgName ||
       !userType ||
-      (userType !== UserType.PATIENT &&
-        userType !== UserType.BENCHMARK &&
-        userType !== UserType.STAFF)
+      (userType !== LoginUserType.PATIENT &&
+        userType !== LoginUserType.BENCHMARK &&
+        userType !== LoginUserType.STAFF &&
+        userType !== LoginUserType.SH_ADMIN)
     ) {
-      throw new HttpException('Invalid Request', HttpStatus.BAD_REQUEST);
+      throw new HttpException('Invalid userType', HttpStatus.BAD_REQUEST);
     }
 
     const { phoneCountryCode, phoneNumber } = body;
     const otp = this.smsAuthService.generateOtp();
-    let user: Patient | Staff;
+    let user: Patient | Staff | ShAdmin;
 
     // TODO: cap the org admin sign-ups
     if (body.inviteCode) {
@@ -63,11 +68,13 @@ export class SmsAuthController {
       });
     }
 
-    if (userType === UserType.STAFF) {
+    if (userType === LoginUserType.SH_ADMIN) {
+      user = await this.smsAuthService.fetchShAdmin(phoneCountryCode, phoneNumber);
+    } else if (userType === LoginUserType.STAFF) {
       user = await this.smsAuthService.fetchStaff(phoneCountryCode, phoneNumber, orgName);
-    } else if (userType === UserType.PATIENT) {
+    } else if (userType === LoginUserType.PATIENT) {
       user = await this.smsAuthService.fetchPatient(phoneCountryCode, phoneNumber, orgName);
-    } else if (userType === UserType.BENCHMARK) {
+    } else if (userType === LoginUserType.BENCHMARK) {
       user = await this.smsAuthService.fetchPatient(phoneCountryCode, phoneNumber, orgName);
       if (!user || !user.canBenchmark) {
         throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
@@ -89,30 +96,37 @@ export class SmsAuthController {
   @Post('resend-otp')
   async resendOtp(
     @Body() body: SMSLoginBody,
-    @Headers('x-pointmotion-user-type') userType: UserType,
+    @Headers('x-pointmotion-user-type') userType: LoginUserType,
     @Headers('x-organization-name') orgName: string,
   ) {
+    // SH ADMIN does not require a Organization.
+    if (userType !== LoginUserType.SH_ADMIN && !orgName) {
+      throw new HttpException('Org name missing', HttpStatus.BAD_REQUEST);
+    }
+
     if (
-      !orgName ||
       !userType ||
-      (userType !== UserType.PATIENT &&
-        userType !== UserType.BENCHMARK &&
-        userType !== UserType.STAFF)
+      (userType !== LoginUserType.PATIENT &&
+        userType !== LoginUserType.BENCHMARK &&
+        userType !== LoginUserType.STAFF &&
+        userType !== LoginUserType.SH_ADMIN)
     ) {
-      throw new HttpException('Invalid Request', HttpStatus.BAD_REQUEST);
+      throw new HttpException('Invalid userType', HttpStatus.BAD_REQUEST);
     }
 
     const { phoneCountryCode, phoneNumber } = body;
 
-    let user: Staff | Patient;
-    if (userType === UserType.PATIENT) {
+    let user: Staff | Patient | ShAdmin;
+    if (userType === LoginUserType.PATIENT) {
       user = await this.smsAuthService.fetchPatient(phoneCountryCode, phoneNumber, orgName);
-    } else if (userType === UserType.BENCHMARK) {
+    } else if (userType === LoginUserType.BENCHMARK) {
       user = await this.smsAuthService.fetchPatient(phoneCountryCode, phoneNumber, orgName);
       if (!user.canBenchmark) {
         throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
       }
-    } else if (userType === UserType.STAFF) {
+    } else if (userType === LoginUserType.SH_ADMIN) {
+      user = await this.smsAuthService.fetchShAdmin(phoneCountryCode, phoneNumber);
+    } else if (userType === LoginUserType.STAFF) {
       // only the phone numbers added to the staff table should be allowed to enter the Organization portal.
       user = await this.smsAuthService.fetchStaff(phoneCountryCode, phoneNumber, orgName);
     }
@@ -143,30 +157,37 @@ export class SmsAuthController {
   @Post('verify-otp')
   async verifyOtp(
     @Body() body: SMSVerifyBody,
-    @Headers('x-pointmotion-user-type') userType: UserType,
+    @Headers('x-pointmotion-user-type') userType: LoginUserType,
     @Headers('x-organization-name') orgName: string,
   ) {
+    // SH ADMIN does not require a Organization.
+    if (userType !== LoginUserType.SH_ADMIN && !orgName) {
+      throw new HttpException('Org name missing', HttpStatus.BAD_REQUEST);
+    }
+
     if (
-      !orgName ||
       !userType ||
-      (userType !== UserType.PATIENT &&
-        userType !== UserType.STAFF &&
-        userType !== UserType.BENCHMARK)
+      (userType !== LoginUserType.PATIENT &&
+        userType !== LoginUserType.BENCHMARK &&
+        userType !== LoginUserType.STAFF &&
+        userType !== LoginUserType.SH_ADMIN)
     ) {
-      throw new HttpException('Invalid Request', HttpStatus.BAD_REQUEST);
+      throw new HttpException('Invalid userType', HttpStatus.BAD_REQUEST);
     }
 
     const { otp: recievedOtp, phoneCountryCode, phoneNumber } = body;
-    let user: Staff | Patient;
+    let user: Staff | Patient | ShAdmin;
 
-    if (userType === UserType.PATIENT) {
+    if (userType === LoginUserType.PATIENT) {
       user = await this.smsAuthService.fetchPatient(phoneCountryCode, phoneNumber, orgName);
-    } else if (userType === UserType.BENCHMARK) {
+    } else if (userType === LoginUserType.BENCHMARK) {
       user = await this.smsAuthService.fetchPatient(phoneCountryCode, phoneNumber, orgName);
       if (!user.canBenchmark) {
         throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
       }
-    } else if (userType === UserType.STAFF) {
+    } else if (userType === LoginUserType.SH_ADMIN) {
+      user = await this.smsAuthService.fetchShAdmin(phoneCountryCode, phoneNumber);
+    } else if (userType === LoginUserType.STAFF) {
       user = await this.smsAuthService.fetchStaff(phoneCountryCode, phoneNumber, orgName);
     }
 

@@ -6,10 +6,12 @@ export enum UserRole {
   BENCHMARK = 'benchmark',
   ORG_ADMIN = 'org_admin',
   SH_ADMIN = 'sh_admin',
+  GUEST = 'guest',
 }
 
-export enum UserType {
+export enum LoginUserType {
   PATIENT = 'patient',
   BENCHMARK = 'benchmark',
   STAFF = 'staff',
+  SH_ADMIN = 'sh_admin',
 }

@@ -45,6 +45,7 @@ export type Shape = 'circle' | 'triangle' | 'rectangle' | 'wrong' | 'hexagon';
 
 export type AggregatedObject = {
   patient: string;
+  organizationId: string;
   game: string;
   key: string;
   value: number;
@@ -104,6 +105,15 @@ export class OrganizationConfiguration {
     family: string;
     url: string;
   };
+  uiRbac: {
+    [key: UserRole]: {
+      ui: {
+        top: any;
+        left: any;
+        route: any;
+      };
+    };
+  };
 }
 
 export class Organization {
@@ -133,6 +143,19 @@ export class Staff {
   status?: string;
   phoneCountryCode: string;
   phoneNumber: string;
+}
+
+export class ShAdmin {
+  id: string;
+  createdAt: Date;
+  updatedAt: Date;
+  firstName: string;
+  lastName: string;
+  email: string;
+  phoneCountryCode: string;
+  phoneNumber: string;
+  type?: string;
+  organizationId?: string;
 }
 
 export class Patient {
@@ -172,4 +195,24 @@ export enum OrganizationTypeEnum {
   CLINIC = 'clinic',
   HOSPITAL = 'hospital',
   PROVIDER = 'provider',
+}
+
+export interface CardDetailsDTO {
+  exp_month: number;
+  exp_year: number;
+  number: string;
+}
+
+type SubscriptionStatus =
+  | 'active'
+  | 'canceled'
+  | 'archived'
+  | 'blocked'
+  | 'trial_period'
+  | 'trial_expired'
+  | 'payment_pending';
+
+interface HttpErrorWithReason {
+  msg: string;
+  reason: string;
 }

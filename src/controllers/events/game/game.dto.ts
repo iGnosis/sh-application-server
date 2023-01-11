@@ -24,6 +24,12 @@ export class GameEnded {
   gameId: string;
 
   @ApiProperty({
+    description: 'Organization UUID.',
+  })
+  @IsNotEmpty()
+  organizationId: string;
+
+  @ApiProperty({
     description: 'Patient UUID.',
   })
   @IsNotEmpty()

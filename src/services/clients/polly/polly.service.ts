@@ -14,7 +14,7 @@ export class PollyService {
   }
 
   async generateSpeech(text: string): Promise<StreamableFile> {
-    const downloadsDir = join(process.cwd(), 'downloads');
+    const downloadsDir = join(process.cwd(), 'storage/downloads');
     const fileName = this._cryb53(text).toString();
     const filePath = join(downloadsDir, fileName);
 

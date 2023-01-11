@@ -36,12 +36,12 @@ export class InviteOrganizationService {
     return resp.insert_invite_organization_one.inviteCode;
   }
 
-  async sendEmailInvite(email: string, inviteCode: string, redirectUrl: string) {
+  async sendEmailInvite(email: string, redirectUrl: string) {
     await this.emailService.send({
       to: [email],
       subject: 'An invite from Pointmotion!',
       text: '',
-      body: `Please click on ${redirectUrl}?inviteCode=${inviteCode} to create an account!`,
+      body: `Please click on ${redirectUrl} to create an account!`,
     });
     return true;
   }

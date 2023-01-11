@@ -39,7 +39,7 @@ export class MediapipePoseGateway
     @MessageBody() body: PoseDataMessageBody,
   ): Promise<WsResponse<string>> {
     // console.log('[RECV] client message', body);
-    const downloadsDir = join(process.cwd(), 'pose-documents');
+    const downloadsDir = join(process.cwd(), 'storage/pose-documents');
     const fileName = `${body.u}.${body.g}.json`;
     const filePath = join(downloadsDir, fileName);
     await fs.writeFile(filePath, `${JSON.stringify(body)}\n`, { encoding: 'utf-8', flag: 'a+' });

@@ -45,6 +45,7 @@ services:
       dockerfile: docker/Local.Dockerfile
     extra_hosts:
       - "host.docker.internal:host-gateway"
+    container_name: local_app_server
     profiles:
       - local
     env_file: .env

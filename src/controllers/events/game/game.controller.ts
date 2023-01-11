@@ -50,7 +50,7 @@ export class GameController {
   // called whenever `endedAt` is set.
   @Post('end')
   async gameEnded(@Body() body: GameEnded) {
-    const { gameId, patientId, endedAt, analytics } = body;
+    const { gameId, patientId, endedAt, analytics, organizationId } = body;
     if (!endedAt) return;
 
     // aggregating analytics for a game.
@@ -58,9 +58,14 @@ export class GameController {
       avgAchievementRatio: this.aggregateAnalyticsService.averageAchievementRatio(analytics),
       avgCompletionTimeInMs: this.aggregateAnalyticsService.averageCompletionTimeInMs(analytics),
     };
-    await this.aggregateAnalyticsService.insertAggregatedAnalytics(patientId, gameId, {
-      ...aggregatedInfo,
-    });
+    await this.aggregateAnalyticsService.insertAggregatedAnalytics(
+      patientId,
+      gameId,
+      organizationId,
+      {
+        ...aggregatedInfo,
+      },
+    );
 
     const downloadsDir = join(process.cwd(), 'pose-documents');
     const fileName = `${patientId}.${gameId}.json`;
@@ -111,9 +116,14 @@ export class GameController {
       }
       // clean up the file after upload
       await fs.unlink(filePath);
-      await this.aggregateAnalyticsService.insertAggregatedAnalytics(patientId, gameId, {
-        ...extractedInfo.angles,
-      });
+      await this.aggregateAnalyticsService.insertAggregatedAnalytics(
+        patientId,
+        gameId,
+        organizationId,
+        {
+          ...extractedInfo.angles,
+        },
+      );
     } catch (err) {
       this.logger.error('gameEnded: ' + JSON.stringify(err));
     }
@@ -124,12 +134,10 @@ export class GameController {
   }
 
   // Call whenever a user lands on Patient Portal.
-  @Roles(UserRole.PATIENT, UserRole.BENCHMARK)
-  @UseGuards(AuthGuard, RolesGuard)
-  @ApiBearerAuth('access-token')
   @HttpCode(200)
+  @ApiBearerAuth('access-token')
   @Post('app-accessed')
-  async appAccessed(@User() userId: string) {
+  async appAccessed(@User('id') userId: string) {
     await this.eventsService.appAccessed(userId);
     return {
       status: 'success',
@@ -139,12 +147,10 @@ export class GameController {
   // For pinpoint.
   // Called from activity-exp (since it was pain to manage user localtime server-side)
   // on completion of a game.
-  @Roles(UserRole.PATIENT, UserRole.BENCHMARK)
-  @UseGuards(AuthGuard, RolesGuard)
-  @ApiBearerAuth('access-token')
   @HttpCode(200)
+  @ApiBearerAuth('access-token')
   @Post('complete')
-  async gameComplete(@Body() body: GameCompletedPinpoint, @User() userId: string) {
+  async gameComplete(@Body() body: GameCompletedPinpoint, @User('id') userId: string) {
     const { userTimezone } = body;
 
     let { startDate, endDate } = body;

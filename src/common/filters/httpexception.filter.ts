@@ -2,6 +2,7 @@ import { ExceptionFilter, Catch, ArgumentsHost, HttpException, Inject } from '@n
 import { Request, Response } from 'express';
 import { WINSTON_MODULE_PROVIDER } from 'nest-winston';
 import { Logger } from 'winston';
+import { HttpErrorWithReason } from 'src/types/global';
 
 @Catch(HttpException)
 export class HttpExceptionFilter implements ExceptionFilter {
@@ -14,8 +15,8 @@ export class HttpExceptionFilter implements ExceptionFilter {
     const status = exception.getStatus();
     const hasuraErrorResponseStatus = 400;
 
+    this.logger.error(exception);
     if (typeof exception.getResponse() == 'string') {
-      this.logger.error(exception);
       response.status(hasuraErrorResponseStatus).json({
         message: exception.getResponse(),
         extensions: {
@@ -23,8 +24,16 @@ export class HttpExceptionFilter implements ExceptionFilter {
           path: request.url,
         },
       });
-    } else {
-      response.status(status).json(exception.getResponse());
+    } else if (typeof exception.getResponse() === 'object') {
+      const { msg: message, reason } = exception.getResponse() as HttpErrorWithReason;
+      response.status(status).json({
+        message,
+        extensions: {
+          statusCode: status,
+          path: request.url,
+          reason,
+        },
+      });
     }
   }
 }

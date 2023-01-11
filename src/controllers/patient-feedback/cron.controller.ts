@@ -2,8 +2,6 @@ import { Body, Controller, Post } from '@nestjs/common';
 import { ScheduleEmailFeedback } from './cron.dto';
 import { CronService } from '../../services/cron/cron.service';
 @Controller('cron')
-// TODO: Enable Guards later.
-// @UseGuards(AuthGuard)
 export class PatientFeedbackController {
   constructor(private cronService: CronService) {}
 

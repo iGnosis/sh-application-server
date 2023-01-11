@@ -1,19 +1,6 @@
-import {
-  Body,
-  Controller,
-  HttpCode,
-  HttpException,
-  HttpStatus,
-  Post,
-  Query,
-  UseGuards,
-} from '@nestjs/common';
+import { Body, Controller, HttpCode, HttpException, HttpStatus, Post } from '@nestjs/common';
 import { ApiBearerAuth } from '@nestjs/swagger';
-import { Roles } from 'src/common/decorators/roles.decorator';
 import { User } from 'src/common/decorators/user.decorator';
-import { UserRole } from 'src/common/enums/role.enum';
-import { AuthGuard } from 'src/common/guards/auth.guard';
-import { RolesGuard } from 'src/common/guards/roles.guard';
 import { StatsService } from '../../services/patient-stats/stats.service';
 import { MarkRewardAsAccessedDto, MarkRewardAsViewedDto } from './rewards.dto';
 import { RewardsService } from '../../services/rewards/rewards.service';
@@ -25,8 +12,6 @@ const couponCodes = {
   gold: 'PTMOPE',
 };
 
-@Roles(UserRole.PATIENT, UserRole.BENCHMARK)
-@UseGuards(AuthGuard, RolesGuard)
 @ApiBearerAuth('access-token')
 @Controller('patient/rewards')
 export class RewardsController {
@@ -44,7 +29,7 @@ export class RewardsController {
     @Body('startDate') startDate: Date,
     @Body('endDate') endDate: Date,
     @Body('userTimezone') userTimezone: string,
-    @User() userId: string,
+    @User('id') userId: string,
   ) {
     try {
       startDate = new Date(startDate);
@@ -92,7 +77,7 @@ export class RewardsController {
 
   @HttpCode(200)
   @Post('viewed')
-  async markRewardAsViewed(@Body() body: MarkRewardAsViewedDto, @User() userId: string) {
+  async markRewardAsViewed(@Body() body: MarkRewardAsViewedDto, @User('id') userId: string) {
     const patientRewards = await this.rewardService.getRewards(userId);
     if (!patientRewards || !patientRewards.patient_by_pk || !patientRewards.patient_by_pk.rewards) {
       return {
@@ -116,7 +101,7 @@ export class RewardsController {
 
   @HttpCode(200)
   @Post('accessed')
-  async markRewardAsAccessed(@Body() body: MarkRewardAsAccessedDto, @User() userId: string) {
+  async markRewardAsAccessed(@Body() body: MarkRewardAsAccessedDto, @User('id') userId: string) {
     const { rewardTier } = body;
     const patientRewards = await this.rewardService.getRewards(userId);
     if (!patientRewards || !patientRewards.patient_by_pk || !patientRewards.patient_by_pk.rewards) {
