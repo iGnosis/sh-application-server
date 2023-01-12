@@ -11,6 +11,7 @@ import {
 } from '@nestjs/websockets';
 import * as fs from 'fs/promises';
 import { join } from 'path';
+import { Socket } from 'socket.io';
 import { PoseDataMessageBody } from 'src/types/global';
 
 @WebSocketGateway({ cors: true })
@@ -25,17 +26,17 @@ export class MediapipePoseGateway
     this.logger.log('Gateway Initialized');
   }
 
-  handleConnection(client: any, ...args: any[]) {
+  handleConnection(client: Socket, ...args: any[]) {
     this.logger.log(`Client connected: ${client.id}`);
   }
 
-  async handleDisconnect(client: any) {
+  async handleDisconnect(client: Socket) {
     this.logger.log(`Client disconnected: ${client.id}`);
   }
 
   @SubscribeMessage('message')
   async handleMessage(
-    @ConnectedSocket() client: any,
+    @ConnectedSocket() client: Socket,
     @MessageBody() body: PoseDataMessageBody,
   ): Promise<WsResponse<string>> {
     // console.log('[RECV] client message', body);
