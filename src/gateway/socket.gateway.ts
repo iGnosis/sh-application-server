@@ -60,6 +60,9 @@ export class MediapipePoseGateway
       if (Object.keys(this.numOfClientsInARoom).includes(userId as string)) {
         this.numOfClientsInARoom[userId as string]--;
       }
+      if (this.numOfClientsInARoom[userId as string] === 0) {
+        delete this.numOfClientsInARoom[userId as string];
+      }
     }
     this.logger.log('numOfClientsInARoom: ' + JSON.stringify(this.numOfClientsInARoom));
   }
@@ -67,7 +70,9 @@ export class MediapipePoseGateway
   @SubscribeMessage('qa')
   async handleQaData(@ConnectedSocket() client: Socket, @MessageBody() body: QaMessageBody) {
     const { userId } = client.handshake.query;
-    client.to(userId).emit('qa', body);
+    if (userId) {
+      client.to(userId).emit('qa', body);
+    }
   }
 
   @SubscribeMessage('posedata')
