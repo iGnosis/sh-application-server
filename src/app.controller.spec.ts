@@ -5,7 +5,7 @@ import { AppService } from './app.service';
 import { SmsAuthService } from './services/sms-auth/sms-auth.service';
 import { DatabaseModule } from './database/database.module';
 import { StatsService } from './services/patient-stats/stats.service';
-import { MediapipePoseGateway } from './gateway/mediapipe-pose/mediapipe-pose.gateway';
+import { MediapipePoseGateway } from './gateway/socket.gateway';
 import { ProviderChartsController } from './controllers/provider-charts/provider-charts.controller';
 import { AggregateAnalyticsService } from './services/aggregate-analytics/aggregate-analytics.service';
 import { EmailService } from './services/clients/email/email.service';
