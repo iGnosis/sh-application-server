@@ -66,6 +66,11 @@ export type PoseDataMessageBody = {
   p: PoseLandmark[];
 };
 
+export type QaMessageBody = {
+  event: string;
+  payload: any;
+};
+
 export type Auth = {
   id: string;
   patient: string;
