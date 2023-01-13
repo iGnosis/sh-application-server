@@ -13,6 +13,7 @@ import * as fs from 'fs/promises';
 import { join } from 'path';
 import { Socket } from 'socket.io';
 import { PoseDataMessageBody, QaMessageBody } from 'src/types/global';
+import { SmsAuthService } from 'src/services/sms-auth/sms-auth.service';
 
 @WebSocketGateway({ cors: true })
 export class MediapipePoseGateway
@@ -20,7 +21,7 @@ export class MediapipePoseGateway
 {
   numOfClientsInARoom: { [roomId: string]: number } = {};
 
-  constructor(private readonly logger: Logger) {
+  constructor(private readonly logger: Logger, private smsAuthSerivce: SmsAuthService) {
     this.logger = new Logger(MediapipePoseGateway.name);
   }
 
@@ -30,7 +31,18 @@ export class MediapipePoseGateway
 
   handleConnection(client: Socket, ...args: any[]) {
     this.logger.log(`Client connected: ${client.id}`);
-    const { userId } = client.handshake.query;
+    const { userId, authToken } = client.handshake.query;
+
+    if (!authToken) {
+      client.disconnect();
+    }
+
+    // only a patient can init a WS connection.
+    const payload = this.smsAuthSerivce.verifyToken(authToken as string);
+    if (payload['https://hasura.io/jwt/claims']['x-hasura-default-role'] !== 'patient') {
+      client.disconnect();
+    }
+
     if (userId) {
       client.join(userId);
 
