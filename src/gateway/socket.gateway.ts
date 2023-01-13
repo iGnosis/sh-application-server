@@ -35,6 +35,7 @@ export class MediapipePoseGateway
 
     if (!authToken) {
       client.disconnect();
+      return;
     }
 
     try {
@@ -42,10 +43,12 @@ export class MediapipePoseGateway
       // only a patient can init a WS connection.
       if (payload['https://hasura.io/jwt/claims']['x-hasura-default-role'] !== 'patient') {
         client.disconnect();
+        return;
       }
     } catch (err) {
       this.logger.log(err);
       client.disconnect();
+      return;
     }
 
     if (userId) {
