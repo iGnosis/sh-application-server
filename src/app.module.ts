@@ -13,7 +13,7 @@ import { GqlService } from './services/clients/gql/gql.service';
 import { EmailService } from './services/clients/email/email.service';
 import { SmsAuthService } from './services/sms-auth/sms-auth.service';
 import { SmsService } from './services/clients/sms/sms.service';
-import { MediapipePoseGateway } from './gateway/mediapipe-pose/mediapipe-pose.gateway';
+import { MediapipePoseGateway } from './gateway/socket.gateway';
 import { S3Service } from './services/clients/s3/s3.service';
 import { AggregateAnalyticsService } from './services/aggregate-analytics/aggregate-analytics.service';
 import { ProviderChartsService } from './services/provider-charts/provider-charts.service';

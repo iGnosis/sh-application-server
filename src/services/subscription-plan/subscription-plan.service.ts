@@ -2,6 +2,8 @@ import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { GqlService } from '../clients/gql/gql.service';
 import Stripe from 'stripe';
 import { StripeService } from '../stripe/stripe.service';
+// import { Workbook, Worksheet } from 'exceljs';
+// import * as tmp from 'tmp';
 
 @Injectable()
 export class SubscriptionPlanService {
@@ -238,3 +240,56 @@ export class SubscriptionPlanService {
     return data;
   }
 }
+// async createExcelReport(reportMetrics: { [key: string]: any[] }) {
+//   const workbook = new Workbook();
+//   const sheet = workbook.addWorksheet('Subscription Plan Report');
+
+//   for (const [_, value] of Object.entries(reportMetrics)) {
+//     value.forEach((val) => {
+//       sheet.addRow(val);
+//     });
+//     // add extra 2 rows for spacing.
+//     sheet.addRows([[], []]);
+//   }
+
+//   this.styleSheet(sheet);
+
+//   const excelFile: string = await new Promise((resolve, reject) => {
+//     tmp.file(
+//       {
+//         discardDescriptor: true,
+//         prefix: 'MyExcelSheet',
+//         postfix: '.xlsx',
+//         mode: parseInt('0600', 8),
+//       },
+//       async (err: any, file: any) => {
+//         if (err) {
+//           throw new HttpException(
+//             'Internal server error: ' + JSON.stringify(err),
+//             HttpStatus.INTERNAL_SERVER_ERROR,
+//           );
+//         }
+//         workbook.xlsx
+//           .writeFile(file)
+//           .then((_) => {
+//             resolve(file);
+//           })
+//           .catch((err) => {
+//             throw new HttpException(
+//               'Internal server error: ' + JSON.stringify(err),
+//               HttpStatus.INTERNAL_SERVER_ERROR,
+//             );
+//           });
+//       },
+//     );
+//   });
+//   return excelFile;
+// }
+
+// private styleSheet(sheet: Worksheet) {
+//   sheet.getColumn(1).width = 16;
+//   sheet.getColumn(2).width = 22;
+//   sheet.getColumn(3).width = 20;
+//   sheet.getColumn(4).width = 22;
+//   sheet.getColumn(5).width = 14;
+// }

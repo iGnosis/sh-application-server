@@ -77,5 +77,18 @@ export class OrganizationPaymentController {
       'Content-Disposition': 'attachment; filename="finance-report.txt"',
     });
     res.send(data);
+    // res.download(excelFilePath, `subscription-plan-report.xlsx`, (err) => {
+    //   if (err) {
+    //     throw new HttpException(
+    //       'Error while downloading the report: ' + JSON.stringify(err),
+    //       HttpStatus.INTERNAL_SERVER_ERROR,
+    //     );
+    //   }
+
+    //   // file to be deleted after the transfer is complete.
+    //   unlink(excelFilePath, () => {
+    //     console.log('File deleted successfully');
+    //   });
+    // });
   }
 }
