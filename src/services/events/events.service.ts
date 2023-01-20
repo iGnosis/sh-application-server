@@ -244,4 +244,48 @@ export class EventsService {
       status: 'success',
     };
   }
+
+  async sendMonthlyReportEmail(report: string, billingPeriod: Date) {
+    const dateOptions: Intl.DateTimeFormatOptions = { month: 'long', year: 'numeric' };
+    const input: SendMessagesCommandInput = {
+      ApplicationId: this.projectId,
+      MessageRequest: {
+        MessageConfiguration: {
+          EmailMessage: {
+            FromAddress: 'no-reply@pointmotion.us',
+            ReplyToAddresses: ['support@pointmotion.us'],
+            SimpleEmail: {
+              Subject: {
+                Data: `Monthly report for the month ${billingPeriod.toLocaleDateString(
+                  'en-US',
+                  dateOptions,
+                )}`,
+              },
+              TextPart: {
+                Data: `Month: ${billingPeriod.toLocaleDateString('en-US', dateOptions)}
+
+Report:
+${report}`,
+              },
+            },
+          },
+        },
+        Addresses: {
+          'imen@pointmotioncontrol.com': {
+            ChannelType: 'EMAIL',
+          },
+          'kevin@pointmotioncontrol.com': {
+            ChannelType: 'EMAIL',
+          },
+          'aman@pointmotioncontrol.com': {
+            ChannelType: 'EMAIL',
+          },
+        },
+      },
+    };
+    await this.pinpoint.sendMessages(input);
+    return {
+      status: 'success',
+    };
+  }
 }

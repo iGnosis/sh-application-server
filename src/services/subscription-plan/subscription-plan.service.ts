@@ -160,8 +160,10 @@ export class SubscriptionPlanService {
       if (!resp || !resp.organization_by_pk) {
         throw new HttpException('Error while generating report', HttpStatus.INTERNAL_SERVER_ERROR);
       }
+
       const { subscription_plans } = resp;
       const { patients } = resp.organization_by_pk;
+      if (subscription_plans.length === 0) return;
       const subscriptions = await this.stripeService.getSubscriptionsForPrice(
         subscription_plans[0].priceId,
       );
@@ -184,6 +186,8 @@ export class SubscriptionPlanService {
       }
 
       const revenue = (currency || '$') + ' ' + totalRevenue;
+      const royalty = (currency || '$') + ' ' + totalRevenue * 0.3;
+      const grossProfit = (currency || '$') + ' ' + totalRevenue * 0.7;
       const trialingPatientsCount =
         patients.filter(
           (patient) =>
@@ -194,20 +198,24 @@ export class SubscriptionPlanService {
 
       const overview = [];
       overview.push([
-        'Total Patients',
+        'Total Paying Users',
         'Total Patients on Trial',
-        'Total Active Patients',
-        'Total Canceled Patients',
         'Total Revenue',
+        'Royalty',
+        'Gross Profit',
       ]);
       overview.push([
-        patients.length,
-        trialingPatientsCount,
         subscriptions.filter((subscription) => subscription.status === 'active').length,
-        subscriptions.filter((subscription) => subscription.status === 'canceled').length,
+        trialingPatientsCount,
         revenue,
+        royalty,
+        grossProfit,
       ]);
 
+      let formattedOverview = '';
+      overview[0].forEach((header, i) => {
+        formattedOverview += `${header} = ${overview[1][i]}\n`;
+      });
       const patientsWithBillingCycle = this.getSubscriptionsForPatient(subscriptions, patients);
 
       const billingCycle = [];
@@ -219,6 +227,7 @@ export class SubscriptionPlanService {
       const results = {
         overview,
         billingCycle,
+        formattedOverview,
       };
 
       return results;
@@ -230,7 +239,7 @@ export class SubscriptionPlanService {
     }
   }
 
-  async createTxtReport(reportMetrics: { [key: string]: any[] }) {
+  async createTxtReport(reportMetrics: { [key: string]: any }) {
     let data = '';
     for (const [_, value] of Object.entries(reportMetrics)) {
       data += value.map((row) => row.join(',')).join('\n');
@@ -238,6 +247,25 @@ export class SubscriptionPlanService {
     }
 
     return data;
+  }
+
+  async saveMonthlyReport(revenue: number, organization: string) {
+    try {
+      const query = `
+      mutation SaveMonthlyReport($revenue: Int = 0, $organization: uuid!) {
+        insert_billing_history_one(object: {revenue: $revenue, organization: $organization}) {
+          revenue
+        }
+      }`;
+      const resp = await this.gqlService.client.request(query, {
+        revenue,
+        organization,
+      });
+
+      return resp;
+    } catch (err) {
+      return err;
+    }
   }
 }
 // async createExcelReport(reportMetrics: { [key: string]: any[] }) {

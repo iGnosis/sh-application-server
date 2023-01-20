@@ -1,10 +1,11 @@
-import { Body, Controller, Get, Post, Put, Res } from '@nestjs/common';
+import { Body, Controller, Post, Put, Res } from '@nestjs/common';
 import { ApiBearerAuth } from '@nestjs/swagger';
+import { Response } from 'express';
 import { User } from 'src/common/decorators/user.decorator';
+import { EventsService } from 'src/services/events/events.service';
 import { StripeService } from 'src/services/stripe/stripe.service';
 import { SubscriptionPlanService } from 'src/services/subscription-plan/subscription-plan.service';
 import { GenerateReportBody, SubscriptionPlanBody } from './organization-payment.dto';
-import { Response } from 'express';
 @ApiBearerAuth('access-token')
 @Controller('organization-payment')
 export class OrganizationPaymentController {
@@ -70,7 +71,8 @@ export class OrganizationPaymentController {
     const { startDate, endDate } = body;
 
     const report = await this.subscriptionPlanService.generateReport(orgId, startDate, endDate);
-    const data = await this.subscriptionPlanService.createTxtReport(report);
+    const { formattedOverview, ...txtReport } = report;
+    const data = await this.subscriptionPlanService.createTxtReport(txtReport);
 
     res.set({
       'Content-Type': 'text/plain',
