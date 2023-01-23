@@ -53,6 +53,8 @@ import { OrganizationPaymentController } from './controllers/payment/organizatio
 import { SubscriptionPlanService } from './services/subscription-plan/subscription-plan.service';
 import { MockController } from './mock/mock.controller';
 import { SubscriptionService } from './services/subscription/subscription.service';
+import { ErpnextController } from './controllers/erpnext/erpnext.controller';
+import { ErpnextService } from './services/erpnext/erpnext.service';
 
 const winstonDailyRotateTransport = new winstonDailyRotateFile({
   dirname: '../nestjs-app-logs',
@@ -132,6 +134,7 @@ const nestLikeFormatting = winston.format.combine(
     PatientPaymentController,
     OrganizationPaymentController,
     MockController,
+    ErpnextController,
   ],
   providers: [
     AppService,
@@ -163,6 +166,7 @@ const nestLikeFormatting = winston.format.combine(
     },
     SubscriptionPlanService,
     SubscriptionService,
+    ErpnextService,
   ],
 })
 export class AppModule {}
