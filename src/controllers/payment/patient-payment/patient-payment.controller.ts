@@ -142,7 +142,9 @@ export class PatientPaymentController {
 
     if (!customerId)
       throw new HttpException('Stripe customer not created.', HttpStatus.BAD_REQUEST);
-    if (subscriptionId)
+
+    const isSubscriptionValid = await this.stripeService.verifySubscription(subscriptionId);
+    if (isSubscriptionValid)
       throw new HttpException('Subscription already exists.', HttpStatus.BAD_REQUEST);
 
     const promoCodes = await this.stripeService.stripeClient.promotionCodes.list();
@@ -187,7 +189,8 @@ export class PatientPaymentController {
     const { customerId, createdAt, subscriptionId } =
       await this.subsciptionService.getPatientDetails(userId);
 
-    if (subscriptionId) {
+    const isSubscriptionValid = await this.stripeService.verifySubscription(subscriptionId);
+    if (isSubscriptionValid) {
       throw new HttpException('Subscription already exists', HttpStatus.BAD_REQUEST);
     }
 

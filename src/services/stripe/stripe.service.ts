@@ -93,4 +93,13 @@ export class StripeService {
       );
     }
   }
+
+  async verifySubscription(subscriptionId: string): Promise<boolean> {
+    try {
+      await this.stripeClient.subscriptions.retrieve(subscriptionId);
+      return true;
+    } catch (err) {
+      return false;
+    }
+  }
 }
