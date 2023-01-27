@@ -71,12 +71,16 @@ export class SmsAuthController {
     // NOTE: allow public patient signups.
     if (userType === LoginUserType.PATIENT) {
       const organization = await this.smsAuthService.getOrganization(orgName);
-      await this.smsAuthService.insertPatient({
-        phoneCountryCode: body.phoneCountryCode,
-        phoneNumber: body.phoneNumber,
-        organizationId: organization.id,
-        type: UserRole.PATIENT,
-      });
+      try {
+        await this.smsAuthService.insertPatient({
+          phoneCountryCode: body.phoneCountryCode,
+          phoneNumber: body.phoneNumber,
+          organizationId: organization.id,
+          type: UserRole.PATIENT,
+        });
+      } catch (error) {
+        this.logger.log('patient might already exist');
+      }
     }
 
     if (userType === LoginUserType.SH_ADMIN) {
