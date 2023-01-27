@@ -4,7 +4,7 @@ import { randomInt } from 'crypto';
 import { GqlService } from 'src/services/clients/gql/gql.service';
 import * as jwt from 'jsonwebtoken';
 import { SmsService } from 'src/services/clients/sms/sms.service';
-import { Staff, Patient, ShAdmin } from 'src/types/global';
+import { Staff, Patient, ShAdmin, Organization } from 'src/types/global';
 import { EmailService } from '../clients/email/email.service';
 import { Email, Auth, JwtPayload } from 'src/types/global';
 import { isArray } from 'lodash';
@@ -63,6 +63,16 @@ export class SmsAuthService {
     } catch (err) {
       this.logger.error('sendOtpEmail: ', JSON.stringify(err));
     }
+  }
+
+  async getOrganization(orgName: string): Promise<Organization> {
+    const query = `query GetOrganization($orgName: String!) {
+      organization(where: {name: {_eq: $orgName}}) {
+        id
+      }
+    }`;
+    const resp = await this.gqlService.client.request(query, { orgName });
+    return resp.organization[0];
   }
 
   async fetchPatient(

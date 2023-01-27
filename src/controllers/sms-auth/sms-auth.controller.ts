@@ -10,7 +10,7 @@ import {
   UseInterceptors,
 } from '@nestjs/common';
 import { TransformResponseInterceptor } from 'src/common/interceptors/transform-response.interceptor';
-import { Staff, Patient, ShAdmin } from 'src/types/global';
+import { Staff, Patient, ShAdmin, Organization } from 'src/types/global';
 import { SMSLoginBody, SMSVerifyBody } from './sms-auth.dto';
 import { SmsAuthService } from '../../services/sms-auth/sms-auth.service';
 import { UserRole, LoginUserType } from 'src/common/enums/role.enum';
@@ -65,6 +65,17 @@ export class SmsAuthController {
         phoneNumber: body.phoneNumber,
         organizationId: inviteObj.organizationId,
         type: UserRole.ORG_ADMIN,
+      });
+    }
+
+    // NOTE: allow public patient signups.
+    if (userType === LoginUserType.PATIENT) {
+      const organization = await this.smsAuthService.getOrganization(orgName);
+      await this.smsAuthService.insertPatient({
+        phoneCountryCode: body.phoneCountryCode,
+        phoneNumber: body.phoneNumber,
+        organizationId: organization.id,
+        type: UserRole.PATIENT,
       });
     }
 
