@@ -18,7 +18,7 @@ export class PatientController {
       patientId,
       'patient',
     );
-    await this.eventsService.userSignIn(patientId);
+    await this.eventsService.userSignUp(patientId);
     return response;
   }
 

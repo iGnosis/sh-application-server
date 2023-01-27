@@ -134,7 +134,7 @@ export class EventsService {
   }
 
   // Called when users' emails are updated.
-  async userSignIn(userId: string) {
+  async userSignUp(userId: string) {
     await this._updateEvents(userId, 'user.signup');
   }
 
@@ -225,7 +225,7 @@ export class EventsService {
                 Data: `
                 Patient Email: ${patientEmail}
                 Patient Nickname: ${nickname || 'unknown'}
-  
+
                 Feedback Received =>
                   Reason for cancellation: ${reason || 'none'}`,
               },
