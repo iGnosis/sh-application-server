@@ -18,4 +18,18 @@ describe('CreateOrganizationService', () => {
   it('should be defined', () => {
     expect(service).toBeDefined();
   });
+
+  xit('should verify that patient is unique', async () => {
+    // given
+    const orgId = '00000000-0000-0000-0000-000000000000';
+    const email = 'example@gmail.com';
+    const phoneCountryCode = '+1';
+    const phoneNumber = '12312312312';
+
+    // when
+    const resp = await service.isPatientUnique(orgId, phoneNumber, phoneCountryCode, email);
+
+    // then
+    expect(resp).toEqual(true);
+  });
 });

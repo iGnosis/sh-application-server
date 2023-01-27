@@ -27,6 +27,12 @@ export class CreateOrganizationController {
     console.log('createPatient:body: ', body);
 
     const inviteObj = await this.createOrganizationService.verifyUserInviteCode(body.inviteCode);
+    await this.createOrganizationService.isPatientUnique(
+      inviteObj.organizationId,
+      body.phoneNumber,
+      body.phoneCountryCode,
+      body.email,
+    );
 
     const now = new Date();
     if (inviteObj.expiryAt && now >= inviteObj.expiryAt) {
