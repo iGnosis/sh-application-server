@@ -116,6 +116,68 @@ export class PatientPaymentController {
     return status;
   }
 
+  @Get('generate-promo-code')
+  async generatePromoCode(@Body() body: { coupon: string }): Promise<{
+    promoCode: Stripe.PromotionCode;
+  }> {
+    const { coupon } = body;
+    const promoCode = await this.stripeService.stripeClient.promotionCodes.create({
+      coupon,
+    });
+
+    return {
+      promoCode,
+    };
+  }
+
+  @ApiBearerAuth('access-token')
+  @Post('create-subscription-with-promocode')
+  async createSubscriptionWithPromoCode(
+    @User('id') userId: string,
+    @User('orgId') orgId: string,
+    @Body() body: { promoCode: string },
+  ): Promise<{ subscription: Stripe.Subscription }> {
+    const { promoCode } = body;
+    const { customerId, subscriptionId } = await this.subsciptionService.getPatientDetails(userId);
+
+    if (!customerId)
+      throw new HttpException('Stripe customer not created.', HttpStatus.BAD_REQUEST);
+    if (subscriptionId)
+      throw new HttpException('Subscription already exists.', HttpStatus.BAD_REQUEST);
+
+    const promoCodes = await this.stripeService.stripeClient.promotionCodes.list();
+    const promoCodesList = promoCodes.data.map((promoCodeData) => promoCodeData.id);
+
+    if (!promoCodesList.includes(promoCode))
+      throw new HttpException('Invalid Promotion Code.', HttpStatus.BAD_REQUEST);
+
+    const { subscription_plans } = await this.subsciptionService.getSubscriptionPlan(orgId);
+    const { priceId, id: subscriptionPlanId } = subscription_plans[0];
+
+    const subscriptionPlan: Stripe.SubscriptionCreateParams = {
+      customer: customerId,
+      items: [
+        {
+          price: priceId,
+        },
+      ],
+      // adding promoCode to the subscription plan
+      promotion_code: promoCode,
+    };
+
+    const subscription = await this.stripeService.stripeClient.subscriptions.create(
+      subscriptionPlan,
+    );
+
+    // setting subscription details in patient and subscription tables
+    await this.subsciptionService.setSubscription(subscriptionPlanId, subscription.id, 'active');
+    await this.subsciptionService.setSubscriptionId(userId, subscription.id);
+
+    return {
+      subscription,
+    };
+  }
+
   @ApiBearerAuth('access-token')
   @Post('create-subscription')
   async createSubscription(

@@ -216,17 +216,17 @@ export class SubscriptionPlanService {
       overview[0].forEach((header, i) => {
         formattedOverview += `${header} = ${overview[1][i]}\n`;
       });
-      const patientsWithBillingCycle = this.getSubscriptionsForPatient(subscriptions, patients);
+      // const patientsWithBillingCycle = this.getSubscriptionsForPatient(subscriptions, patients);
 
-      const billingCycle = [];
-      billingCycle.push(['Patient Name', 'Billing Start', 'Billing End']);
-      for (const patient of patientsWithBillingCycle) {
-        billingCycle.push([patient.name, patient.billingStart, patient.billingEnd]);
-      }
+      // const billingCycle = [];
+      // billingCycle.push(['Patient Name', 'Billing Start', 'Billing End']);
+      // for (const patient of patientsWithBillingCycle) {
+      //   billingCycle.push([patient.name, patient.billingStart, patient.billingEnd]);
+      // }
 
       const results = {
         overview,
-        billingCycle,
+        // billingCycle,
         formattedOverview,
       };
 
