@@ -6,7 +6,7 @@ import Stripe from 'stripe';
 export class StripeService {
   stripeClient!: Stripe;
   constructor(private configService: ConfigService) {
-    this.stripeClient = new Stripe(this.configService.get('STRIPE_TEST_KEY'), {
+    this.stripeClient = new Stripe(this.configService.get('STRIPE_SECRET_KEY'), {
       apiVersion: '2022-11-15',
     });
   }
@@ -66,10 +66,7 @@ export class StripeService {
 
       return response.data;
     } catch (err: any) {
-      throw new HttpException(
-        'Unable to get subscriptions for the price',
-        HttpStatus.INTERNAL_SERVER_ERROR,
-      );
+      return err;
     }
   }
 
@@ -83,17 +80,26 @@ export class StripeService {
         subscription: subscriptionId,
         status: 'paid',
         created: {
-          gte: new Date(startDate).getTime() / 1000,
-          lt: new Date(endDate).getTime() / 1000,
+          gte: Math.floor(new Date(startDate).getTime() / 1000),
+          lt: Math.floor(new Date(endDate).getTime() / 1000),
         },
       });
 
       return response.data;
     } catch (err: any) {
       throw new HttpException(
-        'Unable to get invoices for the price',
+        'Unable to get invoices for the price: ' + err.message,
         HttpStatus.INTERNAL_SERVER_ERROR,
       );
+    }
+  }
+
+  async verifySubscription(subscriptionId: string): Promise<boolean> {
+    try {
+      await this.stripeClient.subscriptions.retrieve(subscriptionId);
+      return true;
+    } catch (err) {
+      return false;
     }
   }
 }

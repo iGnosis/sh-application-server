@@ -17,7 +17,7 @@ export class AggregateAnalyticsService {
     // key, value & noOfSamples are required to store in aggregate_analytics table.
     return {
       key: 'avgAchievementRatio',
-      value: parseFloat((correctPromptsCount / analytics.length).toFixed(2)),
+      value: parseFloat((correctPromptsCount / analytics.length).toFixed(2)) || 0,
       noOfSamples: analytics.length,
     };
   }
@@ -40,7 +40,7 @@ export class AggregateAnalyticsService {
     // key, value & noOfSamples are required to store in aggregate_analytics table.
     return {
       key: 'avgCompletionTimeInMs',
-      value: parseFloat((sumCompletionTime / countCompletionTimePrompts).toFixed(2)),
+      value: parseFloat((sumCompletionTime / countCompletionTimePrompts).toFixed(2)) || 0,
       noOfSamples: countCompletionTimePrompts,
     };
   }

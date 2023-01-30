@@ -6,6 +6,40 @@ import { GqlService } from 'src/services/clients/gql/gql.service';
 export class CreateOrganizationService {
   constructor(private gqlService: GqlService, private readonly logger: Logger) {}
 
+  async isPatientUnique(
+    orgId: string,
+    phoneNumber: string,
+    phoneCountryCode: string,
+    email: string,
+  ) {
+    const isUniqEmail = `query IsUniqEmail($orgId: uuid!, $email: String!) {
+      patient(where: {_and: {organizationId: {_eq: $orgId}, email: {_eq: $email}}}) {
+        id
+      }
+    }`;
+
+    const isUniqPhone = `query IsUniqPhone($orgId: uuid!, $phoneCountryCode: String!, $phoneNumber: String!) {
+      patient(where: {_and: {organizationId: {_eq: $orgId}, phoneCountryCode: {_eq: $phoneCountryCode}, phoneNumber: {_eq: $phoneNumber}}}) {
+        id
+      }
+    }`;
+
+    const [uniqEmailResp, uniqPhoneResp] = await Promise.all([
+      this.gqlService.client.request(isUniqEmail, { orgId, email }),
+      this.gqlService.client.request(isUniqPhone, { orgId, phoneCountryCode, phoneNumber }),
+    ]);
+
+    if (uniqEmailResp.patient.length !== 0) {
+      throw new HttpException('Email address already taken', HttpStatus.BAD_REQUEST);
+    }
+
+    if (uniqPhoneResp.patient.length !== 0) {
+      throw new HttpException('Phone number already taken', HttpStatus.BAD_REQUEST);
+    }
+
+    return true;
+  }
+
   async verifyOrgInviteCode(inviteCode: string): Promise<{
     id: string;
     organizationId: string;

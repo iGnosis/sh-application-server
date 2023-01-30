@@ -1,10 +1,13 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { Cron } from '@nestjs/schedule';
+import { Cron, CronExpression } from '@nestjs/schedule';
 import axios from 'axios';
 import * as fs from 'fs/promises';
 import { join } from 'path';
+import { GqlService } from '../clients/gql/gql.service';
+import { EventsService } from '../events/events.service';
 import { RbacService } from '../rbac/rbac.service';
+import { SubscriptionPlanService } from '../subscription-plan/subscription-plan.service';
 
 @Injectable()
 export class CronService {
@@ -12,6 +15,9 @@ export class CronService {
     private configService: ConfigService,
     private readonly logger: Logger,
     private rbacService: RbacService,
+    private subscriptionPlanService: SubscriptionPlanService,
+    private gqlService: GqlService,
+    private eventsService: EventsService,
   ) {
     this.logger = new Logger(CronService.name);
   }
@@ -101,5 +107,48 @@ export class CronService {
     await fs.writeFile(controllersMetadataFilePath, JSON.stringify(controllerRbac), {
       encoding: 'utf-8',
     });
+  }
+
+  @Cron(CronExpression.EVERY_1ST_DAY_OF_MONTH_AT_NOON)
+  async generateMonthlyReport() {
+    try {
+      const query = `
+      query GetOrganizations {
+        organization {
+          id
+        }
+      }`;
+      const resp = await this.gqlService.client.request(query);
+      if (!resp || !resp.organization) throw new Error('No organizations found');
+
+      const date = new Date();
+      date.setDate(date.getDate() - 1); // last day of previous month
+
+      const startOfMonth = new Date(date.getFullYear(), date.getMonth(), 1);
+      const endOfMonth = new Date(date.getFullYear(), date.getMonth() + 1, 0);
+
+      for (const org of resp.organization) {
+        const orgId = org.id;
+        const report = await this.subscriptionPlanService.generateReport(
+          orgId,
+          startOfMonth.toISOString(),
+          endOfMonth.toISOString(),
+        );
+        if (!report) continue;
+        const { formattedOverview, ...txtReport } = report;
+        await this.subscriptionPlanService.createTxtReport(txtReport);
+
+        if (orgId === '00000000-0000-0000-0000-000000000000') {
+          await this.eventsService.sendMonthlyReportEmail(formattedOverview, startOfMonth);
+        }
+        await this.subscriptionPlanService.saveMonthlyReport(
+          txtReport.overview[1][txtReport.overview.length - 1],
+          orgId,
+        );
+      }
+      this.logger.log('Monthly report generated');
+    } catch (error) {
+      this.logger.error(error);
+    }
   }
 }

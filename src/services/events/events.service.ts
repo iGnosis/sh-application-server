@@ -134,7 +134,7 @@ export class EventsService {
   }
 
   // Called when users' emails are updated.
-  async userSignIn(userId: string) {
+  async userSignUp(userId: string) {
     await this._updateEvents(userId, 'user.signup');
   }
 
@@ -225,7 +225,7 @@ export class EventsService {
                 Data: `
                 Patient Email: ${patientEmail}
                 Patient Nickname: ${nickname || 'unknown'}
-  
+
                 Feedback Received =>
                   Reason for cancellation: ${reason || 'none'}`,
               },
@@ -234,6 +234,50 @@ export class EventsService {
         },
         Addresses: {
           'support@pointmotion.us': {
+            ChannelType: 'EMAIL',
+          },
+        },
+      },
+    };
+    await this.pinpoint.sendMessages(input);
+    return {
+      status: 'success',
+    };
+  }
+
+  async sendMonthlyReportEmail(report: string, billingPeriod: Date) {
+    const dateOptions: Intl.DateTimeFormatOptions = { month: 'long', year: 'numeric' };
+    const input: SendMessagesCommandInput = {
+      ApplicationId: this.projectId,
+      MessageRequest: {
+        MessageConfiguration: {
+          EmailMessage: {
+            FromAddress: 'no-reply@pointmotion.us',
+            ReplyToAddresses: ['support@pointmotion.us'],
+            SimpleEmail: {
+              Subject: {
+                Data: `Monthly report for the month ${billingPeriod.toLocaleDateString(
+                  'en-US',
+                  dateOptions,
+                )}`,
+              },
+              TextPart: {
+                Data: `Month: ${billingPeriod.toLocaleDateString('en-US', dateOptions)}
+
+Report:
+${report}`,
+              },
+            },
+          },
+        },
+        Addresses: {
+          'imen@pointmotioncontrol.com': {
+            ChannelType: 'EMAIL',
+          },
+          'kevin@pointmotioncontrol.com': {
+            ChannelType: 'EMAIL',
+          },
+          'aman@pointmotioncontrol.com': {
             ChannelType: 'EMAIL',
           },
         },
