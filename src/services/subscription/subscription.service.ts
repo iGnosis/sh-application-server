@@ -14,6 +14,16 @@ export class SubscriptionService {
     return this.gqlService.client.request(query, { id, customerId });
   }
 
+  async setPaymentAuthUrl(subscriptionId: string, paymentAuthUrl: string) {
+    const query = `
+    mutation SetPaymentAuthUrl($paymentAuthUrl: String = "", $subscriptionId: String = "") {
+      update_subscriptions(where: {subscriptionId: {_eq: $subscriptionId}}, _set: {paymentAuthUrl: $paymentAuthUrl}) {
+        affected_rows
+      }
+    }`;
+    return this.gqlService.client.request(query, { subscriptionId, paymentAuthUrl });
+  }
+
   async getSubscriptionPlan(orgId: string) {
     const query = `
       query GetSubscriptionPlan($orgId: uuid!) {
@@ -78,6 +88,21 @@ export class SubscriptionService {
       id: userId,
       subscription: subscriptionId,
     });
+  }
+
+  async getSubscriptionId(customerId: string) {
+    try {
+      const query = `
+      query getSubscriptionFromCustomer($customerId: String = "") {
+        patient(where: {customerId: {_eq: $customerId}}) {
+          subscription
+        }
+      }`;
+      const resp = await this.gqlService.client.request(query, { customerId });
+      return resp.patient[0].subscription;
+    } catch (err) {
+      console.log(err);
+    }
   }
 
   async getPatientDetails(userId: string): Promise<{
