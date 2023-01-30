@@ -54,6 +54,8 @@ export class PatientPaymentController {
     const { client_secret } = await this.stripeService.stripeClient.setupIntents.create({
       customer: customerId,
       payment_method_types: ['card'],
+      confirm: true,
+      return_url: 'https://patient.dev.pointmotioncontrol.com/app/home',
     });
     return {
       clientSecret: client_secret,
