@@ -237,7 +237,10 @@ export class PatientPaymentController {
         subscription,
       };
     } catch (err) {
-      throw new HttpException('Unable to create subscription', HttpStatus.BAD_REQUEST);
+      throw new HttpException(
+        'Unable to create subscription::' + JSON.stringify(err),
+        HttpStatus.BAD_REQUEST,
+      );
     }
   }
 
