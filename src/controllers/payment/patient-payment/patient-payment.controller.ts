@@ -453,6 +453,16 @@ export class PatientPaymentController {
         return {
           status: 'success',
         };
+      } else if (body.type == 'payment_intent.succeeded') {
+        const paymentIntent = body.data.object as any;
+        const subscriptionId = await this.subsciptionService.getSubscriptionId(
+          paymentIntent.customer as string,
+        );
+        await this.subsciptionService.setPaymentAuthUrl(subscriptionId, '');
+
+        return {
+          status: 'success',
+        };
       }
     } catch (err) {
       console.log(err);
