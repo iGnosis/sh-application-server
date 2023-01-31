@@ -147,9 +147,21 @@ export class PatientPaymentController {
       throw new HttpException('Subscription already exists.', HttpStatus.BAD_REQUEST);
 
     const promoCodes = await this.stripeService.stripeClient.promotionCodes.list();
-    const promoCodesList = promoCodes.data.map((promoCodeData) => promoCodeData.id);
+    let promoCodesList = promoCodes.data.map((promoCodeData: Stripe.PromotionCode) => ({
+      code: promoCodeData.code,
+      id: promoCodeData.id,
+      active: promoCodeData.active,
+    }));
+    promoCodesList = promoCodesList.filter(
+      (code: { code: string; id: string; active: boolean }) => code.active,
+    );
+    console.log('promocodes::', promoCodesList);
 
-    if (!promoCodesList.includes(promoCode))
+    if (
+      !promoCodesList.filter(
+        (code: { code: string; id: string; active: boolean }) => code.code === promoCode,
+      ).length
+    )
       throw new HttpException('Invalid Promotion Code.', HttpStatus.BAD_REQUEST);
 
     const { subscription_plans } = await this.subsciptionService.getSubscriptionPlan(orgId);
@@ -163,7 +175,9 @@ export class PatientPaymentController {
         },
       ],
       // adding promoCode to the subscription plan
-      promotion_code: promoCode,
+      promotion_code: promoCodesList.filter(
+        (code: { code: string; id: string }) => code.code === promoCode,
+      )[0].id,
     };
 
     const subscription = await this.stripeService.stripeClient.subscriptions.create(
