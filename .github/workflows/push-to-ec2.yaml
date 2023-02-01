@@ -2,10 +2,8 @@ name: Push to EC2
 
 # Controls when the workflow will run
 on:
-  # Triggers the workflow on push or pull request events but only for the main branch
+  # Triggers the workflow on push events.
   push:
-    branches: [ main, dev, stage ]
-  pull_request:
     branches: [ main, dev, stage ]
 
   # Allows you to run this workflow manually from the Actions tab
@@ -14,10 +12,8 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-
     steps:
       - uses: actions/checkout@v2
-
       - name: Set production environment variables
         if: endsWith(github.ref, '/main')
         run: |
@@ -83,21 +79,27 @@ jobs:
         run: |
          echo "Listing files..."
          ls -la
-         npm install
+         npm ci --ignore-scripts
          npm run build
 
-      # TODO: Put tests in CI once you create a env file dynamically.
-      # - name: Run test cases
-      #   run: |
-      #    npm run test
+      - name: Run test cases
+        run: |
+         npm run test:cov
+
+      - name: Update code coverage badge
+        run: npx update-badge
+
+      - uses: mikeal/publish-to-github-action@master
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          BRANCH_NAME: ${{ github.ref_name }}
 
       - name: Copy Files Over Remote Server
         run: |
           rsync -avzr --delete \
           /home/runner/work/sh-application-server/sh-application-server/dist/ \
           /home/runner/work/sh-application-server/sh-application-server/node_modules \
-          /home/runner/work/sh-application-server/sh-application-server/downloads \
-          /home/runner/work/sh-application-server/sh-application-server/pose-documents \
+          /home/runner/work/sh-application-server/sh-application-server/storage \
           $SSH_USER@$SSH_HOST:$SSH_REMOTE_PATH
 
       - name: Kill existing node processes and run the app
@@ -106,5 +108,16 @@ jobs:
           "pkill -15 node; \
           (. ~/.pmc-secrets; \
           cd $SSH_REMOTE_PATH; \
-          echo > /tmp/app-server.log; \
-          nohup node main.js >> /tmp/app-server.log 2>&1 &)"
+          nohup node main.js > /dev/null 2>&1 &)"
+
+  # coverage:
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - uses: actions/checkout@v3
+  #     - uses: ArtiomTr/jest-coverage-report-action@v2
+  #       id: coverage
+  #       with:
+  #         output: report-markdown
+  #     - uses: marocchino/sticky-pull-request-comment@v2
+  #       with:
+  #         message: ${{ steps.coverage.outputs.report }}

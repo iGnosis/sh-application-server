@@ -19,7 +19,7 @@ describe('DatabaseService', () => {
 
   xit('should have database connectivity', async () => {
     const dbVersion = await service.executeQuery('SELECT version()');
-    expect(JSON.stringify(dbVersion)).toContain('PostgreSQL 10.18');
+    expect(JSON.stringify(dbVersion)).toContain('PostgreSQL');
   });
 
   xit('should get connection pool', async () => {

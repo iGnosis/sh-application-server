@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
-import { AggregatedObject, AnalyticsDTO } from 'src/types/analytics';
-import { GqlService } from '../gql/gql.service';
+import { AggregatedObject, AnalyticsDTO } from 'src/types/global';
+import { GqlService } from '../clients/gql/gql.service';
 
 @Injectable()
 export class AggregateAnalyticsService {
@@ -17,21 +17,21 @@ export class AggregateAnalyticsService {
     // key, value & noOfSamples are required to store in aggregate_analytics table.
     return {
       key: 'avgAchievementRatio',
-      value: parseFloat((correctPromptsCount / analytics.length).toFixed(2)),
+      value: parseFloat((correctPromptsCount / analytics.length).toFixed(2)) || 0,
       noOfSamples: analytics.length,
     };
   }
 
-  averageCompletionRatio(analytics: AnalyticsDTO[]) {
+  averageCompletionTimeInMs(analytics: AnalyticsDTO[]) {
     const sumCompletionTime = analytics.reduce((sum, val) => {
-      if (val.reaction.completionTime) {
-        sum += val.reaction.completionTime;
+      if (val.reaction.completionTimeInMs) {
+        sum += val.reaction.completionTimeInMs;
       }
       return sum;
     }, 0);
 
     const countCompletionTimePrompts = analytics.reduce((count, val) => {
-      if (val.reaction.completionTime) {
+      if (val.reaction.completionTimeInMs) {
         count++;
       }
       return count;
@@ -39,13 +39,18 @@ export class AggregateAnalyticsService {
 
     // key, value & noOfSamples are required to store in aggregate_analytics table.
     return {
-      key: 'avgCompletionTime',
-      value: parseFloat((sumCompletionTime / countCompletionTimePrompts).toFixed(2)),
+      key: 'avgCompletionTimeInMs',
+      value: parseFloat((sumCompletionTime / countCompletionTimePrompts).toFixed(2)) || 0,
       noOfSamples: countCompletionTimePrompts,
     };
   }
 
-  async insertAggregatedAnalytics(patientId: string, gameId: string, data: object) {
+  async insertAggregatedAnalytics(
+    patientId: string,
+    gameId: string,
+    organizationId: string,
+    data: object,
+  ) {
     const query = `mutation InsertAggregateAnalytics($objects: [aggregate_analytics_insert_input!] = {}) {
       insert_aggregate_analytics(objects: $objects) {
         affected_rows
@@ -58,6 +63,7 @@ export class AggregateAnalyticsService {
         objects.push({
           patient: patientId,
           game: gameId,
+          organizationId,
           key,
           value,
         });
@@ -65,6 +71,7 @@ export class AggregateAnalyticsService {
         objects.push({
           patient: patientId,
           game: gameId,
+          organizationId,
           key: value.key,
           value: value.value,
           noOfSamples: value.noOfSamples,

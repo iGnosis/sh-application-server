@@ -1,0 +1,60 @@
+version: '3.9'
+services:
+  sh_application_server_prod:
+    build:
+      context: .
+      dockerfile: docker/Prod.Dockerfile
+    profiles:
+      - prod
+    env_file: .env
+    restart: unless-stopped
+    ports:
+      - 9000:9000
+    # so that it can connect to Postgres DB & Hasura
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+  graphql_engine_prod:
+    image: 'docker.io/hasura/graphql-engine:latest'
+    profiles:
+      - prod
+    env_file: .env
+    container_name: graphql-engine
+    ports:
+    - "8080:8080"
+    restart: unless-stopped
+    # so that it can connect to Postgres DB & NestJS
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    environment:
+      HASURA_GRAPHQL_DATABASE_URL: postgres://${DEV_DB_USER}:${DEV_DB_PASSWORD}@${DEV_DB_ENDPOINT}:${DEV_DB_PORT}/${DEV_DB_NAME}
+      HASURA_GRAPHQL_ENABLE_CONSOLE: "false"
+      HASURA_GRAPHQL_DEV_MODE: "${DEV_HASURA_GRAPHQL_DEV_MODE}"
+      ACTION_BASE_URL: ${DEV_ACTION_BASE_URL}
+      HASURA_GRAPHQL_JWT_SECRET: '${DEV_HASURA_GRAPHQL_JWT_SECRET}'
+      HASURA_GRAPHQL_ADMIN_SECRET: ${DEV_HASURA_GRAPHQL_ADMIN_SECRET}
+      HASURA_GRAPHQL_UNAUTHORIZED_ROLE: guest
+      HASURA_GRAPHQL_ENABLED_LOG_TYPES: startup, http-log, webhook-log, websocket-log, query-log
+    command:
+    - graphql-engine
+    - serve
+
+  sh_application_server_local:
+    build:
+      context: .
+      dockerfile: docker/Local.Dockerfile
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    container_name: local_app_server
+    profiles:
+      - local
+    env_file: .env
+    restart: unless-stopped
+    ports:
+      - 9000:9000
+    # For hot reloading
+    volumes:
+      - ./:/usr/src/sh-application-server/local
+      - ignore://usr/src/sh-application-server/local/node_modules
+volumes:
+  ignore:

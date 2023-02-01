@@ -397,10 +397,6 @@ Temporary Items
 # Local
 .env
 dist
-
-
-downloads/*
-!downloads/dont_delete
-
-pose-documents/*
-!pose-documents/dont_delete
+temp
+storage/*/*
+!**/.gitkeep

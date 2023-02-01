@@ -1,0 +1,6 @@
+dist
+docker
+node_modules
+docker-compose.yaml
+.env.sample
+.dockerignore
