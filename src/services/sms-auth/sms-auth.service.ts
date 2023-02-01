@@ -69,6 +69,7 @@ export class SmsAuthService {
     const query = `query GetOrganization($orgName: String!) {
       organization(where: {name: {_eq: $orgName}}) {
         id
+        isPublicSignUpEnabled
       }
     }`;
     const resp = await this.gqlService.client.request(query, { orgName });
