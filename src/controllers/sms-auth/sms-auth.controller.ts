@@ -68,18 +68,20 @@ export class SmsAuthController {
       });
     }
 
-    // NOTE: allow public patient signups.
+    // NOTE: some organization allows public patient sign-ups.
     if (userType === LoginUserType.PATIENT) {
       const organization = await this.smsAuthService.getOrganization(orgName);
-      try {
-        await this.smsAuthService.insertPatient({
-          phoneCountryCode: body.phoneCountryCode,
-          phoneNumber: body.phoneNumber,
-          organizationId: organization.id,
-          type: UserRole.PATIENT,
-        });
-      } catch (error) {
-        this.logger.log('patient might already exist');
+      if (organization && organization.isPublicSignUpEnabled) {
+        try {
+          await this.smsAuthService.insertPatient({
+            phoneCountryCode: body.phoneCountryCode,
+            phoneNumber: body.phoneNumber,
+            organizationId: organization.id,
+            type: UserRole.PATIENT,
+          });
+        } catch (error) {
+          this.logger.log('patient might already exist');
+        }
       }
     }
 

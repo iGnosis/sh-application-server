@@ -131,6 +131,7 @@ export class Organization {
   patientDomain: string;
   organizationDomain: string;
   logoUrl: string;
+  isPublicSignUpEnabled: boolean;
 }
 
 export class Staff {
