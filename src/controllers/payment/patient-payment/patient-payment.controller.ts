@@ -15,9 +15,9 @@ import { StripeService } from 'src/services/stripe/stripe.service';
 import { SubscriptionService } from 'src/services/subscription/subscription.service';
 import Stripe from 'stripe';
 import {
+  GetBillingHistoryDTO,
   PaymentMethodId,
   UpdatePaymentMethodDTO,
-  GetBillingHistoryDTO,
 } from './patient-payment.dto';
 
 @Controller('patient-payment')
@@ -60,7 +60,6 @@ export class PatientPaymentController {
     };
   }
 
-  // WIP
   @ApiBearerAuth('access-token')
   @UseInterceptors(new TransformResponseInterceptor())
   @Get('subscription-status')
@@ -148,9 +147,21 @@ export class PatientPaymentController {
       throw new HttpException('Subscription already exists.', HttpStatus.BAD_REQUEST);
 
     const promoCodes = await this.stripeService.stripeClient.promotionCodes.list();
-    const promoCodesList = promoCodes.data.map((promoCodeData) => promoCodeData.id);
+    let promoCodesList = promoCodes.data.map((promoCodeData: Stripe.PromotionCode) => ({
+      code: promoCodeData.code,
+      id: promoCodeData.id,
+      active: promoCodeData.active,
+    }));
+    promoCodesList = promoCodesList.filter(
+      (code: { code: string; id: string; active: boolean }) => code.active,
+    );
+    console.log('promocodes::', promoCodesList);
 
-    if (!promoCodesList.includes(promoCode))
+    if (
+      !promoCodesList.filter(
+        (code: { code: string; id: string; active: boolean }) => code.code === promoCode,
+      ).length
+    )
       throw new HttpException('Invalid Promotion Code.', HttpStatus.BAD_REQUEST);
 
     const { subscription_plans } = await this.subsciptionService.getSubscriptionPlan(orgId);
@@ -164,7 +175,9 @@ export class PatientPaymentController {
         },
       ],
       // adding promoCode to the subscription plan
-      promotion_code: promoCode,
+      promotion_code: promoCodesList.filter(
+        (code: { code: string; id: string }) => code.code === promoCode,
+      )[0].id,
     };
 
     const subscription = await this.stripeService.stripeClient.subscriptions.create(
@@ -237,7 +250,10 @@ export class PatientPaymentController {
         subscription,
       };
     } catch (err) {
-      throw new HttpException('Unable to create subscription', HttpStatus.BAD_REQUEST);
+      throw new HttpException(
+        'Unable to create subscription::' + JSON.stringify(err),
+        HttpStatus.BAD_REQUEST,
+      );
     }
   }
 
@@ -427,6 +443,41 @@ export class PatientPaymentController {
         invoices: response,
         hasMore: invoices.has_more,
       };
+    } catch (err) {
+      console.log(err);
+      throw new HttpException(err.message, HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+  }
+
+  @Post('require-payment-action')
+  async requirePaymentAction(@Body() body: any): Promise<any> {
+    try {
+      if (body.type == 'payment_intent.requires_action') {
+        const paymentIntent = body.data.object as any;
+        const subscriptionId = await this.subsciptionService.getSubscriptionId(
+          paymentIntent.customer as string,
+        );
+        if (paymentIntent.next_action?.use_stripe_sdk?.stripe_js) {
+          await this.subsciptionService.setPaymentAuthUrl(
+            subscriptionId,
+            paymentIntent.next_action.use_stripe_sdk.stripe_js,
+          );
+        }
+
+        return {
+          status: 'success',
+        };
+      } else if (body.type == 'payment_intent.succeeded') {
+        const paymentIntent = body.data.object as any;
+        const subscriptionId = await this.subsciptionService.getSubscriptionId(
+          paymentIntent.customer as string,
+        );
+        await this.subsciptionService.setPaymentAuthUrl(subscriptionId, '');
+
+        return {
+          status: 'success',
+        };
+      }
     } catch (err) {
       console.log(err);
       throw new HttpException(err.message, HttpStatus.INTERNAL_SERVER_ERROR);
