@@ -43,7 +43,7 @@ socket = io(wss://services.dev.pointmotioncontrol.com/testing-videos, {
     - final array that was created by appending Step2 returned objects
 */
 
-@WebSocketGateway({ cors: true, namespace: 'testing-videos' })
+@WebSocketGateway({ cors: true, namespace: 'testing-videos', path: 'testing-videos' })
 export class TestingVideoGateway
   implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect
 {
