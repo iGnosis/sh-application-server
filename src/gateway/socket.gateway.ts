@@ -32,10 +32,6 @@ export class MediapipePoseGateway
   numOfClientsInARoom: { [roomId: string]: number } = {};
   private logEvents: { [key: string]: InputLogEvent[] } = {};
   private cloudwatchClient = new CloudWatchLogsClient({
-    credentials: {
-      accessKeyId: this.configService.get('AWS_ACCESS_KEY_ID'),
-      secretAccessKey: this.configService.get('AWS_SECRET_ACCESS_KEY'),
-    },
     region: this.configService.get('AWS_DEFAULT_REGION') || 'us-east-1',
   });
 
@@ -175,6 +171,7 @@ export class MediapipePoseGateway
       } catch (err) {
         this.logger.log(err);
       }
+      this.logger.log('Log Stream Name: ' + logStreamName);
 
       try {
         const logEvent = new PutLogEventsCommand({
@@ -183,6 +180,8 @@ export class MediapipePoseGateway
           logStreamName,
         });
         await this.cloudwatchClient.send(logEvent);
+        delete this.logEvents[logStreamName];
+        this.logger.log('Logged Events: ' + this.logEvents[logStreamName].length);
       } catch (err) {
         this.logger.log(err);
       }
