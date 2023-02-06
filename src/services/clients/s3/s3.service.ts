@@ -5,9 +5,13 @@ import {
   PutObjectCommand,
   DeleteObjectCommand,
   PutObjectCommandInput,
+  CreateMultipartUploadCommand,
+  UploadPartCommand,
+  CompleteMultipartUploadCommand,
 } from '@aws-sdk/client-s3';
 import { ConfigService } from '@nestjs/config';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
+import { S3CompletedParts } from 'src/types/global';
 
 @Injectable()
 export class S3Service {
@@ -25,7 +29,43 @@ export class S3Service {
       Bucket: bucket,
       Key: key,
     });
-    return this.client.send(command);
+    return await this.client.send(command);
+  }
+
+  async createMultipartUpload(bucket: string, key: string) {
+    const command = new CreateMultipartUploadCommand({
+      Bucket: bucket,
+      Key: key,
+    });
+    return await this.client.send(command);
+  }
+
+  async uploadPart(bucket: string, key: string, uploadId: string, partNumber: number, chunk: Blob) {
+    const command = new UploadPartCommand({
+      Bucket: bucket,
+      Key: key,
+      UploadId: uploadId,
+      PartNumber: partNumber,
+      Body: chunk,
+    });
+    return await this.client.send(command);
+  }
+
+  async completePartUpload(
+    bucket: string,
+    key: string,
+    uploadId: string,
+    parts: S3CompletedParts[],
+  ) {
+    const command = new CompleteMultipartUploadCommand({
+      Bucket: bucket,
+      Key: key,
+      UploadId: uploadId,
+      MultipartUpload: {
+        Parts: parts,
+      },
+    });
+    return await this.client.send(command);
   }
 
   async putObjectSignedUrl(

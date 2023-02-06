@@ -222,3 +222,21 @@ interface HttpErrorWithReason {
   msg: string;
   reason: string;
 }
+
+interface S3CompletedParts {
+  PartNumber: number;
+  ETag: string;
+}
+
+interface CompleteMultipartUploadBody {
+  filename: string;
+  uploadId: string;
+  parts: S3CompletedParts[];
+}
+
+interface UploadChunkBody {
+  filename: string;
+  uploadId: string;
+  chunk: Blob;
+  partNumber: number;
+}
