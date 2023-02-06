@@ -51,18 +51,15 @@ export class S3Service {
     return await this.client.send(command);
   }
 
-  async completePartUpload(
-    bucket: string,
-    key: string,
-    uploadId: string,
-    parts: S3CompletedParts[],
-  ) {
+  async completePartUpload(bucket: string, key: string, uploadId: string) {
+    // make API call to build parts
+
     const command = new CompleteMultipartUploadCommand({
       Bucket: bucket,
       Key: key,
       UploadId: uploadId,
       MultipartUpload: {
-        Parts: parts,
+        Parts: [],
       },
     });
     return await this.client.send(command);

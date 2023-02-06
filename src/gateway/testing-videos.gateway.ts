@@ -94,17 +94,17 @@ export class TestingVideoGateway
 
   @SubscribeMessage('upload-chunk')
   async uploadChunk(@ConnectedSocket() client: Socket, @MessageBody() body: UploadChunkBody) {
-    const res = await this.s3Service.uploadPart(
+    this.s3Service.uploadPart(
       this.BUCKET,
       body.filename,
       body.uploadId,
       body.partNumber,
       body.chunk,
     );
-    client.emit('upload-chunk', {
-      PartNumber: body.partNumber,
-      ETag: res.ETag,
-    });
+    // client.emit('upload-chunk', {
+    //   PartNumber: body.partNumber,
+    //   ETag: res.ETag,
+    // });
   }
 
   @SubscribeMessage('complete-multipart-upload')
@@ -116,7 +116,7 @@ export class TestingVideoGateway
       this.BUCKET,
       body.filename,
       body.uploadId,
-      body.parts,
+      // body.parts,
     );
     // TODO: create table for keeping urls.
     client.emit('complete-multipart-upload', {
