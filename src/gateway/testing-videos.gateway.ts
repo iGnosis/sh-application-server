@@ -69,6 +69,7 @@ export class TestingVideoGateway
 
     const payload = this.smsAuthSerivce.verifyWsToken(authToken as string);
     if (!payload) {
+      this.logger.error(`Invalid authtoken. Disconnecting client ${client.id}`);
       client.disconnect();
       return;
     }
