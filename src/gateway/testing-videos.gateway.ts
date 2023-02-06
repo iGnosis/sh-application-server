@@ -83,7 +83,7 @@ export class TestingVideoGateway
     const { userId } = client.handshake.query;
     const res = await this.s3Service.createMultipartUpload(
       this.BUCKET,
-      `${this.ENV_NAME}/${userId}/${new Date().getTime()}`,
+      `${this.ENV_NAME}/${userId}/${new Date().getTime()}.mp4`,
     );
     client.emit('init-multipart-upload', {
       uploadId: res.UploadId,
