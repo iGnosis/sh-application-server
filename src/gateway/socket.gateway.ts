@@ -175,6 +175,7 @@ export class MediapipePoseGateway
       } catch (err) {
         this.logger.log(err);
       }
+      this.logger.log('Log Stream Name: ' + logStreamName);
 
       try {
         const logEvent = new PutLogEventsCommand({
@@ -183,6 +184,8 @@ export class MediapipePoseGateway
           logStreamName,
         });
         await this.cloudwatchClient.send(logEvent);
+        delete this.logEvents[logStreamName];
+        this.logger.log('Logged Events: ' + this.logEvents[logStreamName].length);
       } catch (err) {
         this.logger.log(err);
       }
