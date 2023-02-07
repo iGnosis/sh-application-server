@@ -8,6 +8,8 @@ import {
   CreateMultipartUploadCommand,
   UploadPartCommand,
   CompleteMultipartUploadCommand,
+  ListMultipartUploadsCommand,
+  ListPartsCommand,
 } from '@aws-sdk/client-s3';
 import { ConfigService } from '@nestjs/config';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
@@ -40,7 +42,7 @@ export class S3Service {
     return await this.client.send(command);
   }
 
-  async uploadPart(bucket: string, key: string, uploadId: string, partNumber: number, chunk: Blob) {
+  uploadPart(bucket: string, key: string, uploadId: string, partNumber: number, chunk: Blob) {
     const command = new UploadPartCommand({
       Bucket: bucket,
       Key: key,
@@ -48,18 +50,29 @@ export class S3Service {
       PartNumber: partNumber,
       Body: chunk,
     });
-    return await this.client.send(command);
+    return this.client.send(command);
   }
 
   async completePartUpload(bucket: string, key: string, uploadId: string) {
-    // make API call to build parts
+    const listMultipartUploadsCommand = new ListPartsCommand({
+      Bucket: bucket,
+      Key: key,
+      UploadId: uploadId,
+    });
+    const parts = await this.client.send(listMultipartUploadsCommand);
+    const filteredParts = parts.Parts.map((part) => {
+      return {
+        ETag: part.ETag,
+        PartNumber: part.PartNumber,
+      };
+    });
 
     const command = new CompleteMultipartUploadCommand({
       Bucket: bucket,
       Key: key,
       UploadId: uploadId,
       MultipartUpload: {
-        Parts: [],
+        Parts: filteredParts,
       },
     });
     return await this.client.send(command);

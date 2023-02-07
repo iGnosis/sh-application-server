@@ -61,7 +61,7 @@ export class TestingVideoGateway
   }
 
   afterInit(server: any) {
-    this.logger.log('Gateway Initialized');
+    this.logger.log('TestingVideoGateway Initialized');
   }
 
   handleConnection(client: Socket, ...args: any[]) {
@@ -73,6 +73,7 @@ export class TestingVideoGateway
       client.disconnect();
       return;
     }
+    this.logger.log(`Client connected: ${client.id}`);
   }
 
   handleDisconnect(client: any) {
@@ -82,25 +83,33 @@ export class TestingVideoGateway
   @SubscribeMessage('init-multipart-upload')
   async initMultipartUpload(@ConnectedSocket() client: Socket) {
     const { userId } = client.handshake.query;
-    const res = await this.s3Service.createMultipartUpload(
-      this.BUCKET,
-      `${this.ENV_NAME}/${userId}/${new Date().getTime()}.mp4`,
-    );
-    client.emit('init-multipart-upload', {
-      uploadId: res.UploadId,
-      filename: res.Key,
-    });
+    try {
+      const res = await this.s3Service.createMultipartUpload(
+        this.BUCKET,
+        `${this.ENV_NAME}/${userId}/${new Date().getTime()}.mp4`,
+      );
+      client.emit('init-multipart-upload', {
+        uploadId: res.UploadId,
+        filename: res.Key,
+      });
+    } catch (err) {
+      this.logger.error('error while init multipart upload:: ' + JSON.stringify(err));
+    }
   }
 
   @SubscribeMessage('upload-chunk')
   async uploadChunk(@ConnectedSocket() client: Socket, @MessageBody() body: UploadChunkBody) {
-    this.s3Service.uploadPart(
-      this.BUCKET,
-      body.filename,
-      body.uploadId,
-      body.partNumber,
-      body.chunk,
-    );
+    this.s3Service
+      .uploadPart(this.BUCKET, body.filename, body.uploadId, body.partNumber, body.chunk)
+      .then((res) => {
+        client.emit('upload-chunk', {
+          ...res,
+        });
+        this.logger.log('chunk uploaded');
+      })
+      .catch((err) => {
+        this.logger.error('error while uploading chunk:: ' + JSON.stringify(err));
+      });
     // client.emit('upload-chunk', {
     //   PartNumber: body.partNumber,
     //   ETag: res.ETag,
@@ -112,15 +121,20 @@ export class TestingVideoGateway
     @ConnectedSocket() client: Socket,
     @MessageBody() body: CompleteMultipartUploadBody,
   ) {
-    const res = await this.s3Service.completePartUpload(
-      this.BUCKET,
-      body.filename,
-      body.uploadId,
-      // body.parts,
-    );
-    // TODO: create table for keeping urls.
-    client.emit('complete-multipart-upload', {
-      accessUrl: res.Location,
-    });
+    try {
+      const res = await this.s3Service.completePartUpload(
+        this.BUCKET,
+        body.filename,
+        body.uploadId,
+        // body.parts,
+      );
+      // TODO: create table for keeping urls.
+      client.emit('complete-multipart-upload', {
+        accessUrl: res.Location,
+      });
+      this.logger.log('upload complete');
+    } catch (err) {
+      this.logger.error('error while completing upload:: ' + JSON.stringify(err));
+    }
   }
 }
