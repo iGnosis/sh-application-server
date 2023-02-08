@@ -5,9 +5,15 @@ import {
   PutObjectCommand,
   DeleteObjectCommand,
   PutObjectCommandInput,
+  CreateMultipartUploadCommand,
+  UploadPartCommand,
+  CompleteMultipartUploadCommand,
+  ListMultipartUploadsCommand,
+  ListPartsCommand,
 } from '@aws-sdk/client-s3';
 import { ConfigService } from '@nestjs/config';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
+import { S3CompletedParts } from 'src/types/global';
 
 @Injectable()
 export class S3Service {
@@ -25,7 +31,51 @@ export class S3Service {
       Bucket: bucket,
       Key: key,
     });
+    return await this.client.send(command);
+  }
+
+  async createMultipartUpload(bucket: string, key: string) {
+    const command = new CreateMultipartUploadCommand({
+      Bucket: bucket,
+      Key: key,
+    });
+    return await this.client.send(command);
+  }
+
+  uploadPart(bucket: string, key: string, uploadId: string, partNumber: number, chunk: Blob) {
+    const command = new UploadPartCommand({
+      Bucket: bucket,
+      Key: key,
+      UploadId: uploadId,
+      PartNumber: partNumber,
+      Body: chunk,
+    });
     return this.client.send(command);
+  }
+
+  async completePartUpload(bucket: string, key: string, uploadId: string) {
+    const listMultipartUploadsCommand = new ListPartsCommand({
+      Bucket: bucket,
+      Key: key,
+      UploadId: uploadId,
+    });
+    const parts = await this.client.send(listMultipartUploadsCommand);
+    const filteredParts = parts.Parts.map((part) => {
+      return {
+        ETag: part.ETag,
+        PartNumber: part.PartNumber,
+      };
+    });
+
+    const command = new CompleteMultipartUploadCommand({
+      Bucket: bucket,
+      Key: key,
+      UploadId: uploadId,
+      MultipartUpload: {
+        Parts: filteredParts,
+      },
+    });
+    return await this.client.send(command);
   }
 
   async putObjectSignedUrl(

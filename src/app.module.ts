@@ -55,6 +55,7 @@ import { MockController } from './mock/mock.controller';
 import { SubscriptionService } from './services/subscription/subscription.service';
 import { ErpnextController } from './controllers/erpnext/erpnext.controller';
 import { ErpnextService } from './services/erpnext/erpnext.service';
+import { TestingVideoGateway } from './gateway/testing-videos.gateway';
 
 const winstonDailyRotateTransport = new winstonDailyRotateFile({
   dirname: '../nestjs-app-logs',
@@ -143,6 +144,7 @@ const nestLikeFormatting = winston.format.combine(
     SmsAuthService,
     SmsService,
     MediapipePoseGateway,
+    TestingVideoGateway,
     S3Service,
     AggregateAnalyticsService,
     StatsService,

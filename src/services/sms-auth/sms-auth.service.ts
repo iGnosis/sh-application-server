@@ -373,4 +373,18 @@ export class SmsAuthService {
       throw new HttpException('Invalid Token', HttpStatus.FORBIDDEN);
     }
   }
+
+  verifyWsToken(authToken: string): boolean | JwtPayload {
+    if (!authToken) {
+      return false;
+    }
+
+    try {
+      const payload = this.verifyToken(authToken);
+      return payload;
+    } catch (err) {
+      this.logger.log(err);
+      return false;
+    }
+  }
 }
