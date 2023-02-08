@@ -20,7 +20,7 @@ import { PollyService } from './services/clients/polly/polly.service';
 import { RewardsService } from './services/rewards/rewards.service';
 import { VideoTranscoderService } from './services/clients/video-transcoder/video-transcoder.service';
 import { GameBenchmarkingController } from './controllers/game-benchmarking/game-benchmarking.controller';
-import { PatientFeedbackController } from './controllers/patient-feedback/cron.controller';
+import { PatientFeedbackController } from './controllers/cron/cron.controller';
 import { RewardsController } from './controllers/rewards/rewards.controller';
 import { SpeechSynthesisController } from './controllers/speech-synthesis/speech-synthesis.controller';
 import { StatsController } from './controllers/stats/stats.controller';
