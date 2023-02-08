@@ -152,18 +152,19 @@ export class MediapipePoseGateway
 
   @Cron(CronExpression.EVERY_5_MINUTES)
   async handlePendingLogs() {
-    if (Object.keys(this.logEvents).length === 0) return;
+    if (Object.keys(this.logEvents).length === 0 || !this.configService.get('AWS_LOG_GROUP_NAME'))
+      return;
 
     for (const logStreamName of Object.keys(this.logEvents)) {
       try {
         const getLogStreamCommand = new DescribeLogStreamsCommand({
-          logGroupName: this.configService.get('AWS_LOG_GROUP_NAME') || 'dev-logs',
+          logGroupName: this.configService.get('AWS_LOG_GROUP_NAME'),
           logStreamNamePrefix: logStreamName,
         });
         const logStreamData = await this.cloudwatchClient.send(getLogStreamCommand);
         if (logStreamData.logStreams.length === 0) {
           const logStream = new CreateLogStreamCommand({
-            logGroupName: this.configService.get('AWS_LOG_GROUP_NAME') || 'dev-logs',
+            logGroupName: this.configService.get('AWS_LOG_GROUP_NAME'),
             logStreamName,
           });
           this.cloudwatchClient.send(logStream);
@@ -176,7 +177,7 @@ export class MediapipePoseGateway
       try {
         const logEvent = new PutLogEventsCommand({
           logEvents: this.logEvents[logStreamName],
-          logGroupName: this.configService.get('AWS_LOG_GROUP_NAME') || 'dev-logs',
+          logGroupName: this.configService.get('AWS_LOG_GROUP_NAME'),
           logStreamName,
         });
         await this.cloudwatchClient.send(logEvent);
