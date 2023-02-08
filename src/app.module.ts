@@ -56,6 +56,7 @@ import { SubscriptionService } from './services/subscription/subscription.servic
 import { ErpnextController } from './controllers/erpnext/erpnext.controller';
 import { ErpnextService } from './services/erpnext/erpnext.service';
 import { TesterVideosController } from './controllers/tester-videos/tester-videos.controller';
+import { StsService } from './services/clients/sts/sts.service';
 
 const winstonDailyRotateTransport = new winstonDailyRotateFile({
   dirname: '../nestjs-app-logs',
@@ -169,6 +170,7 @@ const nestLikeFormatting = winston.format.combine(
     SubscriptionPlanService,
     SubscriptionService,
     ErpnextService,
+    StsService,
   ],
 })
 export class AppModule {}

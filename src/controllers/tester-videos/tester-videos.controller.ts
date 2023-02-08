@@ -1,9 +1,12 @@
 import { Controller, Get, Logger, UseInterceptors } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { ApiBearerAuth } from '@nestjs/swagger';
 import { User } from 'src/common/decorators/user.decorator';
 import { TransformResponseInterceptor } from 'src/common/interceptors/transform-response.interceptor';
 import { S3Service } from 'src/services/clients/s3/s3.service';
+import { StsService } from 'src/services/clients/sts/sts.service';
 
+@ApiBearerAuth('access-token')
 @UseInterceptors(new TransformResponseInterceptor())
 @Controller('tester-videos')
 export class TesterVideosController {
@@ -11,7 +14,7 @@ export class TesterVideosController {
   private ENV_NAME: string;
 
   constructor(
-    private s3Service: S3Service,
+    private stsService: StsService,
     private readonly logger: Logger,
     private configService: ConfigService,
   ) {
@@ -19,10 +22,17 @@ export class TesterVideosController {
     this.ENV_NAME = this.configService.get('ENV_NAME');
   }
 
-  @Get('upload-video-url')
+  @Get('upload-video-creds')
   async uploadVideoUrl(@User('id') userId: string) {
-    const file = `${this.ENV_NAME}/${userId}/${new Date().toISOString()}.mp4`;
-    const uploadUrl = await this.s3Service.putObjectSignedUrl(this.BUCKET, file);
-    return { uploadUrl };
+    const fileName = `${new Date().toISOString()}.mp4`;
+    const filePath = `${this.ENV_NAME}/${userId}/${fileName}`;
+    const credentials = await this.stsService.putObjStsAssumeRole(
+      this.BUCKET,
+      this.ENV_NAME,
+      userId,
+      fileName,
+    );
+
+    return { credentials, file: filePath, bucket: this.BUCKET };
   }
 }
