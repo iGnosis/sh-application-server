@@ -5,6 +5,10 @@ import {
   PutObjectCommand,
   DeleteObjectCommand,
   PutObjectCommandInput,
+  CreateMultipartUploadCommand,
+  UploadPartCommand,
+  CompleteMultipartUploadCommand,
+  ListPartsCommand,
 } from '@aws-sdk/client-s3';
 import { ConfigService } from '@nestjs/config';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
@@ -25,7 +29,7 @@ export class S3Service {
       Bucket: bucket,
       Key: key,
     });
-    return this.client.send(command);
+    return await this.client.send(command);
   }
 
   async putObjectSignedUrl(

@@ -14,14 +14,33 @@ import { join } from 'path';
 import { Socket } from 'socket.io';
 import { PoseDataMessageBody, QaMessageBody } from 'src/types/global';
 import { SmsAuthService } from 'src/services/sms-auth/sms-auth.service';
+import {
+  CloudWatchLogsClient,
+  CreateLogStreamCommand,
+  InputLogEvent,
+  PutLogEventsCommand,
+  DescribeLogStreamsCommand,
+} from '@aws-sdk/client-cloudwatch-logs';
+import { ConfigService } from '@nestjs/config';
+import { Cron, CronExpression } from '@nestjs/schedule';
+import { GqlService } from 'src/services/clients/gql/gql.service';
 
 @WebSocketGateway({ cors: true })
 export class MediapipePoseGateway
   implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect
 {
   numOfClientsInARoom: { [roomId: string]: number } = {};
+  private logEvents: { [key: string]: InputLogEvent[] } = {};
+  private cloudwatchClient = new CloudWatchLogsClient({
+    region: this.configService.get('AWS_DEFAULT_REGION') || 'us-east-1',
+  });
 
-  constructor(private readonly logger: Logger, private smsAuthSerivce: SmsAuthService) {
+  constructor(
+    private readonly logger: Logger,
+    private smsAuthSerivce: SmsAuthService,
+    private configService: ConfigService,
+    private gqlService: GqlService,
+  ) {
     this.logger = new Logger(MediapipePoseGateway.name);
   }
 
@@ -40,11 +59,6 @@ export class MediapipePoseGateway
 
     try {
       const payload = this.smsAuthSerivce.verifyToken(authToken as string);
-      // only a patient can init a WS connection.
-      if (payload['https://hasura.io/jwt/claims']['x-hasura-default-role'] !== 'patient') {
-        client.disconnect();
-        return;
-      }
     } catch (err) {
       this.logger.log(err);
       client.disconnect();
@@ -106,5 +120,72 @@ export class MediapipePoseGateway
     const filePath = join(downloadsDir, fileName);
     await fs.writeFile(filePath, `${JSON.stringify(body)}\n`, { encoding: 'utf-8', flag: 'a+' });
     return { event: 'posedata', data: 'success' };
+  }
+
+  @SubscribeMessage('cloudwatch-log')
+  async handleLogData(
+    @ConnectedSocket() socketclient: Socket,
+    @MessageBody() body: any,
+  ): Promise<WsResponse<string>> {
+    const { userId } = socketclient.handshake.query;
+    const date = new Date();
+    date.setHours(0, 0, 0, 0);
+    this.logger.log('Socket Log:: ' + body.logs);
+    const logStreamName = `${body.portal}_${userId}_${date.toLocaleDateString('en-US')}`;
+
+    if (this.logEvents[logStreamName]) {
+      this.logEvents[logStreamName].push({
+        message: body.logs,
+        timestamp: Date.now(),
+      });
+    } else {
+      this.logEvents[logStreamName] = [
+        {
+          message: body.logs,
+          timestamp: Date.now(),
+        },
+      ];
+    }
+
+    return { event: 'log', data: 'success' };
+  }
+
+  @Cron(CronExpression.EVERY_5_MINUTES)
+  async handlePendingLogs() {
+    if (Object.keys(this.logEvents).length === 0 || !this.configService.get('AWS_LOG_GROUP_NAME'))
+      return;
+
+    for (const logStreamName of Object.keys(this.logEvents)) {
+      try {
+        const getLogStreamCommand = new DescribeLogStreamsCommand({
+          logGroupName: this.configService.get('AWS_LOG_GROUP_NAME'),
+          logStreamNamePrefix: logStreamName,
+        });
+        const logStreamData = await this.cloudwatchClient.send(getLogStreamCommand);
+        if (logStreamData.logStreams.length === 0) {
+          const logStream = new CreateLogStreamCommand({
+            logGroupName: this.configService.get('AWS_LOG_GROUP_NAME'),
+            logStreamName,
+          });
+          this.cloudwatchClient.send(logStream);
+        }
+      } catch (err) {
+        this.logger.log(err);
+      }
+      this.logger.log('Log Stream Name: ' + logStreamName);
+
+      try {
+        const logEvent = new PutLogEventsCommand({
+          logEvents: this.logEvents[logStreamName],
+          logGroupName: this.configService.get('AWS_LOG_GROUP_NAME'),
+          logStreamName,
+        });
+        await this.cloudwatchClient.send(logEvent);
+        delete this.logEvents[logStreamName];
+        this.logger.log('Logged Events: ' + this.logEvents[logStreamName].length);
+      } catch (err) {
+        this.logger.log(err);
+      }
+    }
   }
 }
