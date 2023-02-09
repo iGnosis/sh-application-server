@@ -20,12 +20,10 @@ describe('StsService', () => {
   xit('should assume a role', async () => {
     // Given
     const bucket = 'testers-screen-rec';
-    const env = 'local';
-    const userId = '12311';
-    const fileName = 'testFile';
+    const filePath = 'local/1331112';
 
     // When
-    const data = await service.putObjStsAssumeRole(bucket, env, userId, fileName);
+    const data = await service.putObjStsAssumeRole(bucket, filePath);
 
     // Then
     console.log(data);

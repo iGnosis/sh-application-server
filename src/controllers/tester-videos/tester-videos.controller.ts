@@ -24,15 +24,9 @@ export class TesterVideosController {
 
   @Get('upload-video-creds')
   async uploadVideoUrl(@User('id') userId: string) {
-    const fileName = `${new Date().toISOString()}.mp4`;
-    const filePath = `${this.ENV_NAME}/${userId}/${fileName}`;
-    const credentials = await this.stsService.putObjStsAssumeRole(
-      this.BUCKET,
-      this.ENV_NAME,
-      userId,
-      fileName,
-    );
+    const folder = `${this.ENV_NAME}/${userId}/${new Date().toISOString()}`;
+    const credentials = await this.stsService.putObjStsAssumeRole(this.BUCKET, folder);
 
-    return { credentials, file: filePath, bucket: this.BUCKET };
+    return { credentials, folder: folder, bucket: this.BUCKET };
   }
 }

@@ -11,7 +11,7 @@ export class StsService {
     });
   }
 
-  async putObjStsAssumeRole(bucket: string, env: string, userId: string, fileName: string) {
+  async putObjStsAssumeRole(bucket: string, filePath: string) {
     const policy = `{
         "Version": "2012-10-17",
         "Statement": [
@@ -22,7 +22,7 @@ export class StsService {
                   "s3:PutObject",
                   "s3:GetObject"
               ],
-              "Resource": "arn:aws:s3:::${bucket}/${env}/${userId}/${fileName}"
+              "Resource": "arn:aws:s3:::${bucket}/${filePath}/*"
           }
         ]
       }`;
