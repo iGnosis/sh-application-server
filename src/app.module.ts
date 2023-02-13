@@ -23,7 +23,7 @@ import { GameBenchmarkingService } from './services/game-benchmarking/game-bench
 import { GameBenchmarkingController } from './controllers/game-benchmarking/game-benchmarking.controller';
 import { ExtractInformationService } from './services/extract-information/extract-information.service';
 import { VideoTranscoderService } from './services/clients/video-transcoder/video-transcoder.service';
-import { PatientFeedbackController } from './controllers/patient-feedback/cron.controller';
+import { PatientFeedbackController } from './controllers/cron/cron.controller';
 import { CronService } from './services/cron/cron.service';
 import { SpeechSynthesisController } from './controllers/speech-synthesis/speech-synthesis.controller';
 import { PollyService } from './services/clients/polly/polly.service';
@@ -55,8 +55,9 @@ import { MockController } from './mock/mock.controller';
 import { SubscriptionService } from './services/subscription/subscription.service';
 import { ErpnextController } from './controllers/erpnext/erpnext.controller';
 import { ErpnextService } from './services/erpnext/erpnext.service';
-import { TestingVideoGateway } from './gateway/testing-videos.gateway';
 import { LogReportService } from './services/log-report/log-report.service';
+import { TesterVideosController } from './controllers/tester-videos/tester-videos.controller';
+import { StsService } from './services/clients/sts/sts.service';
 
 const winstonDailyRotateTransport = new winstonDailyRotateFile({
   dirname: '../nestjs-app-logs',
@@ -137,6 +138,7 @@ const nestLikeFormatting = winston.format.combine(
     OrganizationPaymentController,
     MockController,
     ErpnextController,
+    TesterVideosController,
   ],
   providers: [
     AppService,
@@ -145,7 +147,6 @@ const nestLikeFormatting = winston.format.combine(
     SmsAuthService,
     SmsService,
     MediapipePoseGateway,
-    TestingVideoGateway,
     S3Service,
     AggregateAnalyticsService,
     StatsService,
@@ -171,6 +172,7 @@ const nestLikeFormatting = winston.format.combine(
     SubscriptionService,
     ErpnextService,
     LogReportService,
+    StsService,
   ],
 })
 export class AppModule {}
