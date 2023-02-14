@@ -39,9 +39,7 @@ export class PatientController {
           }
           createdAt
           updatedAt
-          description
-          rating
-          recommendationScore
+          response
         }
       }`;
 
