@@ -200,7 +200,7 @@ ${feedbackString}`,
           },
         },
         Addresses: {
-          'vigneshhrajj@gmail.com': {
+          'support@pointmotion.us': {
             ChannelType: 'EMAIL',
           },
         },
