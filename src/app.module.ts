@@ -55,6 +55,7 @@ import { MockController } from './mock/mock.controller';
 import { SubscriptionService } from './services/subscription/subscription.service';
 import { ErpnextController } from './controllers/erpnext/erpnext.controller';
 import { ErpnextService } from './services/erpnext/erpnext.service';
+import { LogReportService } from './services/log-report/log-report.service';
 import { TesterVideosController } from './controllers/tester-videos/tester-videos.controller';
 import { StsService } from './services/clients/sts/sts.service';
 
@@ -170,6 +171,7 @@ const nestLikeFormatting = winston.format.combine(
     SubscriptionPlanService,
     SubscriptionService,
     ErpnextService,
+    LogReportService,
     StsService,
   ],
 })

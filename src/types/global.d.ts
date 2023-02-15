@@ -192,10 +192,13 @@ export class PatientFeedback {
   patientByPatient: Patient;
   createdAt: Date;
   updatedAt: Date;
-  description: string;
-  rating: number;
-  recommendationScore: number;
+  response: PatientFeedbackResponse[];
 }
+
+type PatientFeedbackResponse = {
+  question: string;
+  answer: string;
+};
 
 export enum OrganizationTypeEnum {
   CLINIC = 'clinic',

@@ -130,7 +130,6 @@ export class MediapipePoseGateway
     const { userId } = socketclient.handshake.query;
     const date = new Date();
     date.setHours(0, 0, 0, 0);
-    this.logger.log('Socket Log:: ' + body.logs);
     const logStreamName = `${body.portal}_${userId}_${date.toLocaleDateString('en-US')}`;
 
     if (this.logEvents[logStreamName]) {
@@ -182,7 +181,6 @@ export class MediapipePoseGateway
         });
         await this.cloudwatchClient.send(logEvent);
         delete this.logEvents[logStreamName];
-        this.logger.log('Logged Events: ' + this.logEvents[logStreamName].length);
       } catch (err) {
         this.logger.log(err);
       }

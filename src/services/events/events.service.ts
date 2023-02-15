@@ -170,8 +170,14 @@ export class EventsService {
     // const { description, rating, recommendationScore, patientByPatient: { email: patientEmail, nickname } } = patientFeedback;
 
     // much cleaner this way!
-    const { description, rating, recommendationScore } = patientFeedback;
+    const { response } = patientFeedback;
     const { email: patientEmail, nickname } = patientFeedback.patientByPatient;
+
+    let feedbackString = 'Feedback Received =>\n\n';
+    for (let i = 0; i < response.length; i++) {
+      feedbackString += `\tQ. ${response[i].question}\n`;
+      feedbackString += `\tA. ${response[i].answer}\n\n`;
+    }
 
     const input: SendMessagesCommandInput = {
       ApplicationId: this.projectId,
@@ -185,14 +191,10 @@ export class EventsService {
                 Data: `Feedback from Patient ${nickname}`,
               },
               TextPart: {
-                Data: `
-                Patient Email: ${patientEmail}
-                Patient Nickname: ${nickname}
+                Data: `Patient Email: ${patientEmail}
+Patient Nickname: ${nickname}
 
-                Feedback Received =>
-                  Description (optional): ${description}
-                  Please rate your experience: ${rating}
-                  How likely are you to recommend this product to someone? (optional): ${recommendationScore}`,
+${feedbackString}`,
               },
             },
           },
@@ -209,6 +211,7 @@ export class EventsService {
       status: 'success',
     };
   }
+
   async sendCancellationEmail(patientEmail: string, nickname?: string, reason?: string) {
     const input: SendMessagesCommandInput = {
       ApplicationId: this.projectId,
