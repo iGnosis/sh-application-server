@@ -135,16 +135,13 @@ export class CronService {
           endOfMonth.toISOString(),
         );
         if (!report) continue;
-        const { formattedOverview, ...txtReport } = report;
+        const { formattedOverview, revenue, ...txtReport } = report;
         await this.subscriptionPlanService.createTxtReport(txtReport);
 
         if (orgId === '00000000-0000-0000-0000-000000000000') {
           await this.eventsService.sendMonthlyReportEmail(formattedOverview, startOfMonth);
         }
-        await this.subscriptionPlanService.saveMonthlyReport(
-          txtReport.overview[1][txtReport.overview.length - 1],
-          orgId,
-        );
+        await this.subscriptionPlanService.saveMonthlyReport(revenue, orgId);
       }
       this.logger.log('Monthly report generated');
     } catch (error) {
