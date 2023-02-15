@@ -228,6 +228,7 @@ export class SubscriptionPlanService {
         overview,
         // billingCycle,
         formattedOverview,
+        revenue: totalRevenue,
       };
 
       return results;

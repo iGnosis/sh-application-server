@@ -71,7 +71,7 @@ export class OrganizationPaymentController {
     const { startDate, endDate } = body;
 
     const report = await this.subscriptionPlanService.generateReport(orgId, startDate, endDate);
-    const { formattedOverview, ...txtReport } = report;
+    const { formattedOverview, revenue, ...txtReport } = report;
     const data = await this.subscriptionPlanService.createTxtReport(txtReport);
 
     res.set({
