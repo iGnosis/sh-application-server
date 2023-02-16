@@ -6,7 +6,6 @@ on:
     types:
       - closed
     branches:
-      - 'test'
       - 'main'
   push:
     branches: [ dev, stage ]
@@ -19,14 +18,21 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
+
+      - name: Debug GH branch names
+        run: |
+          echo "GITHUB_HEAD_REF: $GITHUB_HEAD_REF"
+          echo "GITHUB_HEAD_REF##*/: ${GITHUB_HEAD_REF##*/}"
+          echo "GITHUB_REF: $GITHUB_REF"
+
       - name: Set production environment variables
-        if: endsWith(github.ref, '/main') && github.event.pull_request.merged == true
+        if: ${{ github.base_ref == 'main' }} && github.event.pull_request.merged == true
         run: |
           echo "ENVIRONMENT=production" >> $GITHUB_ENV
           echo "SSH_REMOTE_PATH=/home/ubuntu/nestjs-app" >> $GITHUB_ENV
           echo "SSH_HOST=services.prod.pointmotioncontrol.com" >> $GITHUB_ENV
           echo "SSH_USER=ubuntu" >> $GITHUB_ENV
-          echo ${{ secrets.PROD_SSH_PRIVATE_KEY_B64ENCODED }} | base64 -d >> ~/ssh_key
+          echo ${{ secrets.PROD_SSH_PRIVATE_KEY_B64ENCODED }} | base64 -d > ~/ssh_key
           echo "{\"version\":\"${GITHUB_HEAD_REF##*/}\",\"timestamp\":\"$(date +"%Y-%m-%dT%H:%M:%S%z")\"}" > version.json
 
       - name: Set development environment variables
@@ -36,7 +42,7 @@ jobs:
           echo "SSH_REMOTE_PATH=/home/ubuntu/nestjs-app" >> $GITHUB_ENV
           echo "SSH_HOST=services.dev.pointmotioncontrol.com" >> $GITHUB_ENV
           echo "SSH_USER=ubuntu" >> $GITHUB_ENV
-          echo ${{ secrets.DEV_SSH_PRIVATE_KEY_B64ENCODED }} | base64 -d >> ~/ssh_key
+          echo ${{ secrets.DEV_SSH_PRIVATE_KEY_B64ENCODED }} | base64 -d > ~/ssh_key
           echo "{\"version\":\"dev-build\",\"timestamp\":\"$(date +"%Y-%m-%dT%H:%M:%S%z")\"}" > version.json
 
       - name: Set staging environment variables
@@ -46,12 +52,8 @@ jobs:
           echo "SSH_REMOTE_PATH=/home/ec2-user/nestjs-app" >> $GITHUB_ENV
           echo "SSH_HOST=services.stage.pointmotioncontrol.com" >> $GITHUB_ENV
           echo "SSH_USER=ec2-user" >> $GITHUB_ENV
-          echo ${{ secrets.STAGE_SSH_PRIVATE_KEY_B64ENCODED }} | base64 -d >> ~/ssh_key
+          echo ${{ secrets.STAGE_SSH_PRIVATE_KEY_B64ENCODED }} | base64 -d > ~/ssh_key
           echo "{\"version\":\"stage-build\",\"timestamp\":\"$(date +"%Y-%m-%dT%H:%M:%S%z")\"}" > version.json
-
-      # # Uncomment this if you want to debug Github action using SSH.
-      # - name: Setup upterm session
-      #   uses: lhotari/action-upterm@v1
 
       - name: Setup SSH Files permissions
         run: |
@@ -82,6 +84,10 @@ jobs:
           echo "User $SSH_USER" >> ~/.ssh/config
           echo "IdentityFile ~/ssh_key" >> ~/.ssh/config
           echo "IdentitiesOnly yes" >> ~/.ssh/config
+
+      # Uncomment this if you want to debug Github action using SSH.
+      # - name: Setup upterm session
+      #   uses: lhotari/action-upterm@v1
 
       - name: Build Deployable App
         run: |
