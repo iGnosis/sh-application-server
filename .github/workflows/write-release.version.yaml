@@ -2,25 +2,31 @@ name: Write release verison
 
 # Controls when the workflow will run
 on:
-  # Triggers the workflow on push events.
-  push:
-    branches: [ 'release/**' ]
+  pull_request:
+    types:
+      - closed
+    branches:
+      - 'test'
+      - 'main'
+      - 'org/**'
 
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
 
 jobs:
   build:
+    # runs only if PR is merged.
+    if: github.event.pull_request.merged == true
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
 
       - name: Write release to `version.json` file.
         run: |
-          echo {\"version\":\"${GITHUB_REF##*/}\"} > version.json
-          echo ${GITHUB_REF##*/} > version.txt
+          echo {\"version\":\"${GITHUB_HEAD_REF##*/}\"} > version.json
+          echo ${GITHUB_HEAD_REF##*/} > version.txt
 
-      - uses: mikeal/publish-to-github-action@master
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          BRANCH_NAME: ${{ github.ref_name }}
+      - name: List files
+        run: |
+          cat version.txt
+          cat version.json | jq
