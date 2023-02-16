@@ -2,9 +2,14 @@ name: Push to EC2
 
 # Controls when the workflow will run
 on:
-  # Triggers the workflow on push events.
+  pull_request:
+    types:
+      - closed
+    branches:
+      - 'test'
+      - 'main'
   push:
-    branches: [ main, dev, stage ]
+    branches: [ dev, stage ]
 
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
@@ -15,13 +20,14 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - name: Set production environment variables
-        if: endsWith(github.ref, '/main')
+        if: endsWith(github.ref, '/main') && github.event.pull_request.merged == true
         run: |
           echo "ENVIRONMENT=production" >> $GITHUB_ENV
           echo "SSH_REMOTE_PATH=/home/ubuntu/nestjs-app" >> $GITHUB_ENV
           echo "SSH_HOST=services.prod.pointmotioncontrol.com" >> $GITHUB_ENV
           echo "SSH_USER=ubuntu" >> $GITHUB_ENV
           echo ${{ secrets.PROD_SSH_PRIVATE_KEY_B64ENCODED }} | base64 -d >> ~/ssh_key
+          echo "{\"version\":\"${GITHUB_HEAD_REF##*/}\",\"timestamp\":\"$(date +"%Y-%m-%dT%H:%M:%S%z")\"}" > version.json
 
       - name: Set development environment variables
         if: endsWith(github.ref, '/dev')
@@ -31,6 +37,7 @@ jobs:
           echo "SSH_HOST=services.dev.pointmotioncontrol.com" >> $GITHUB_ENV
           echo "SSH_USER=ubuntu" >> $GITHUB_ENV
           echo ${{ secrets.DEV_SSH_PRIVATE_KEY_B64ENCODED }} | base64 -d >> ~/ssh_key
+          echo "{\"version\":\"dev-build\",\"timestamp\":\"$(date +"%Y-%m-%dT%H:%M:%S%z")\"}" > version.json
 
       - name: Set staging environment variables
         if: endsWith(github.ref, '/stage')
@@ -40,6 +47,7 @@ jobs:
           echo "SSH_HOST=services.stage.pointmotioncontrol.com" >> $GITHUB_ENV
           echo "SSH_USER=ec2-user" >> $GITHUB_ENV
           echo ${{ secrets.STAGE_SSH_PRIVATE_KEY_B64ENCODED }} | base64 -d >> ~/ssh_key
+          echo "{\"version\":\"stage-build\",\"timestamp\":\"$(date +"%Y-%m-%dT%H:%M:%S%z")\"}" > version.json
 
       # # Uncomment this if you want to debug Github action using SSH.
       # - name: Setup upterm session
@@ -77,10 +85,19 @@ jobs:
 
       - name: Build Deployable App
         run: |
-         echo "Listing files..."
-         ls -la
          npm ci --ignore-scripts
          npm run build
+         cp version.json ./dist
+
+         echo "Listing files..."
+         ls -la
+
+         echo "Listing dist..."
+         ls -la dist
+
+      - name: Printing app version
+        run: |
+          cat dist/version.json | jq
 
       - name: Run test cases
         run: |
@@ -109,15 +126,3 @@ jobs:
           (. ~/.pmc-secrets; \
           cd $SSH_REMOTE_PATH; \
           nohup node main.js > /dev/null 2>&1 &)"
-
-  # coverage:
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #     - uses: actions/checkout@v3
-  #     - uses: ArtiomTr/jest-coverage-report-action@v2
-  #       id: coverage
-  #       with:
-  #         output: report-markdown
-  #     - uses: marocchino/sticky-pull-request-comment@v2
-  #       with:
-  #         message: ${{ steps.coverage.outputs.report }}
