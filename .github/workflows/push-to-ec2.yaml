@@ -19,6 +19,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
+
+      - name: Debug GH branch names
+        run: |
+          echo "GITHUB_HEAD_REF: $GITHUB_HEAD_REF"
+          echo "GITHUB_HEAD_REF##*/: $GITHUB_HEAD_REF##*/"
+          echo "GITHUB_REF: $GITHUB_REF"
+
       - name: Set production environment variables
         if: endsWith(github.ref, '/main') && github.event.pull_request.merged == true
         run: |
