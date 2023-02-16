@@ -97,7 +97,7 @@ jobs:
 
       - name: Printing app version
         run: |
-          cat dist/version | jq
+          cat dist/version.json | jq
 
       - name: Run test cases
         run: |
