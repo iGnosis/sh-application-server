@@ -55,10 +55,6 @@ jobs:
           echo ${{ secrets.STAGE_SSH_PRIVATE_KEY_B64ENCODED }} | base64 -d >> ~/ssh_key
           echo "{\"version\":\"stage-build\",\"timestamp\":\"$(date +"%Y-%m-%dT%H:%M:%S%z")\"}" > version.json
 
-      # # Uncomment this if you want to debug Github action using SSH.
-      # - name: Setup upterm session
-      #   uses: lhotari/action-upterm@v1
-
       - name: Setup SSH Files permissions
         run: |
           echo "Setting proper SSH private key permissions..."
@@ -88,6 +84,10 @@ jobs:
           echo "User $SSH_USER" >> ~/.ssh/config
           echo "IdentityFile ~/ssh_key" >> ~/.ssh/config
           echo "IdentitiesOnly yes" >> ~/.ssh/config
+
+      # Uncomment this if you want to debug Github action using SSH.
+      - name: Setup upterm session
+        uses: lhotari/action-upterm@v1
 
       - name: Build Deployable App
         run: |
