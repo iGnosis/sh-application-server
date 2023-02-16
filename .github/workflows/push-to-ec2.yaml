@@ -9,7 +9,7 @@ on:
       - 'test'
       - 'main'
   push:
-    branches: [ dev, stage ]
+    branches: [ dev, stage, test ]
 
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
