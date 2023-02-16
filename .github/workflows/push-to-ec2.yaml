@@ -9,7 +9,7 @@ on:
       - 'test'
       - 'main'
   push:
-    branches: [ dev, stage, test ]
+    branches: [ dev, stage ]
 
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
@@ -37,7 +37,7 @@ jobs:
           echo "{\"version\":\"${GITHUB_HEAD_REF##*/}\",\"timestamp\":\"$(date +"%Y-%m-%dT%H:%M:%S%z")\"}" > version.json
 
       - name: Set test environment variables
-        if: ${{ github.ref == 'refs/heads/test' }}
+        if: ${{ github.base_ref == 'test' }}
         run: |
           echo "ENVIRONMENT=development" >> $GITHUB_ENV
           echo "SSH_REMOTE_PATH=/home/ubuntu/nestjs-app" >> $GITHUB_ENV
