@@ -86,8 +86,8 @@ jobs:
           echo "IdentitiesOnly yes" >> ~/.ssh/config
 
       # Uncomment this if you want to debug Github action using SSH.
-      - name: Setup upterm session
-        uses: lhotari/action-upterm@v1
+      # - name: Setup upterm session
+      #   uses: lhotari/action-upterm@v1
 
       - name: Build Deployable App
         run: |
