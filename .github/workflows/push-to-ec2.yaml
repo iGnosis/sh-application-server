@@ -32,7 +32,7 @@ jobs:
           echo "SSH_REMOTE_PATH=/home/ubuntu/nestjs-app" >> $GITHUB_ENV
           echo "SSH_HOST=services.prod.pointmotioncontrol.com" >> $GITHUB_ENV
           echo "SSH_USER=ubuntu" >> $GITHUB_ENV
-          echo ${{ secrets.PROD_SSH_PRIVATE_KEY_B64ENCODED }} | base64 -d >> ~/ssh_key
+          echo ${{ secrets.PROD_SSH_PRIVATE_KEY_B64ENCODED }} | base64 -d > ~/ssh_key
           echo "{\"version\":\"${GITHUB_HEAD_REF##*/}\",\"timestamp\":\"$(date +"%Y-%m-%dT%H:%M:%S%z")\"}" > version.json
 
       - name: Set development environment variables
@@ -42,7 +42,7 @@ jobs:
           echo "SSH_REMOTE_PATH=/home/ubuntu/nestjs-app" >> $GITHUB_ENV
           echo "SSH_HOST=services.dev.pointmotioncontrol.com" >> $GITHUB_ENV
           echo "SSH_USER=ubuntu" >> $GITHUB_ENV
-          echo ${{ secrets.DEV_SSH_PRIVATE_KEY_B64ENCODED }} | base64 -d >> ~/ssh_key
+          echo ${{ secrets.DEV_SSH_PRIVATE_KEY_B64ENCODED }} | base64 -d > ~/ssh_key
           echo "{\"version\":\"dev-build\",\"timestamp\":\"$(date +"%Y-%m-%dT%H:%M:%S%z")\"}" > version.json
 
       - name: Set staging environment variables
@@ -52,7 +52,7 @@ jobs:
           echo "SSH_REMOTE_PATH=/home/ec2-user/nestjs-app" >> $GITHUB_ENV
           echo "SSH_HOST=services.stage.pointmotioncontrol.com" >> $GITHUB_ENV
           echo "SSH_USER=ec2-user" >> $GITHUB_ENV
-          echo ${{ secrets.STAGE_SSH_PRIVATE_KEY_B64ENCODED }} | base64 -d >> ~/ssh_key
+          echo ${{ secrets.STAGE_SSH_PRIVATE_KEY_B64ENCODED }} | base64 -d > ~/ssh_key
           echo "{\"version\":\"stage-build\",\"timestamp\":\"$(date +"%Y-%m-%dT%H:%M:%S%z")\"}" > version.json
 
       - name: Setup SSH Files permissions
