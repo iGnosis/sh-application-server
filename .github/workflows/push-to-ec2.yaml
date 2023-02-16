@@ -6,7 +6,6 @@ on:
     types:
       - closed
     branches:
-      - 'test'
       - 'main'
   push:
     branches: [ dev, stage ]
@@ -19,8 +18,15 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
+
+      - name: Debug GH branch names
+        run: |
+          echo "GITHUB_HEAD_REF: $GITHUB_HEAD_REF"
+          echo "GITHUB_HEAD_REF##*/: ${GITHUB_HEAD_REF##*/}"
+          echo "GITHUB_REF: $GITHUB_REF"
+
       - name: Set production environment variables
-        if: endsWith(github.ref, '/main') && github.event.pull_request.merged == true
+        if: ${{ github.base_ref == 'main' }} && github.event.pull_request.merged == true
         run: |
           echo "ENVIRONMENT=production" >> $GITHUB_ENV
           echo "SSH_REMOTE_PATH=/home/ubuntu/nestjs-app" >> $GITHUB_ENV
