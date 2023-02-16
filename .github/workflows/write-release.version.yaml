@@ -25,6 +25,7 @@ jobs:
         run: |
           echo {\"version\":\"${GITHUB_HEAD_REF##*/}\"} > version.json
           echo ${GITHUB_HEAD_REF##*/} > version.txt
+          echo "GITHUB_REF: $GITHUB_REF"
 
       - name: List files
         run: |
