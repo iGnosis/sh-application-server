@@ -26,7 +26,7 @@ jobs:
           echo "GITHUB_REF: $GITHUB_REF"
 
       - name: Set production environment variables
-        if: ${{ github.base_ref == 'main' }} && github.event.pull_request.merged == true
+        if: ${{ github.event_name == 'pull_request' && github.base_ref == 'main' && github.event.pull_request.merged == true }}
         run: |
           echo "ENVIRONMENT=production" >> $GITHUB_ENV
           echo "SSH_REMOTE_PATH=/home/ubuntu/nestjs-app" >> $GITHUB_ENV
