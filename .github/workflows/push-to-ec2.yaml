@@ -131,6 +131,10 @@ jobs:
          npm ci --ignore-scripts
          npm run build
 
+      - name: Run test cases
+        run: |
+         npm run test:cov
+
       - name: Update code coverage badge
         run: npx update-badge
 
