@@ -58,6 +58,7 @@ import { ErpnextService } from './services/erpnext/erpnext.service';
 import { LogReportService } from './services/log-report/log-report.service';
 import { TesterVideosController } from './controllers/tester-videos/tester-videos.controller';
 import { StsService } from './services/clients/sts/sts.service';
+import { BuildVersionController } from './controllers/build-version/build-version.controller';
 
 const winstonDailyRotateTransport = new winstonDailyRotateFile({
   dirname: '../nestjs-app-logs',
@@ -139,6 +140,7 @@ const nestLikeFormatting = winston.format.combine(
     MockController,
     ErpnextController,
     TesterVideosController,
+    BuildVersionController,
   ],
   providers: [
     AppService,

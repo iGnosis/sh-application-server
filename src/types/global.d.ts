@@ -1,5 +1,10 @@
 import { UserRole } from 'src/common/enums/role.enum';
 
+export interface BuildVersion {
+  version: string;
+  timestamp: Date;
+}
+
 export type AnalyticsDTO = {
   prompt: AnalyticsPromptDTO;
   reaction: AnalyticsReactionDTO;
