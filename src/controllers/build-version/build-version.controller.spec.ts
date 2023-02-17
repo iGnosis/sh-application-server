@@ -8,7 +8,7 @@ describe('BuildVersionController', () => {
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       controllers: [BuildVersionController],
-      providers: [ConfigService]
+      providers: [ConfigService],
     }).compile();
 
     controller = module.get<BuildVersionController>(BuildVersionController);
@@ -21,5 +21,5 @@ describe('BuildVersionController', () => {
   it('should fetch build version', () => {
     const buildVersion = controller.buildVersion();
     expect(buildVersion).toBeDefined();
-  })
+  });
 });
