@@ -8,9 +8,11 @@ export class BuildVersionController {
 
   @Get('')
   buildVersion() {
-    const buildVersion = JSON.parse(
-      this.configService.get('BUILD_VERSION') || '{}',
-    ) as BuildVersion;
-    return buildVersion;
+    const version = this.configService.get('BUILD_VERSION');
+    const timestamp = this.configService.get('BUILD_TIMESTAMP');
+    return {
+      version,
+      timestamp,
+    };
   }
 }
