@@ -120,9 +120,10 @@ jobs:
       - name: Kill existing node processes and run the app
         run: |
           ssh $SSH_USER@$SSH_HOST \
-          "echo export BUILD_VERSION=\'$(cat version.json)\' > ~/.pmc-build; \
+          "echo \'export BUILD_VERSION=$(cat version.json)\' > ~/.pmc-build; \
           pkill -15 node; \
-          (. ~/.pmc-*; \
+          (. ~/.pmc-secrets; \
+          . ~/.pmc-build; \
           cd $SSH_REMOTE_PATH; \
           nohup node main.js > /dev/null 2>&1 &)"
 
