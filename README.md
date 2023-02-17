@@ -1,4 +1,4 @@
-# sh-application-server ![check-code-coverage](https://img.shields.io/badge/code--coverage-26.37%25-red)
+# sh-application-server ![check-code-coverage](https://img.shields.io/badge/code--coverage-26.4%25-red)
 
 ## Installation steps
 
