@@ -8,7 +8,7 @@ import { Staff, Patient, ShAdmin, Organization } from 'src/types/global';
 import { EmailService } from '../clients/email/email.service';
 import { Email, Auth, JwtPayload } from 'src/types/global';
 import { isArray } from 'lodash';
-import { LoginUserType } from 'src/common/enums/role.enum';
+import { LoginUserType } from 'src/common/enums/enum';
 
 @Injectable()
 export class SmsAuthService {

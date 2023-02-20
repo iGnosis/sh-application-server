@@ -6,11 +6,10 @@ import { SmsAuthService } from './services/sms-auth/sms-auth.service';
 import { DatabaseModule } from './database/database.module';
 import { StatsService } from './services/patient-stats/stats.service';
 import { MediapipePoseGateway } from './gateway/socket.gateway';
-import { ProviderChartsController } from './controllers/provider-charts/provider-charts.controller';
+import { ProviderChartsController } from './controllers/provider/provider-charts.controller';
 import { AggregateAnalyticsService } from './services/aggregate-analytics/aggregate-analytics.service';
 import { EmailService } from './services/clients/email/email.service';
 import { GqlService } from './services/clients/gql/gql.service';
-import { ProviderChartsService } from './services/provider-charts/provider-charts.service';
 import { S3Service } from './services/clients/s3/s3.service';
 import { SmsService } from './services/clients/sms/sms.service';
 import { CronService } from './services/cron/cron.service';
@@ -26,6 +25,7 @@ import { SpeechSynthesisController } from './controllers/speech-synthesis/speech
 import { StatsController } from './controllers/stats/stats.controller';
 import { EventsService } from './services/events/events.service';
 import { Logger } from '@nestjs/common';
+import { ProviderChartsService } from './services/provider/charts/provider-charts.service';
 
 describe('AppController', () => {
   let app: TestingModule;

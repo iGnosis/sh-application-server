@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { UserRole } from 'src/common/enums/role.enum';
+import { UserRole } from 'src/common/enums/enum';
 import axios from 'axios';
 import { GqlService } from '../clients/gql/gql.service';
 
