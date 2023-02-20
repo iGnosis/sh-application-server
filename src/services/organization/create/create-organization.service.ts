@@ -1,5 +1,5 @@
 import { HttpException, HttpStatus, Injectable, Logger } from '@nestjs/common';
-import { UserRole } from 'src/common/enums/role.enum';
+import { UserRole } from 'src/common/enums/enum';
 import { GqlService } from 'src/services/clients/gql/gql.service';
 
 @Injectable()

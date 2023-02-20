@@ -8,7 +8,6 @@ import {
   UseInterceptors,
 } from '@nestjs/common';
 import { ApiBearerAuth } from '@nestjs/swagger';
-import { ProviderChartsService } from 'src/services/provider-charts/provider-charts.service';
 import {
   ChartType,
   GroupBy,
@@ -20,6 +19,7 @@ import {
 import { StatsService } from 'src/services/patient-stats/stats.service';
 import { TransformResponseInterceptor } from 'src/common/interceptors/transform-response.interceptor';
 import { User } from 'src/common/decorators/user.decorator';
+import { ProviderChartsService } from 'src/services/provider/charts/provider-charts.service';
 
 @ApiBearerAuth('access-token')
 @Controller('provider-charts')

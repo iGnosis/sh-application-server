@@ -1,4 +1,4 @@
-import { UserRole } from 'src/common/enums/role.enum';
+import { UserRole } from 'src/common/enums/enum';
 
 export interface BuildVersion {
   version: string;
@@ -229,4 +229,11 @@ type SubscriptionStatus =
 interface HttpErrorWithReason {
   msg: string;
   reason: string;
+}
+
+interface DashboardData {
+  newCount: number;
+  percentageChange?: number;
+  showPercentageChange: boolean;
+  metric: ConversionTypeEnum;
 }
