@@ -95,7 +95,7 @@ export class DashboardController {
         newAvgUserEngagement,
         oldAvgUserEngagement,
       );
-      response.metric = DashboardMetricsEnums.AVG_ACTIVITIES_PLAYED;
+      response.metric = DashboardMetricsEnums.AVG_USER_ENGAGEMENT;
     } else if (type === DashboardMetricsEnums.AVG_ACTIVITIES_PLAYED) {
       // TODO: get activity count dynamically!
       const numOfActivities = 4;
