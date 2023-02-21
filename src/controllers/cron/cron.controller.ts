@@ -9,10 +9,10 @@ export class PatientFeedbackController {
   async scheduleEmailFeedback(@Body() body: ScheduleEmailFeedback) {
     const { feedbackId } = body;
     const now = new Date();
-    const FiveMinsInFuture = new Date(now.getTime() + 1000 * 60 * 5).toISOString();
+    const fiveMinsInFuture = new Date(now.getTime() + 1000 * 60 * 5).toISOString();
     const payload = { feedbackId };
     await this.cronService.scheduleOneOffCron(
-      FiveMinsInFuture,
+      fiveMinsInFuture,
       '/events/patient/feedback-received',
       payload,
     );
