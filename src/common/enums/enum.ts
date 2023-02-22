@@ -29,6 +29,6 @@ export enum DashboardMetricsEnums {
 
   // retention
   ACTIVE_USERS = 'active_users',
-  TOTAL_ACTIVE_USERS = 'total_active_users',
+  TOTAL_USERS = 'total_users',
   STICKINESS = 'stickiness',
 }

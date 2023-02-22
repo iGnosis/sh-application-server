@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { DatabaseService } from 'src/database/database.service';
 import { DashboardData } from 'src/types/global';
 
@@ -131,6 +131,11 @@ export class DashboardService {
     const results = await this.databaseService.executeQuery(sql, [startDate, endDate, orgId]);
     const activeUsers = parseInt(results[0].noOfPatients);
     return activeUsers;
+  }
+
+  async totalActiveSubscriptions(startDate: Date, endDate: Date, orgId: string): Promise<number> {
+    // throw new HttpException('To Be Implemented', HttpStatus.NOT_IMPLEMENTED)
+    return 0;
   }
 
   async adpotionRate(startDate: Date, endDate: Date, orgId: string) {

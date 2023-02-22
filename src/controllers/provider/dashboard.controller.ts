@@ -167,9 +167,13 @@ export class DashboardController {
         oldActiveUsersCount,
       );
       response.metric = DashboardMetricsEnums.ACTIVE_USERS;
-    } else if (type === DashboardMetricsEnums.TOTAL_ACTIVE_USERS) {
-      const newActiveUsers = await this.dashboardService.activeUsers(startDate, endDate, orgId);
-      const oldActiveUsers = await this.dashboardService.activeUsers(
+    } else if (type === DashboardMetricsEnums.TOTAL_USERS) {
+      const newActiveUsers = await this.dashboardService.totalActiveSubscriptions(
+        startDate,
+        endDate,
+        orgId,
+      );
+      const oldActiveUsers = await this.dashboardService.totalActiveSubscriptions(
         prevStartDate,
         prevEndDate,
         orgId,
@@ -179,7 +183,7 @@ export class DashboardController {
         newActiveUsers,
         oldActiveUsers,
       );
-      response.metric = DashboardMetricsEnums.TOTAL_ACTIVE_USERS;
+      response.metric = DashboardMetricsEnums.TOTAL_USERS;
     } else if (type === DashboardMetricsEnums.STICKINESS) {
       // DAO - total number of users who played at least one game of a given day(today by default )
       // MAO - total number of users who played at least 1 game in the given month(by default the current month or last 30 days)
