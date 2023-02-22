@@ -183,9 +183,19 @@ export class PatientPaymentController {
     const subscription = await this.stripeService.stripeClient.subscriptions.create(
       subscriptionPlan,
     );
+    const startDate = new Date(subscription.created * 1000);
+    const endDate = new Date(subscription.current_period_end * 1000);
 
     // setting subscription details in patient and subscription tables
-    await this.subsciptionService.setSubscription(subscriptionPlanId, subscription.id, 'active');
+    await this.subsciptionService.setSubscription(
+      userId,
+      subscriptionPlanId,
+      subscription.id,
+      'active',
+      startDate.toISOString(),
+      endDate.toISOString(),
+    );
+
     await this.subsciptionService.setSubscriptionId(userId, subscription.id);
 
     return {
@@ -236,12 +246,18 @@ export class PatientPaymentController {
         subscriptionPlan,
       );
 
+      const startDate = new Date(subscription.created * 1000);
+      const endDate = new Date(subscription.current_period_end * 1000);
+
       // setting the subscription data in subscription table
       const subscriptionStatus = trialExpired ? 'active' : 'trial_period';
       await this.subsciptionService.setSubscription(
+        userId,
         subscriptionPlanId,
         subscription.id,
         subscriptionStatus,
+        startDate.toISOString(),
+        endDate.toISOString(),
       );
       // setting subscription data in patient table
       await this.subsciptionService.setSubscriptionId(userId, subscription.id);
@@ -473,6 +489,13 @@ export class PatientPaymentController {
           paymentIntent.customer as string,
         );
         await this.subsciptionService.setPaymentAuthUrl(subscriptionId, '');
+
+        // updating the subscription end date
+        const subscription = await this.stripeService.stripeClient.subscriptions.retrieve(
+          subscriptionId,
+        );
+        const endDate = new Date(subscription.current_period_end * 1000).toISOString();
+        await this.subsciptionService.setSubscriptionEndDate(subscriptionId, endDate);
 
         return {
           status: 'success',

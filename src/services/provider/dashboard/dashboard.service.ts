@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { DatabaseService } from 'src/database/database.service';
 import { DashboardData } from 'src/types/global';
 
@@ -16,7 +16,7 @@ export class DashboardService {
     newCount: number,
     oldCount: number,
   ): Partial<DashboardData> {
-    resp.newCount = parseFloat(newCount.toFixed(2));
+    resp.newCount = parseFloat(newCount.toFixed(2)) || 0;
     if (!oldCount) {
       resp.showPercentageChange = false;
     } else {
@@ -131,6 +131,25 @@ export class DashboardService {
     const results = await this.databaseService.executeQuery(sql, [startDate, endDate, orgId]);
     const activeUsers = parseInt(results[0].noOfPatients);
     return activeUsers;
+  }
+
+  async totalActiveSubscriptions(startDate: Date, endDate: Date, orgId: string): Promise<number> {
+    const sql = `
+    SELECT COUNT(*) AS "count"
+    FROM patient p
+    JOIN subscriptions_history sh
+    ON p."id" = sh."patient"
+    WHERE
+      p."organizationId" = $3 AND
+      (
+        sh."status" = 'active' OR
+        sh."status" = 'trial_period'
+      ) AND
+      sh."startDate" <= $1 AND
+      sh."endDate" >= $2
+    `;
+    const results = await this.databaseService.executeQuery(sql, [startDate, endDate, orgId]);
+    return parseInt(results[0].count);
   }
 
   async adpotionRate(startDate: Date, endDate: Date, orgId: string) {
