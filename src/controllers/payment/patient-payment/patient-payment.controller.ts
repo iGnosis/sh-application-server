@@ -2,11 +2,15 @@ import {
   Body,
   Controller,
   Get,
+  Headers,
   HttpException,
   HttpStatus,
   Post,
+  RawBodyRequest,
+  Req,
   UseInterceptors,
 } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { ApiBearerAuth } from '@nestjs/swagger';
 import { User } from 'src/common/decorators/user.decorator';
 import { TransformResponseInterceptor } from 'src/common/interceptors/transform-response.interceptor';
@@ -26,6 +30,7 @@ export class PatientPaymentController {
     private stripeService: StripeService,
     private subsciptionService: SubscriptionService,
     private eventsService: EventsService,
+    private configService: ConfigService,
   ) {}
 
   @ApiBearerAuth('access-token')
@@ -466,10 +471,18 @@ export class PatientPaymentController {
   }
 
   @Post('require-payment-action')
-  async requirePaymentAction(@Body() body: any): Promise<any> {
+  async requirePaymentAction(
+    @Req() req: RawBodyRequest<Request>,
+    @Headers('stripe-signature') signature: string,
+  ): Promise<any> {
     try {
-      if (body.type == 'payment_intent.requires_action') {
-        const paymentIntent = body.data.object as any;
+      const event = this.stripeService.stripeClient.webhooks.constructEvent(
+        req.rawBody,
+        signature,
+        this.configService.get('STRIPE_WEBHOOK_SECRET'),
+      );
+      if (event.type == 'payment_intent.requires_action') {
+        const paymentIntent = event.data.object as any;
         const subscriptionId = await this.subsciptionService.getSubscriptionId(
           paymentIntent.customer as string,
         );
@@ -483,8 +496,8 @@ export class PatientPaymentController {
         return {
           status: 'success',
         };
-      } else if (body.type == 'payment_intent.succeeded') {
-        const paymentIntent = body.data.object as any;
+      } else if (event.type == 'payment_intent.succeeded') {
+        const paymentIntent = event.data.object as any;
         const subscriptionId = await this.subsciptionService.getSubscriptionId(
           paymentIntent.customer as string,
         );
