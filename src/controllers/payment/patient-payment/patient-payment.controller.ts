@@ -188,6 +188,7 @@ export class PatientPaymentController {
 
     // setting subscription details in patient and subscription tables
     await this.subsciptionService.setSubscription(
+      userId,
       subscriptionPlanId,
       subscription.id,
       'active',
@@ -251,6 +252,7 @@ export class PatientPaymentController {
       // setting the subscription data in subscription table
       const subscriptionStatus = trialExpired ? 'active' : 'trial_period';
       await this.subsciptionService.setSubscription(
+        userId,
         subscriptionPlanId,
         subscription.id,
         subscriptionStatus,
