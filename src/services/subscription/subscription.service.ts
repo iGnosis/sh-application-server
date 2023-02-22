@@ -61,10 +61,12 @@ export class SubscriptionService {
     subscriptionPlanId: string,
     subscriptionId: string,
     status: 'trial_period' | 'active',
+    startDate: string,
+    endDate: string,
   ) {
     const query = `
       mutation SetSubscription($subscriptionId: String!, $subscriptionPlanId: uuid!, $status: subscription_status_enum!) {
-        insert_subscriptions_one(object: {status: $status, subscriptionId: $subscriptionId, subscriptionPlanId: $subscriptionPlanId}) {
+        insert_subscriptions_one(object: {status: $status, subscriptionId: $subscriptionId, subscriptionPlanId: $subscriptionPlanId, startDate: $startDate, endDate: $endDate}) {
           id
         }
       }`;
@@ -73,6 +75,22 @@ export class SubscriptionService {
       status,
       subscriptionId,
       subscriptionPlanId,
+      startDate,
+      endDate,
+    });
+  }
+
+  async setSubscriptionEndDate(subscriptionId: string, endDate: string) {
+    const query = `
+      mutation SetSubscriptionEndDate($subscriptionId: String!, $endDate: timestamptz!) {
+        update_subscriptions(where: {subscriptionId: {_eq: $subscriptionId}}, _set: {endDate: $endDate}) {
+          affected_rows
+        }
+      }`;
+
+    return this.gqlService.client.request(query, {
+      subscriptionId,
+      endDate,
     });
   }
 
