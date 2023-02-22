@@ -134,8 +134,22 @@ export class DashboardService {
   }
 
   async totalActiveSubscriptions(startDate: Date, endDate: Date, orgId: string): Promise<number> {
-    // throw new HttpException('To Be Implemented', HttpStatus.NOT_IMPLEMENTED)
-    return 0;
+    const sql = `
+    SELECT COUNT(*) AS "count"
+    FROM patient p
+    JOIN subscriptions_history sh
+    ON p."id" = sh."patient"
+    WHERE
+      p."organizationId" = $3 AND
+      (
+        sh."status" = 'active' OR
+        sh."status" = 'trial_period'
+      ) AND
+      sh."startDate" <= $1 AND
+      sh."endDate" >= $2
+    `;
+    const results = await this.databaseService.executeQuery(sql, [startDate, endDate, orgId]);
+    return parseInt(results[0].count);
   }
 
   async adpotionRate(startDate: Date, endDate: Date, orgId: string) {
