@@ -85,7 +85,7 @@ export class DashboardService {
       patient: string;
       totalGamePlayInMinutes: string;
     }[] = await this.databaseService.executeQuery(sql, [startDate, endDate, orgId]);
-    this.logger.log('avgUserEngagement:results:', results);
+    this.logger.log('avgUserEngagement:results:' + JSON.stringify(results));
 
     const patientsCount = results.length;
     const totalGamePlayMins = results.reduce((acc, res) => {
