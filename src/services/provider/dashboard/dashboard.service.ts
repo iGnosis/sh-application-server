@@ -1,10 +1,10 @@
-import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
+import { HttpException, HttpStatus, Injectable, Logger } from '@nestjs/common';
 import { DatabaseService } from 'src/database/database.service';
 import { DashboardData } from 'src/types/global';
 
 @Injectable()
 export class DashboardService {
-  constructor(private databaseService: DatabaseService) {}
+  constructor(private databaseService: DatabaseService, private logger: Logger) {}
 
   // NOTE: if oldVal is zero, it does not make sense to show percentage difference.
   percentageDiff(newVal: number, oldVal: number) {
@@ -85,6 +85,7 @@ export class DashboardService {
       patient: string;
       totalGamePlayInMinutes: string;
     }[] = await this.databaseService.executeQuery(sql, [startDate, endDate, orgId]);
+    this.logger.log('avgUserEngagement:results:', results);
 
     const patientsCount = results.length;
     const totalGamePlayMins = results.reduce((acc, res) => {
