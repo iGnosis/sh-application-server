@@ -116,8 +116,8 @@ export class DashboardController {
 
       response = this.dashboardService.buildMetricResponse(
         response,
-        newAvgUserEngagement,
-        oldAvgUserEngagement,
+        newActiveSubs !== 0 ? newAvgUserEngagement : 0, // to rule out divide by zero
+        oldActiveSubs !== 0 ? oldAvgUserEngagement : 0,
       );
       response.metric = DashboardMetricsEnums.AVG_USER_ENGAGEMENT;
     } else if (type === DashboardMetricsEnums.AVG_ACTIVITIES_PLAYED) {

@@ -16,7 +16,10 @@ export class DashboardService {
     newCount: number,
     oldCount: number,
   ): Partial<DashboardData> {
-    resp.newCount = parseFloat(newCount.toFixed(2)) || 0;
+    resp.newCount = parseFloat(newCount.toFixed(2));
+    if (!resp.newCount) {
+      resp.newCount = 0;
+    }
     if (!oldCount) {
       resp.showPercentageChange = false;
     } else {
