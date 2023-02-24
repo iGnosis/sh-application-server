@@ -77,21 +77,42 @@ export class DashboardController {
     let response: Partial<DashboardData> = {};
 
     if (type === DashboardMetricsEnums.AVG_USER_ENGAGEMENT) {
-      const p1 = this.dashboardService.avgUserEngagement(startDate, endDate, orgId);
-      const p2 = this.dashboardService.avgUserEngagement(prevStartDate, prevEndDate, orgId);
-      const [newUsrEngagement, oldUsrEngagement] = await Promise.all([p1, p2]);
+      // Average user engagement is total time of game play divided by total number of active subscriptions
+      const newActiveSubsPromise = this.dashboardService.totalActiveSubscriptions(
+        startDate,
+        endDate,
+        orgId,
+      );
+      const oldActiveSubsPromise = this.dashboardService.totalActiveSubscriptions(
+        prevStartDate,
+        prevEndDate,
+        orgId,
+      );
+      const newTotalGameplayDurationPromise = this.dashboardService.totalGamePlayDurationMin(
+        startDate,
+        endDate,
+        orgId,
+      );
+      const oldTotalGameplayDurationPromise = this.dashboardService.totalGamePlayDurationMin(
+        prevStartDate,
+        prevEndDate,
+        orgId,
+      );
 
-      if (oldUsrEngagement.patientsCount !== newUsrEngagement.patientsCount) {
-        throw new HttpException(
-          "[AVG_USER_ENGAGEMENT] Something went wrong. Old and new patients count don't match!",
-          HttpStatus.INTERNAL_SERVER_ERROR,
-        );
-      }
+      const [
+        newActiveSubs,
+        oldActiveSubs,
+        newTotalGameplayDurationMin,
+        oldTotalGameplayDurationMin,
+      ] = await Promise.all([
+        newActiveSubsPromise,
+        oldActiveSubsPromise,
+        newTotalGameplayDurationPromise,
+        oldTotalGameplayDurationPromise,
+      ]);
 
-      const newAvgUserEngagement =
-        newUsrEngagement.totalGamePlayMins / newUsrEngagement.patientsCount;
-      const oldAvgUserEngagement =
-        oldUsrEngagement.totalGamePlayMins / oldUsrEngagement.patientsCount;
+      const newAvgUserEngagement = newTotalGameplayDurationMin / newActiveSubs;
+      const oldAvgUserEngagement = oldTotalGameplayDurationMin / oldActiveSubs;
 
       response = this.dashboardService.buildMetricResponse(
         response,

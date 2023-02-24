@@ -53,48 +53,20 @@ export class DashboardService {
     return parseInt(results[0].count);
   }
 
-  async avgUserEngagement(
-    startDate: Date,
-    endDate: Date,
-    orgId: string,
-  ): Promise<{
-    patientsCount: number;
-    totalGamePlayMins: number;
-  }> {
+  async totalGamePlayDurationMin(startDate: Date, endDate: Date, orgId: string): Promise<number> {
     const sql = `
-    SELECT p.id "patient", SUM(EXTRACT(EPOCH FROM (g."endedAt" - g."createdAt")) / 60) AS "totalGamePlayInMinutes"
+    SELECT SUM(EXTRACT(EPOCH FROM (g."endedAt" - g."createdAt")) / 60) AS "totalGamePlayInMinutes"
     FROM patient p
-    LEFT JOIN subscriptions s
-    ON s."subscriptionId" = p."subscription"
     INNER JOIN game g
     ON g.patient = p.id
     WHERE
       p."organizationId" = $3 AND
-      (
-        s."status" = 'active' OR
-        s."status" = 'trial_period'
-      ) AND
-      g."endedAt" IS NOT NULL AND
       g."createdAt" >= $1 AND
-      g."createdAt" < $2
-    GROUP BY p.id
-    `;
-    // ORDER BY "totalGamePlayInMinutes" DESC
+      g."createdAt" < $2 AND
+      g."endedAt" IS NOT NULL`;
 
-    const results: {
-      patient: string;
-      totalGamePlayInMinutes: string;
-    }[] = await this.databaseService.executeQuery(sql, [startDate, endDate, orgId]);
-    this.logger.log('avgUserEngagement:results:' + JSON.stringify(results));
-
-    const patientsCount = results.length;
-    const totalGamePlayMins = results.reduce((acc, res) => {
-      return acc + parseFloat(parseFloat(res.totalGamePlayInMinutes).toFixed(2));
-    }, 0);
-    return {
-      patientsCount,
-      totalGamePlayMins,
-    };
+    const results = await this.databaseService.executeQuery(sql, [startDate, endDate, orgId]);
+    return parseFloat(parseFloat(results[0].totalGamePlayInMinutes).toFixed(2));
   }
 
   async gamesPlayedCount(startDate: Date, endDate: Date, orgId: string) {
