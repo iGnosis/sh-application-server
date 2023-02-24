@@ -202,20 +202,20 @@ export class DashboardController {
       // Stickiness is generally calculated as the ratio of Daily Active Users to Monthly Active Users
       const noOfDaysInMonth = this.statsService.getDaysInMonth(
         startDate.getFullYear(),
-        startDate.getMonth(),
+        startDate.getMonth() + 1,
       );
       this.logger.log('STICKINESS:noOfDaysInMonth: ' + noOfDaysInMonth);
 
       const pastDate = this.statsService.getPastDate(startDate, 1);
+      this.logger.log('STICKINESS:startDate: ' + startDate);
+      this.logger.log('STICKINESS:endDate: ' + endDate);
       this.logger.log('STICKINESS:pastDate: ' + pastDate);
 
-      const datesDiff = noOfDaysInMonth - startDate.getDate();
-      this.logger.log('STICKINESS:datesDiff: ' + datesDiff);
-
-      const monthStartDate = this.statsService.getPastDate(startDate, startDate.getDate() - 1);
+      const monthStartDate = new Date(startDate.getFullYear(), startDate.getMonth(), 1);
       this.logger.log('STICKINESS:monthStartDate: ' + monthStartDate);
 
-      const monthEndDate = this.statsService.getFutureDate(startDate, datesDiff + 1);
+      // last date is exclusive.
+      const monthEndDate = new Date(startDate.getFullYear(), startDate.getMonth() + 1, 1);
       this.logger.log('STICKINESS:monthEndDate: ' + monthEndDate);
 
       const p1 = this.dashboardService.activeUsers(monthStartDate, monthEndDate, orgId);
