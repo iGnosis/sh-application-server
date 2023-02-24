@@ -1,4 +1,12 @@
-import { Controller, Get, HttpException, HttpStatus, Query, UseInterceptors } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  HttpException,
+  HttpStatus,
+  Logger,
+  Query,
+  UseInterceptors,
+} from '@nestjs/common';
 import { ApiBearerAuth } from '@nestjs/swagger';
 import { User } from 'src/common/decorators/user.decorator';
 import { TransformResponseInterceptor } from 'src/common/interceptors/transform-response.interceptor';
@@ -12,7 +20,11 @@ import { StatsService } from 'src/services/patient-stats/stats.service';
 @Controller('dashboard')
 @UseInterceptors(new TransformResponseInterceptor())
 export class DashboardController {
-  constructor(private dashboardService: DashboardService, private statsService: StatsService) {}
+  constructor(
+    private dashboardService: DashboardService,
+    private statsService: StatsService,
+    private logger: Logger,
+  ) {}
 
   @Get('conversion')
   async conversion(@Query() query: DashboardDto, @User('orgId') orgId: string) {
@@ -192,10 +204,19 @@ export class DashboardController {
         startDate.getFullYear(),
         startDate.getMonth(),
       );
+      this.logger.log('STICKINESS:noOfDaysInMonth: ' + noOfDaysInMonth);
+
       const pastDate = this.statsService.getPastDate(startDate, 1);
+      this.logger.log('STICKINESS:pastDate: ' + pastDate);
+
       const datesDiff = noOfDaysInMonth - startDate.getDate();
+      this.logger.log('STICKINESS:datesDiff: ' + datesDiff);
+
       const monthStartDate = this.statsService.getPastDate(startDate, startDate.getDate() - 1);
+      this.logger.log('STICKINESS:monthStartDate: ' + monthStartDate);
+
       const monthEndDate = this.statsService.getFutureDate(startDate, datesDiff + 1);
+      this.logger.log('STICKINESS:monthEndDate: ' + monthEndDate);
 
       const p1 = this.dashboardService.activeUsers(monthStartDate, monthEndDate, orgId);
       const p2 = this.dashboardService.activeUsers(startDate, endDate, orgId);
