@@ -1,8 +1,8 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
+import { GqlService } from 'src/services/clients/gql/gql.service';
 import { StatsService } from 'src/services/patient-stats/stats.service';
 import { AnalyticsDTO } from 'src/types/global';
 import { GroupBy, PlotChartDTO, PlotHeatmapDTO } from 'src/types/provider-charts';
-import { GqlService } from '../clients/gql/gql.service';
 
 @Injectable()
 export class ProviderChartsService {

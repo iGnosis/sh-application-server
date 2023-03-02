@@ -16,14 +16,13 @@ import { SmsService } from './services/clients/sms/sms.service';
 import { MediapipePoseGateway } from './gateway/socket.gateway';
 import { S3Service } from './services/clients/s3/s3.service';
 import { AggregateAnalyticsService } from './services/aggregate-analytics/aggregate-analytics.service';
-import { ProviderChartsService } from './services/provider-charts/provider-charts.service';
-import { ProviderChartsController } from './controllers/provider-charts/provider-charts.controller';
+import { ProviderChartsController } from './controllers/provider/provider-charts.controller';
 import { StatsService } from './services/patient-stats/stats.service';
 import { GameBenchmarkingService } from './services/game-benchmarking/game-benchmarking.service';
 import { GameBenchmarkingController } from './controllers/game-benchmarking/game-benchmarking.controller';
 import { ExtractInformationService } from './services/extract-information/extract-information.service';
 import { VideoTranscoderService } from './services/clients/video-transcoder/video-transcoder.service';
-import { PatientFeedbackController } from './controllers/patient-feedback/cron.controller';
+import { PatientFeedbackController } from './controllers/cron/cron.controller';
 import { CronService } from './services/cron/cron.service';
 import { SpeechSynthesisController } from './controllers/speech-synthesis/speech-synthesis.controller';
 import { PollyService } from './services/clients/polly/polly.service';
@@ -55,6 +54,14 @@ import { MockController } from './mock/mock.controller';
 import { SubscriptionService } from './services/subscription/subscription.service';
 import { ErpnextController } from './controllers/erpnext/erpnext.controller';
 import { ErpnextService } from './services/erpnext/erpnext.service';
+import { LogReportService } from './services/log-report/log-report.service';
+import { TesterVideosController } from './controllers/tester-videos/tester-videos.controller';
+import { StsService } from './services/clients/sts/sts.service';
+import { BuildVersionController } from './controllers/build-version/build-version.controller';
+import { ProviderChartsService } from './services/provider/charts/provider-charts.service';
+import { DashboardService } from './services/provider/dashboard/dashboard.service';
+import { DashboardController } from './controllers/provider/dashboard.controller';
+import { TesterVideosService } from './services/tester-videos/tester-videos.service';
 
 const winstonDailyRotateTransport = new winstonDailyRotateFile({
   dirname: '../nestjs-app-logs',
@@ -135,6 +142,9 @@ const nestLikeFormatting = winston.format.combine(
     OrganizationPaymentController,
     MockController,
     ErpnextController,
+    TesterVideosController,
+    BuildVersionController,
+    DashboardController,
   ],
   providers: [
     AppService,
@@ -167,6 +177,10 @@ const nestLikeFormatting = winston.format.combine(
     SubscriptionPlanService,
     SubscriptionService,
     ErpnextService,
+    LogReportService,
+    StsService,
+    DashboardService,
+    TesterVideosService,
   ],
 })
 export class AppModule {}

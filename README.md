@@ -1,4 +1,4 @@
-# sh-application-server ![check-code-coverage](https://img.shields.io/badge/code--coverage-25.79%25-red)
+# sh-application-server ![check-code-coverage](https://img.shields.io/badge/code--coverage-25.36%25-red)
 
 ## Installation steps
 
@@ -26,3 +26,5 @@ $ npm run test:e2e
 # test coverage
 $ npm run test:cov
 ```
+
+test dev

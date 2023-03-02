@@ -58,21 +58,40 @@ export class SubscriptionService {
   }
 
   async setSubscription(
+    patient: string,
     subscriptionPlanId: string,
     subscriptionId: string,
     status: 'trial_period' | 'active',
+    startDate: string,
+    endDate: string,
   ) {
+    const query = `mutation SetSubscription($subscriptionId: String!, $subscriptionPlanId: uuid!, $status: subscription_status_enum!, $startDate: timestamptz!, $endDate: timestamptz!, $patient: uuid!) {
+      insert_subscriptions_one(object: {status: $status, subscriptionId: $subscriptionId, subscriptionPlanId: $subscriptionPlanId, startDate: $startDate, endDate: $endDate, patient: $patient}) {
+        id
+      }
+    }`;
+
+    return this.gqlService.client.request(query, {
+      patient,
+      status,
+      subscriptionId,
+      subscriptionPlanId,
+      startDate,
+      endDate,
+    });
+  }
+
+  async setSubscriptionEndDate(subscriptionId: string, endDate: string) {
     const query = `
-      mutation SetSubscription($subscriptionId: String!, $subscriptionPlanId: uuid!, $status: subscription_status_enum!) {
-        insert_subscriptions_one(object: {status: $status, subscriptionId: $subscriptionId, subscriptionPlanId: $subscriptionPlanId}) {
-          id
+      mutation SetSubscriptionEndDate($subscriptionId: String!, $endDate: timestamptz!) {
+        update_subscriptions(where: {subscriptionId: {_eq: $subscriptionId}}, _set: {endDate: $endDate}) {
+          affected_rows
         }
       }`;
 
     return this.gqlService.client.request(query, {
-      status,
       subscriptionId,
-      subscriptionPlanId,
+      endDate,
     });
   }
 

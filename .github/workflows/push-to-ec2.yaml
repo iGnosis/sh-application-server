@@ -2,9 +2,13 @@ name: Push to EC2
 
 # Controls when the workflow will run
 on:
-  # Triggers the workflow on push events.
+  pull_request:
+    types:
+      - closed
+    branches:
+      - 'main'
   push:
-    branches: [ main, dev, stage ]
+    branches: [ dev, stage ]
 
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
@@ -14,14 +18,22 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
+
+      - name: Debug GH branch names
+        run: |
+          echo "GITHUB_HEAD_REF: $GITHUB_HEAD_REF"
+          echo "GITHUB_HEAD_REF##*/: ${GITHUB_HEAD_REF##*/}"
+          echo "GITHUB_REF: $GITHUB_REF"
+
       - name: Set production environment variables
-        if: endsWith(github.ref, '/main')
+        if: ${{ github.event_name == 'pull_request' && github.base_ref == 'main' && github.event.pull_request.merged == true }}
         run: |
           echo "ENVIRONMENT=production" >> $GITHUB_ENV
           echo "SSH_REMOTE_PATH=/home/ubuntu/nestjs-app" >> $GITHUB_ENV
           echo "SSH_HOST=services.prod.pointmotioncontrol.com" >> $GITHUB_ENV
           echo "SSH_USER=ubuntu" >> $GITHUB_ENV
-          echo ${{ secrets.PROD_SSH_PRIVATE_KEY_B64ENCODED }} | base64 -d >> ~/ssh_key
+          echo ${{ secrets.PROD_SSH_PRIVATE_KEY_B64ENCODED }} | base64 -d > ~/ssh_key
+          echo "{\"version\":\"${GITHUB_HEAD_REF##*/}\",\"timestamp\":\"$(date +"%Y-%m-%dT%H:%M:%S%z")\"}" > version.json
 
       - name: Set development environment variables
         if: endsWith(github.ref, '/dev')
@@ -30,7 +42,8 @@ jobs:
           echo "SSH_REMOTE_PATH=/home/ubuntu/nestjs-app" >> $GITHUB_ENV
           echo "SSH_HOST=services.dev.pointmotioncontrol.com" >> $GITHUB_ENV
           echo "SSH_USER=ubuntu" >> $GITHUB_ENV
-          echo ${{ secrets.DEV_SSH_PRIVATE_KEY_B64ENCODED }} | base64 -d >> ~/ssh_key
+          echo ${{ secrets.DEV_SSH_PRIVATE_KEY_B64ENCODED }} | base64 -d > ~/ssh_key
+          echo "{\"version\":\"dev-build\",\"timestamp\":\"$(date +"%Y-%m-%dT%H:%M:%S%z")\"}" > version.json
 
       - name: Set staging environment variables
         if: endsWith(github.ref, '/stage')
@@ -39,11 +52,8 @@ jobs:
           echo "SSH_REMOTE_PATH=/home/ec2-user/nestjs-app" >> $GITHUB_ENV
           echo "SSH_HOST=services.stage.pointmotioncontrol.com" >> $GITHUB_ENV
           echo "SSH_USER=ec2-user" >> $GITHUB_ENV
-          echo ${{ secrets.STAGE_SSH_PRIVATE_KEY_B64ENCODED }} | base64 -d >> ~/ssh_key
-
-      # # Uncomment this if you want to debug Github action using SSH.
-      # - name: Setup upterm session
-      #   uses: lhotari/action-upterm@v1
+          echo ${{ secrets.STAGE_SSH_PRIVATE_KEY_B64ENCODED }} | base64 -d > ~/ssh_key
+          echo "{\"version\":\"stage-build\",\"timestamp\":\"$(date +"%Y-%m-%dT%H:%M:%S%z")\"}" > version.json
 
       - name: Setup SSH Files permissions
         run: |
@@ -75,10 +85,58 @@ jobs:
           echo "IdentityFile ~/ssh_key" >> ~/.ssh/config
           echo "IdentitiesOnly yes" >> ~/.ssh/config
 
+      # Uncomment this if you want to debug Github action using SSH.
+      # - name: Setup upterm session
+      #   uses: lhotari/action-upterm@v1
+
       - name: Build Deployable App
         run: |
+         npm ci --ignore-scripts
+         npm run build
+         cp version.json ./dist
+
          echo "Listing files..."
          ls -la
+
+         echo "Listing dist..."
+         ls -la dist
+
+      - name: Printing app version
+        run: |
+          cat dist/version.json | jq
+
+      - name: Run test cases
+        run: |
+         npm run test:cov
+
+      - name: Copy Files Over Remote Server
+        run: |
+          rsync -avzr --delete \
+          /home/runner/work/sh-application-server/sh-application-server/dist/ \
+          /home/runner/work/sh-application-server/sh-application-server/node_modules \
+          /home/runner/work/sh-application-server/sh-application-server/storage \
+          $SSH_USER@$SSH_HOST:$SSH_REMOTE_PATH
+
+      - name: Kill existing node processes and run the app
+        run: |
+          ssh $SSH_USER@$SSH_HOST \
+          "echo export BUILD_VERSION=$(cat version.json | jq .version) > ~/.pmc-build; \
+          echo export BUILD_TIMESTAMP=$(cat version.json | jq .timestamp) >> ~/.pmc-build; \
+          pkill -15 node; \
+          (. ~/.pmc-secrets; \
+          . ~/.pmc-build; \
+          cd $SSH_REMOTE_PATH; \
+          nohup node main.js > /dev/null 2>&1 &)"
+
+  update-coverage-badge:
+    runs-on: ubuntu-latest
+    needs: build
+    if: github.ref == 'refs/heads/dev'
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Build app
+        run: |
          npm ci --ignore-scripts
          npm run build
 
@@ -93,31 +151,3 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           BRANCH_NAME: ${{ github.ref_name }}
-
-      - name: Copy Files Over Remote Server
-        run: |
-          rsync -avzr --delete \
-          /home/runner/work/sh-application-server/sh-application-server/dist/ \
-          /home/runner/work/sh-application-server/sh-application-server/node_modules \
-          /home/runner/work/sh-application-server/sh-application-server/storage \
-          $SSH_USER@$SSH_HOST:$SSH_REMOTE_PATH
-
-      - name: Kill existing node processes and run the app
-        run: |
-          ssh $SSH_USER@$SSH_HOST \
-          "pkill -15 node; \
-          (. ~/.pmc-secrets; \
-          cd $SSH_REMOTE_PATH; \
-          nohup node main.js > /dev/null 2>&1 &)"
-
-  # coverage:
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #     - uses: actions/checkout@v3
-  #     - uses: ArtiomTr/jest-coverage-report-action@v2
-  #       id: coverage
-  #       with:
-  #         output: report-markdown
-  #     - uses: marocchino/sticky-pull-request-comment@v2
-  #       with:
-  #         message: ${{ steps.coverage.outputs.report }}

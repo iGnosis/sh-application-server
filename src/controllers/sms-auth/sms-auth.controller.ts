@@ -13,7 +13,7 @@ import { TransformResponseInterceptor } from 'src/common/interceptors/transform-
 import { Staff, Patient, ShAdmin, Organization } from 'src/types/global';
 import { SMSLoginBody, SMSVerifyBody } from './sms-auth.dto';
 import { SmsAuthService } from '../../services/sms-auth/sms-auth.service';
-import { UserRole, LoginUserType } from 'src/common/enums/role.enum';
+import { UserRole, LoginUserType } from 'src/common/enums/enum';
 import { CreateOrganizationService } from 'src/services/organization/create/create-organization.service';
 
 // TODO: Apply rate limiters (?)

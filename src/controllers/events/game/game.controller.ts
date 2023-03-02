@@ -7,7 +7,7 @@ import * as fs from 'fs/promises';
 import { join } from 'path';
 import { Roles } from 'src/common/decorators/roles.decorator';
 import { User } from 'src/common/decorators/user.decorator';
-import { UserRole } from 'src/common/enums/role.enum';
+import { UserRole } from 'src/common/enums/enum';
 import { AuthGuard } from 'src/common/guards/auth.guard';
 import { RolesGuard } from 'src/common/guards/roles.guard';
 import { StatsService } from 'src/services/patient-stats/stats.service';

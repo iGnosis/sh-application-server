@@ -8,7 +8,7 @@ import { Staff, Patient, ShAdmin, Organization } from 'src/types/global';
 import { EmailService } from '../clients/email/email.service';
 import { Email, Auth, JwtPayload } from 'src/types/global';
 import { isArray } from 'lodash';
-import { LoginUserType } from 'src/common/enums/role.enum';
+import { LoginUserType } from 'src/common/enums/enum';
 
 @Injectable()
 export class SmsAuthService {
@@ -371,6 +371,20 @@ export class SmsAuthService {
       return decodedToken as JwtPayload;
     } catch (error) {
       throw new HttpException('Invalid Token', HttpStatus.FORBIDDEN);
+    }
+  }
+
+  verifyWsToken(authToken: string): boolean | JwtPayload {
+    if (!authToken) {
+      return false;
+    }
+
+    try {
+      const payload = this.verifyToken(authToken);
+      return payload;
+    } catch (err) {
+      this.logger.log(err);
+      return false;
     }
   }
 }

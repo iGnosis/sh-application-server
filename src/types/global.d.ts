@@ -1,4 +1,9 @@
-import { UserRole } from 'src/common/enums/role.enum';
+import { UserRole } from 'src/common/enums/enum';
+
+export interface BuildVersion {
+  version: string;
+  timestamp: Date;
+}
 
 export type AnalyticsDTO = {
   prompt: AnalyticsPromptDTO;
@@ -192,10 +197,13 @@ export class PatientFeedback {
   patientByPatient: Patient;
   createdAt: Date;
   updatedAt: Date;
-  description: string;
-  rating: number;
-  recommendationScore: number;
+  response: PatientFeedbackResponse[];
 }
+
+type PatientFeedbackResponse = {
+  question: string;
+  answer: string;
+};
 
 export enum OrganizationTypeEnum {
   CLINIC = 'clinic',
@@ -221,4 +229,11 @@ type SubscriptionStatus =
 interface HttpErrorWithReason {
   msg: string;
   reason: string;
+}
+
+interface DashboardData {
+  newCount: number;
+  percentageChange?: number;
+  showPercentageChange: boolean;
+  metric: ConversionTypeEnum;
 }

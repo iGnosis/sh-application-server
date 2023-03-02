@@ -25,7 +25,7 @@ export class S3Service {
       Bucket: bucket,
       Key: key,
     });
-    return this.client.send(command);
+    return await this.client.send(command);
   }
 
   async putObjectSignedUrl(
