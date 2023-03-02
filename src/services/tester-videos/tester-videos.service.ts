@@ -7,7 +7,7 @@ export class TesterVideosService {
 
   async getRecording(recordingId: string): Promise<{
     id: string;
-    createdAt: Date;
+    startedAt: Date;
     endedAt: Date;
     patient: string;
     videoKey: string;
@@ -17,7 +17,7 @@ export class TesterVideosService {
     const query = `query GetRecording($recordingId: uuid!) {
       tester_videos_by_pk(id: $recordingId) {
         id
-        createdAt
+        startedAt
         endedAt
         patient
         videoKey

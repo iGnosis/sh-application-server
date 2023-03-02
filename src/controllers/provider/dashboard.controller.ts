@@ -1,4 +1,12 @@
-import { Controller, Get, Query, UseInterceptors } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  HttpException,
+  HttpStatus,
+  Logger,
+  Query,
+  UseInterceptors,
+} from '@nestjs/common';
 import { ApiBearerAuth } from '@nestjs/swagger';
 import { User } from 'src/common/decorators/user.decorator';
 import { TransformResponseInterceptor } from 'src/common/interceptors/transform-response.interceptor';
@@ -12,7 +20,11 @@ import { StatsService } from 'src/services/patient-stats/stats.service';
 @Controller('dashboard')
 @UseInterceptors(new TransformResponseInterceptor())
 export class DashboardController {
-  constructor(private dashboardService: DashboardService, private statsService: StatsService) {}
+  constructor(
+    private dashboardService: DashboardService,
+    private statsService: StatsService,
+    private logger: Logger,
+  ) {}
 
   @Get('conversion')
   async conversion(@Query() query: DashboardDto, @User('orgId') orgId: string) {
@@ -27,34 +39,29 @@ export class DashboardController {
     let response: Partial<DashboardData> = {};
 
     if (type == DashboardMetricsEnums.NEW_USERS) {
-      const newCount = await this.dashboardService.newUsers(startDate, endDate, orgId);
-      const oldCount = await this.dashboardService.newUsers(prevStartDate, prevEndDate, orgId);
+      const p1 = this.dashboardService.newUsers(startDate, endDate, orgId);
+      const p2 = this.dashboardService.newUsers(prevStartDate, prevEndDate, orgId);
+      const [newCount, oldCount] = await Promise.all([p1, p2]);
       response = this.dashboardService.buildMetricResponse(response, newCount, oldCount);
       response.metric = DashboardMetricsEnums.NEW_USERS;
     } else if (type == DashboardMetricsEnums.ACTIVATION_MILESTONE) {
-      const newCount = await this.dashboardService.activationMilestone(startDate, endDate, orgId);
-      const oldCount = await this.dashboardService.activationMilestone(
-        prevStartDate,
-        prevEndDate,
-        orgId,
-      );
-
+      const p1 = this.dashboardService.activationMilestone(startDate, endDate, orgId);
+      const p2 = this.dashboardService.activationMilestone(prevStartDate, prevEndDate, orgId);
+      const [newCount, oldCount] = await Promise.all([p1, p2]);
       response = this.dashboardService.buildMetricResponse(response, newCount, oldCount);
       response.metric = DashboardMetricsEnums.ACTIVATION_MILESTONE;
     } else if (type == DashboardMetricsEnums.ACTIVATION_RATE) {
-      const newUsersCount = await this.dashboardService.newUsers(startDate, endDate, orgId);
-      const oldUsersCount = await this.dashboardService.newUsers(prevStartDate, prevEndDate, orgId);
+      const p1 = this.dashboardService.newUsers(startDate, endDate, orgId);
+      const p2 = this.dashboardService.newUsers(prevStartDate, prevEndDate, orgId);
+      const p3 = this.dashboardService.activationMilestone(startDate, endDate, orgId);
+      const p4 = this.dashboardService.activationMilestone(prevStartDate, prevEndDate, orgId);
 
-      const newActivationMilestoneCount = await this.dashboardService.activationMilestone(
-        startDate,
-        endDate,
-        orgId,
-      );
-      const oldActivationMilestoneCount = await this.dashboardService.activationMilestone(
-        prevStartDate,
-        prevEndDate,
-        orgId,
-      );
+      const [
+        newUsersCount,
+        oldUsersCount,
+        newActivationMilestoneCount,
+        oldActivationMilestoneCount,
+      ] = await Promise.all([p1, p2, p3, p4]);
 
       const newActivationRate = (newActivationMilestoneCount / newUsersCount) * 100;
       const oldActivationRate = (oldActivationMilestoneCount / oldUsersCount) * 100;
@@ -82,35 +89,57 @@ export class DashboardController {
     let response: Partial<DashboardData> = {};
 
     if (type === DashboardMetricsEnums.AVG_USER_ENGAGEMENT) {
-      const { patientsCount, totalGamePlayMins: newTotalGamePlayMins } =
-        await this.dashboardService.avgUserEngagement(startDate, endDate, orgId);
-      const { totalGamePlayMins: oldTotalGamePlayMins } =
-        await this.dashboardService.avgUserEngagement(prevStartDate, prevEndDate, orgId);
+      // Average user engagement is total time of game play divided by total number of active subscriptions
+      const newActiveSubsPromise = this.dashboardService.totalActiveSubscriptions(
+        startDate,
+        endDate,
+        orgId,
+      );
+      const oldActiveSubsPromise = this.dashboardService.totalActiveSubscriptions(
+        prevStartDate,
+        prevEndDate,
+        orgId,
+      );
+      const newTotalGameplayDurationPromise = this.dashboardService.totalGamePlayDurationMin(
+        startDate,
+        endDate,
+        orgId,
+      );
+      const oldTotalGameplayDurationPromise = this.dashboardService.totalGamePlayDurationMin(
+        prevStartDate,
+        prevEndDate,
+        orgId,
+      );
 
-      const newAvgUserEngagement = newTotalGamePlayMins / patientsCount;
-      const oldAvgUserEngagement = oldTotalGamePlayMins / patientsCount;
+      const [
+        newActiveSubs,
+        oldActiveSubs,
+        newTotalGameplayDurationMin,
+        oldTotalGameplayDurationMin,
+      ] = await Promise.all([
+        newActiveSubsPromise,
+        oldActiveSubsPromise,
+        newTotalGameplayDurationPromise,
+        oldTotalGameplayDurationPromise,
+      ]);
+
+      const newAvgUserEngagement = newTotalGameplayDurationMin / newActiveSubs;
+      const oldAvgUserEngagement = oldTotalGameplayDurationMin / oldActiveSubs;
 
       response = this.dashboardService.buildMetricResponse(
         response,
-        newAvgUserEngagement,
-        oldAvgUserEngagement,
+        newActiveSubs !== 0 ? newAvgUserEngagement : 0, // to rule out divide by zero
+        oldActiveSubs !== 0 ? oldAvgUserEngagement : 0,
       );
       response.metric = DashboardMetricsEnums.AVG_USER_ENGAGEMENT;
     } else if (type === DashboardMetricsEnums.AVG_ACTIVITIES_PLAYED) {
       // TODO: get activity count dynamically!
       const numOfActivities = 4;
 
-      const newGamesPlayedCount = await this.dashboardService.gamesPlayedCount(
-        startDate,
-        endDate,
-        orgId,
-      );
-      const oldGamesPlayedCount = await this.dashboardService.gamesPlayedCount(
-        prevStartDate,
-        prevEndDate,
-        orgId,
-      );
+      const p1 = this.dashboardService.gamesPlayedCount(startDate, endDate, orgId);
+      const p2 = this.dashboardService.gamesPlayedCount(prevStartDate, prevEndDate, orgId);
 
+      const [newGamesPlayedCount, oldGamesPlayedCount] = await Promise.all([p1, p2]);
       const newAvgActivitiesPlayed = newGamesPlayedCount / numOfActivities;
       const oldAvgActivitiesPlayed = oldGamesPlayedCount / numOfActivities;
 
@@ -121,12 +150,9 @@ export class DashboardController {
       );
       response.metric = DashboardMetricsEnums.AVG_ACTIVITIES_PLAYED;
     } else if (type === DashboardMetricsEnums.ADOPTION_RATE) {
-      const newAdoptionRate = await this.dashboardService.adpotionRate(startDate, endDate, orgId);
-      const oldAdoptionRate = await this.dashboardService.adpotionRate(
-        prevStartDate,
-        prevEndDate,
-        orgId,
-      );
+      const p1 = this.dashboardService.adpotionRate(startDate, endDate, orgId);
+      const p2 = this.dashboardService.adpotionRate(prevStartDate, prevEndDate, orgId);
+      const [newAdoptionRate, oldAdoptionRate] = await Promise.all([p1, p2]);
       response = this.dashboardService.buildMetricResponse(
         response,
         newAdoptionRate,
@@ -151,16 +177,9 @@ export class DashboardController {
     let response: Partial<DashboardData> = {};
 
     if (type === DashboardMetricsEnums.ACTIVE_USERS) {
-      const newActiveUsersCount = await this.dashboardService.activeUsers(
-        startDate,
-        endDate,
-        orgId,
-      );
-      const oldActiveUsersCount = await this.dashboardService.activeUsers(
-        prevStartDate,
-        prevEndDate,
-        orgId,
-      );
+      const p1 = this.dashboardService.activeUsers(startDate, endDate, orgId);
+      const p2 = this.dashboardService.activeUsers(prevStartDate, prevEndDate, orgId);
+      const [newActiveUsersCount, oldActiveUsersCount] = await Promise.all([p1, p2]);
       response = this.dashboardService.buildMetricResponse(
         response,
         newActiveUsersCount,
@@ -168,16 +187,9 @@ export class DashboardController {
       );
       response.metric = DashboardMetricsEnums.ACTIVE_USERS;
     } else if (type === DashboardMetricsEnums.TOTAL_USERS) {
-      const newActiveUsers = await this.dashboardService.totalActiveSubscriptions(
-        startDate,
-        endDate,
-        orgId,
-      );
-      const oldActiveUsers = await this.dashboardService.totalActiveSubscriptions(
-        prevStartDate,
-        prevEndDate,
-        orgId,
-      );
+      const p1 = this.dashboardService.totalActiveSubscriptions(startDate, endDate, orgId);
+      const p2 = this.dashboardService.totalActiveSubscriptions(prevStartDate, prevEndDate, orgId);
+      const [newActiveUsers, oldActiveUsers] = await Promise.all([p1, p2]);
       response = this.dashboardService.buildMetricResponse(
         response,
         newActiveUsers,
@@ -190,31 +202,32 @@ export class DashboardController {
       // Stickiness is generally calculated as the ratio of Daily Active Users to Monthly Active Users
       const noOfDaysInMonth = this.statsService.getDaysInMonth(
         startDate.getFullYear(),
-        startDate.getMonth(),
+        startDate.getMonth() + 1,
       );
-      const datesDiff = noOfDaysInMonth - startDate.getDate();
-
-      const monthStartDate = this.statsService.getPastDate(startDate, startDate.getDate() - 1);
-      const monthEndDate = this.statsService.getFutureDate(startDate, datesDiff + 1);
-      const monthlyActiveUsers = await this.dashboardService.activeUsers(
-        monthStartDate,
-        monthEndDate,
-        orgId,
-      );
-
-      const newDailyActiveUsers = await this.dashboardService.activeUsers(
-        startDate,
-        endDate,
-        orgId,
-      );
-      const newStickiness = newDailyActiveUsers / monthlyActiveUsers;
+      this.logger.log('STICKINESS:noOfDaysInMonth: ' + noOfDaysInMonth);
 
       const pastDate = this.statsService.getPastDate(startDate, 1);
-      const oldDailyActiveUsers = await this.dashboardService.activeUsers(
-        pastDate,
-        startDate,
-        orgId,
-      );
+      this.logger.log('STICKINESS:startDate: ' + startDate);
+      this.logger.log('STICKINESS:endDate: ' + endDate);
+      this.logger.log('STICKINESS:pastDate: ' + pastDate);
+
+      const monthStartDate = new Date(startDate.getFullYear(), startDate.getMonth(), 1);
+      this.logger.log('STICKINESS:monthStartDate: ' + monthStartDate);
+
+      // last date is exclusive.
+      const monthEndDate = new Date(startDate.getFullYear(), startDate.getMonth() + 1, 1);
+      this.logger.log('STICKINESS:monthEndDate: ' + monthEndDate);
+
+      const p1 = this.dashboardService.activeUsers(monthStartDate, monthEndDate, orgId);
+      const p2 = this.dashboardService.activeUsers(startDate, endDate, orgId);
+      const p3 = this.dashboardService.activeUsers(pastDate, startDate, orgId);
+
+      const [monthlyActiveUsers, newDailyActiveUsers, oldDailyActiveUsers] = await Promise.all([
+        p1,
+        p2,
+        p3,
+      ]);
+      const newStickiness = newDailyActiveUsers / monthlyActiveUsers;
       const oldStickiness = oldDailyActiveUsers / monthlyActiveUsers;
 
       response = this.dashboardService.buildMetricResponse(response, newStickiness, oldStickiness);
