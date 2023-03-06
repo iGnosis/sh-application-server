@@ -109,6 +109,19 @@ export class SubscriptionService {
     });
   }
 
+  async setSubscriptionStatus(subscriptionId: string, subscriptionStatus: string) {
+    const query = `mutation SetSubscriptionStatus($subscriptionStatus: subscription_status_enum = active, $subscriptionId: String!) {
+      update_subscriptions(_set: {status: $subscriptionStatus}, where: {subscriptionId: {_eq: $subscriptionId}}) {
+        affected_rows
+      }
+    }
+    `;
+    return this.gqlService.client.request(query, {
+      subscriptionId,
+      subscriptionStatus,
+    });
+  }
+
   async getSubscriptionId(customerId: string) {
     try {
       const query = `

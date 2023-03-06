@@ -115,6 +115,58 @@ export class PatientPaymentController {
     return status;
   }
 
+  @ApiBearerAuth('access-token')
+  @Post('pause-subscription')
+  async pauseSubscription(@User('id') userId: string, @Body() body: { resumesAt: string }) {
+    const { resumesAt } = body;
+    const { customerId, subscriptionId } = await this.subsciptionService.getPatientDetails(userId);
+    if (!customerId) {
+      throw new HttpException('CustomerId Not Found', HttpStatus.BAD_REQUEST);
+    }
+    if (!subscriptionId) {
+      throw new HttpException('SubscriptionId Not Found', HttpStatus.BAD_REQUEST);
+    }
+    const subscription = await this.stripeService.stripeClient.subscriptions.update(
+      subscriptionId,
+      {
+        pause_collection: {
+          behavior: 'void',
+          // stripe will take seconds instead of milliseconds
+          resumes_at: new Date(resumesAt).getTime() / 1000,
+        },
+      },
+    );
+
+    // setting the status to paused
+    await this.subsciptionService.setSubscriptionStatus(subscriptionId, 'paused');
+
+    return subscription;
+  }
+
+  @ApiBearerAuth('access-token')
+  @Post('resume-subscription-manually')
+  async resumeSubscription(@User('id') userId: string) {
+    const { customerId, subscriptionId } = await this.subsciptionService.getPatientDetails(userId);
+    if (!customerId) {
+      throw new HttpException('CustomerId Not Found', HttpStatus.BAD_REQUEST);
+    }
+    if (!subscriptionId) {
+      throw new HttpException('SubscriptionId Not Found', HttpStatus.BAD_REQUEST);
+    }
+
+    const subscription = await this.stripeService.stripeClient.subscriptions.update(
+      subscriptionId,
+      {
+        pause_collection: '',
+      },
+    );
+
+    // setting the status to active
+    await this.subsciptionService.setSubscriptionStatus(subscriptionId, 'active');
+
+    return subscription;
+  }
+
   @Get('generate-promo-code')
   async generatePromoCode(@Body() body: { coupon: string }): Promise<{
     promoCode: Stripe.PromotionCode;
