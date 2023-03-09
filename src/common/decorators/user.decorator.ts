@@ -5,7 +5,7 @@ export const User = createParamDecorator((data: string, ctx: ExecutionContext) =
 
   if (!request || !request.user || !request.user['https://hasura.io/jwt/claims']) {
     throw new HttpException(
-      'Hasura claims not set for this route',
+      'Please correctly set Hasura Action permissions to run this route',
       HttpStatus.INTERNAL_SERVER_ERROR,
     );
   }
