@@ -9,6 +9,7 @@ import {
 } from '@nestjs/common';
 import { ApiBearerAuth } from '@nestjs/swagger';
 import { User } from 'src/common/decorators/user.decorator';
+import { SubscriptionStatusEnum } from 'src/common/enums/enum';
 import { TransformResponseInterceptor } from 'src/common/interceptors/transform-response.interceptor';
 import { EventsService } from 'src/services/events/events.service';
 import { StripeService } from 'src/services/stripe/stripe.service';
@@ -73,31 +74,31 @@ export class PatientPaymentController {
 
     // archived
     if (!customerId) {
-      return 'archived';
+      return SubscriptionStatusEnum.ARCHIVED;
     }
 
     // blocked - not implemented yet
     if (customer.deleted) {
-      return 'blocked';
+      return SubscriptionStatusEnum.BLOCKED;
     }
 
     // trial expired
     if (trialExpired) {
       if (!paymentMethodAdded) {
-        return 'trial_expired';
+        return SubscriptionStatusEnum.TRIAL_EXPIRED;
       }
     }
 
     // if subscription hasn't started and user is trialing
     if (!subscriptionId) {
-      return 'trial_period';
+      return SubscriptionStatusEnum.TRIAL_PERIOD;
     }
 
     // active, cancelled or unpaid
     const { status } = await this.stripeService.stripeClient.subscriptions.retrieve(subscriptionId);
 
     if (status === 'trialing') {
-      return 'trial_period';
+      return SubscriptionStatusEnum.TRIAL_PERIOD;
     }
 
     if (
@@ -107,9 +108,9 @@ export class PatientPaymentController {
       status === 'incomplete_expired'
     ) {
       if (!paymentMethodAdded) {
-        return 'trial_expired';
+        return SubscriptionStatusEnum.TRIAL_EXPIRED;
       }
-      return 'payment_pending';
+      return SubscriptionStatusEnum.PAYMENT_PENDING;
     }
 
     return status;
@@ -138,7 +139,10 @@ export class PatientPaymentController {
     );
 
     // setting the status to paused
-    await this.subsciptionService.setSubscriptionStatus(subscriptionId, 'paused');
+    await this.subsciptionService.setSubscriptionStatus(
+      subscriptionId,
+      SubscriptionStatusEnum.PAUSED,
+    );
 
     return subscription;
   }
@@ -162,7 +166,10 @@ export class PatientPaymentController {
     );
 
     // setting the status to active
-    await this.subsciptionService.setSubscriptionStatus(subscriptionId, 'active');
+    await this.subsciptionService.setSubscriptionStatus(
+      subscriptionId,
+      SubscriptionStatusEnum.ACTIVE,
+    );
 
     return subscription;
   }
@@ -207,7 +214,6 @@ export class PatientPaymentController {
     promoCodesList = promoCodesList.filter(
       (code: { code: string; id: string; active: boolean }) => code.active,
     );
-    console.log('promocodes::', promoCodesList);
 
     if (
       !promoCodesList.filter(
@@ -243,7 +249,7 @@ export class PatientPaymentController {
       userId,
       subscriptionPlanId,
       subscription.id,
-      'active',
+      SubscriptionStatusEnum.ACTIVE,
       startDate.toISOString(),
       endDate.toISOString(),
     );
@@ -302,7 +308,9 @@ export class PatientPaymentController {
       const endDate = new Date(subscription.current_period_end * 1000);
 
       // setting the subscription data in subscription table
-      const subscriptionStatus = trialExpired ? 'active' : 'trial_period';
+      const subscriptionStatus = trialExpired
+        ? SubscriptionStatusEnum.ACTIVE
+        : SubscriptionStatusEnum.TRIAL_PERIOD;
       await this.subsciptionService.setSubscription(
         userId,
         subscriptionPlanId,

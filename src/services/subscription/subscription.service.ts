@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { SubscriptionStatusEnum } from 'src/common/enums/enum';
 import { GqlService } from '../clients/gql/gql.service';
 
 @Injectable()
@@ -109,7 +110,7 @@ export class SubscriptionService {
     });
   }
 
-  async setSubscriptionStatus(subscriptionId: string, subscriptionStatus: string) {
+  async setSubscriptionStatus(subscriptionId: string, subscriptionStatus: SubscriptionStatusEnum) {
     const query = `mutation SetSubscriptionStatus($subscriptionStatus: subscription_status_enum = active, $subscriptionId: String!) {
       update_subscriptions(_set: {status: $subscriptionStatus}, where: {subscriptionId: {_eq: $subscriptionId}}) {
         affected_rows
