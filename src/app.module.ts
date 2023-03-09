@@ -62,6 +62,7 @@ import { ProviderChartsService } from './services/provider/charts/provider-chart
 import { DashboardService } from './services/provider/dashboard/dashboard.service';
 import { DashboardController } from './controllers/provider/dashboard.controller';
 import { TesterVideosService } from './services/tester-videos/tester-videos.service';
+import { NovuService } from './services/novu/novu.service';
 
 const winstonDailyRotateTransport = new winstonDailyRotateFile({
   dirname: '../nestjs-app-logs',
@@ -181,6 +182,7 @@ const nestLikeFormatting = winston.format.combine(
     StsService,
     DashboardService,
     TesterVideosService,
+    NovuService,
   ],
 })
 export class AppModule {}
