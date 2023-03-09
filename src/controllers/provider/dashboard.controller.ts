@@ -13,7 +13,7 @@ import { TransformResponseInterceptor } from 'src/common/interceptors/transform-
 import { DashboardService } from 'src/services/provider/dashboard/dashboard.service';
 import { DashboardDto } from './dashbaord.dto';
 import { DashboardData } from 'src/types/global';
-import { DashboardMetricEnum } from 'src/types/enums/enum';
+import { DashboardMetricEnum } from 'src/types/enum';
 import { StatsService } from 'src/services/patient-stats/stats.service';
 
 @ApiBearerAuth('access-token')

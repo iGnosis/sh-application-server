@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsEnum } from 'class-validator';
-import { DashboardMetricEnum } from 'src/types/enums/enum';
+import { DashboardMetricEnum } from 'src/types/enum';
 
 export class DashboardDto {
   @ApiProperty({

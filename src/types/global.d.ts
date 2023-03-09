@@ -1,4 +1,4 @@
-import { UserRole } from 'src/types/enums/enum';
+import { UserRole } from 'src/types/enum';
 
 export interface BuildVersion {
   version: string;

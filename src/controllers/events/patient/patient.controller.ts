@@ -4,7 +4,7 @@ import { PatientFeedback } from 'src/types/global';
 import { EventsService } from 'src/services/events/events.service';
 import { FeedbackReceivedEvent, NewPatientDto } from './patient.dto';
 import { NovuService } from 'src/services/novu/novu.service';
-import { NovuTriggerEnum } from 'src/types/enums/enum';
+import { NovuTriggerEnum } from 'src/types/enum';
 
 @Controller('events/patient')
 export class PatientController {

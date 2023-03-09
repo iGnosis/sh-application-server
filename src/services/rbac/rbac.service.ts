@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { UserRole } from 'src/types/enums/enum';
+import { UserRole } from 'src/types/enum';
 import axios from 'axios';
 
 @Injectable()
