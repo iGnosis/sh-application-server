@@ -10,7 +10,7 @@ import { Observable } from 'rxjs';
 import * as fs from 'fs';
 import { ConfigService } from '@nestjs/config';
 import { SmsAuthService } from 'src/services/sms-auth/sms-auth.service';
-import { UserRole } from '../enums/enum';
+import { UserRole } from '../../types/enums/enum';
 
 @Injectable()
 export class HasuraGuard implements CanActivate {

@@ -3,7 +3,7 @@ import { ApiBearerAuth } from '@nestjs/swagger';
 import * as fs from 'fs/promises';
 import { join } from 'path';
 import { User } from 'src/common/decorators/user.decorator';
-import { UserRole } from 'src/common/enums/enum';
+import { UserRole } from 'src/types/enums/enum';
 import { TransformResponseInterceptor } from 'src/common/interceptors/transform-response.interceptor';
 import { UploadOrganizationService } from 'src/services/organization/upload/upload-organization.service';
 import { RbacService } from 'src/services/rbac/rbac.service';

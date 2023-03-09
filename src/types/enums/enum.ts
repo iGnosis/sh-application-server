@@ -16,7 +16,7 @@ export enum LoginUserType {
   SH_ADMIN = 'sh_admin',
 }
 
-export enum DashboardMetricsEnums {
+export enum DashboardMetricEnum {
   // conversion
   NEW_USERS = 'new_users',
   ACTIVATION_MILESTONE = 'activation_milestone',
@@ -31,4 +31,9 @@ export enum DashboardMetricsEnums {
   ACTIVE_USERS = 'active_users',
   TOTAL_USERS = 'total_users',
   STICKINESS = 'stickiness',
+}
+
+export enum NovuTriggerEnum {
+  WELCOME_EMAIL = 'welcome-email',
+  PAYMENT_REMINDER = 'payment-reminder',
 }
