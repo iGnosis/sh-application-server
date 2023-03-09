@@ -32,3 +32,14 @@ export enum DashboardMetricsEnums {
   TOTAL_USERS = 'total_users',
   STICKINESS = 'stickiness',
 }
+
+export enum SubscriptionStatusEnum {
+  ACTIVE = 'active',
+  PAUSED = 'paused',
+  CANCELED = 'canceled',
+  ARCHIVED = 'archived',
+  BLOCKED = 'blocked',
+  TRIAL_PERIOD = 'trial_period',
+  TRIAL_EXPIRED = 'trial_expired',
+  PAYMENT_PENDING = 'payment_pending',
+}
