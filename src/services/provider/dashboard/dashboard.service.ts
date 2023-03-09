@@ -1,10 +1,10 @@
-import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
+import { HttpException, HttpStatus, Injectable, Logger } from '@nestjs/common';
 import { DatabaseService } from 'src/database/database.service';
 import { DashboardData } from 'src/types/global';
 
 @Injectable()
 export class DashboardService {
-  constructor(private databaseService: DatabaseService) {}
+  constructor(private databaseService: DatabaseService, private logger: Logger) {}
 
   // NOTE: if oldVal is zero, it does not make sense to show percentage difference.
   percentageDiff(newVal: number, oldVal: number) {
@@ -16,7 +16,10 @@ export class DashboardService {
     newCount: number,
     oldCount: number,
   ): Partial<DashboardData> {
-    resp.newCount = parseFloat(newCount.toFixed(2)) || 0;
+    resp.newCount = parseFloat(newCount.toFixed(2));
+    if (!resp.newCount) {
+      resp.newCount = 0;
+    }
     if (!oldCount) {
       resp.showPercentageChange = false;
     } else {
@@ -53,47 +56,20 @@ export class DashboardService {
     return parseInt(results[0].count);
   }
 
-  async avgUserEngagement(
-    startDate: Date,
-    endDate: Date,
-    orgId: string,
-  ): Promise<{
-    patientsCount: number;
-    totalGamePlayMins: number;
-  }> {
+  async totalGamePlayDurationMin(startDate: Date, endDate: Date, orgId: string): Promise<number> {
     const sql = `
-    SELECT p.id "patient", SUM(EXTRACT(EPOCH FROM (g."endedAt" - g."createdAt")) / 60) AS "totalGamePlayInMinutes"
+    SELECT SUM(EXTRACT(EPOCH FROM (g."endedAt" - g."createdAt")) / 60) AS "totalGamePlayInMinutes"
     FROM patient p
-    LEFT JOIN subscriptions s
-    ON s."subscriptionId" = p."subscription"
     INNER JOIN game g
     ON g.patient = p.id
     WHERE
       p."organizationId" = $3 AND
-      (
-        s."status" = 'active' OR
-        s."status" = 'trial_period'
-      ) AND
-      g."endedAt" IS NOT NULL AND
       g."createdAt" >= $1 AND
-      g."createdAt" < $2
-    GROUP BY p.id
-    `;
-    // ORDER BY "totalGamePlayInMinutes" DESC
+      g."createdAt" < $2 AND
+      g."endedAt" IS NOT NULL`;
 
-    const results: {
-      patient: string;
-      totalGamePlayInMinutes: string;
-    }[] = await this.databaseService.executeQuery(sql, [startDate, endDate, orgId]);
-
-    const patientsCount = results.length;
-    const totalGamePlayMins = results.reduce((acc, res) => {
-      return acc + parseFloat(parseFloat(res.totalGamePlayInMinutes).toFixed(2));
-    }, 0);
-    return {
-      patientsCount,
-      totalGamePlayMins,
-    };
+    const results = await this.databaseService.executeQuery(sql, [startDate, endDate, orgId]);
+    return parseFloat(parseFloat(results[0].totalGamePlayInMinutes).toFixed(2));
   }
 
   async gamesPlayedCount(startDate: Date, endDate: Date, orgId: string) {

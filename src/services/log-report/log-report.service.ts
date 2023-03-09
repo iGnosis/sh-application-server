@@ -43,8 +43,9 @@ export class LogReportService {
     if (
       Object.keys(this.logEvents).length === 0 ||
       !this.configService.get('AWS_SERVER_LOG_GROUP_NAME')
-    )
+    ) {
       return;
+    }
 
     for (const logStreamName of Object.keys(this.logEvents)) {
       try {
