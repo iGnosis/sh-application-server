@@ -11,14 +11,39 @@ export class NewPatientDto {
   @ApiProperty({
     description: 'Patient email',
   })
-  @IsNotEmpty()
   email: string;
 
   @ApiProperty({
     description: 'Patient nickname',
   })
-  @IsNotEmpty()
   nickname: string;
+
+  @ApiProperty({
+    description: 'Patient name prefix. eg (Mr. Mrs. Dr.)',
+  })
+  namePrefix: string;
+
+  @ApiProperty({
+    description: 'Patient first name',
+  })
+  firstName: string;
+
+  @ApiProperty({
+    description: 'Patient last name',
+  })
+  lastName: string;
+
+  @ApiProperty({
+    description: 'Patient phone country code',
+  })
+  @IsNotEmpty()
+  phoneCountryCode: string;
+
+  @ApiProperty({
+    description: 'Patient phone number',
+  })
+  @IsNotEmpty()
+  phoneNumber: string;
 }
 
 export class FeedbackReceivedEvent {
