@@ -39,7 +39,7 @@ export class PatientController {
       data: {
         nickname,
         namePrefix,
-        paymentMade: true,
+        env: this.configService.get('ENV_NAME') || 'local',
       },
     });
     return resp.data;
