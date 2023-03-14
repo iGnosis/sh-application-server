@@ -5,6 +5,7 @@ import { EventsService } from 'src/services/events/events.service';
 import { FeedbackReceivedEvent, NewPatientDto } from './patient.dto';
 import { NovuService } from 'src/services/novu/novu.service';
 import { NovuTriggerEnum } from 'src/types/enum';
+import { ConfigService } from '@nestjs/config';
 
 @Controller('events/patient')
 export class PatientController {
@@ -13,6 +14,7 @@ export class PatientController {
     private gqlService: GqlService,
     private novuService: NovuService,
     private logger: Logger,
+    private configService: ConfigService,
   ) {}
 
   @HttpCode(200)
@@ -29,18 +31,18 @@ export class PatientController {
       phoneNumber,
     } = body;
 
-    // const resp = await this.novuService.novuClient.subscribers.update(patientId, {
-    //   email,
-    //   firstName,
-    //   lastName,
-    //   phone: `${phoneCountryCode}${phoneNumber}`,
-    //   data: {
-    //     nickname,
-    //     namePrefix,
-    //     paymentMade: true,
-    //   },
-    // });
-    // return resp.data;
+    const resp = await this.novuService.novuClient.subscribers.update(patientId, {
+      email,
+      firstName,
+      lastName,
+      phone: `${phoneCountryCode}${phoneNumber}`,
+      data: {
+        nickname,
+        namePrefix,
+        paymentMade: true,
+      },
+    });
+    return resp.data;
   }
 
   @HttpCode(200)
@@ -63,10 +65,8 @@ export class PatientController {
       'patient',
     );
     await this.eventsService.userSignUp(patientId);
-    return response;
 
-    /*
-    // create subscriber
+    // create Novu subscriber
     await this.novuService.novuClient.subscribers.identify(patientId, {
       email,
       firstName,
@@ -76,11 +76,13 @@ export class PatientController {
         nickname,
         namePrefix,
         paymentMade: false,
+        env: this.configService.get('ENV_NAME') || 'local',
       },
     });
 
-    const subscriber = await this.novuService.novuClient.subscribers.get(patientId);
-    console.log(subscriber.data);
+    // just testing that subscriber data was saved properly.
+    // const subscriber = await this.novuService.novuClient.subscribers.get(patientId);
+    // console.log(subscriber.data);
 
     try {
       // send welcome email to subscriber
@@ -95,7 +97,7 @@ export class PatientController {
     }
 
     try {
-      // remind patient if they didn't set payments
+      // remind patient if they didn't set payments after a while.
       await this.novuService.novuClient.trigger(NovuTriggerEnum.PAYMENT_REMINDER, {
         to: {
           subscriberId: patientId,
@@ -109,7 +111,6 @@ export class PatientController {
     }
 
     return 'success';
-    */
   }
 
   // called by Hasura on-off scheduled cron job.
