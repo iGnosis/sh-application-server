@@ -20,6 +20,7 @@ describe('AggregateAnalyticsService', () => {
         type: 'success',
         timestamp: 1,
         score: 1,
+        coin: 0,
       },
       reaction: {
         type: 'x',
@@ -41,6 +42,7 @@ describe('AggregateAnalyticsService', () => {
         type: 'failure',
         timestamp: 1,
         score: 0,
+        coin: 0,
       },
       reaction: {
         type: 'x',
