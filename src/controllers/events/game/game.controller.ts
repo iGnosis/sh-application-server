@@ -49,6 +49,11 @@ export class GameController {
     const { gameId, patientId, endedAt, analytics, organizationId } = body;
     if (!endedAt) return;
 
+    // calculate total coins for a game
+    const totalGameCoins = analytics.reduce((sum, data) => data.result.coin + sum, 0);
+    await this.aggregateAnalyticsService.updatePatientTotalCoins(patientId, totalGameCoins);
+    await this.aggregateAnalyticsService.updateGameTotalCoins(gameId, totalGameCoins);
+
     // aggregating analytics for a game.
     const aggregatedInfo = {
       avgAchievementRatio: this.aggregateAnalyticsService.averageAchievementRatio(analytics),

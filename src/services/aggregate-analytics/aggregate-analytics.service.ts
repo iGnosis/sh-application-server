@@ -6,6 +6,24 @@ import { GqlService } from '../clients/gql/gql.service';
 export class AggregateAnalyticsService {
   constructor(private gqlService: GqlService) {}
 
+  async updatePatientTotalCoins(patientId: string, totalCoins: number) {
+    const query = `mutation UpdatePatientTotalCoins($patientId: uuid!, $totalCoins: Int!) {
+      update_patient_by_pk(pk_columns: {id: $patientId}, _inc: {totalCoins: $totalCoins}) {
+        id
+      }
+    }`;
+    await this.gqlService.client.request(query, { patientId, totalCoins });
+  }
+
+  async updateGameTotalCoins(gameId: string, totalCoins: number) {
+    const query = `mutation UpdateGameTotalCoins($gameId: uuid!, $totalCoins: Int!) {
+      update_game_by_pk(pk_columns: {id: $gameId}, _inc: {totalCoins: $totalCoins}) {
+        id
+      }
+    }`;
+    await this.gqlService.client.request(query, { gameId, totalCoins });
+  }
+
   averageAchievementRatio(analytics: AnalyticsDTO[]) {
     const correctPromptsCount = analytics.reduce((count, data) => {
       if (data.result.type === 'success') {
