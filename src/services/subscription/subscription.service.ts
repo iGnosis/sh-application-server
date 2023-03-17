@@ -138,6 +138,20 @@ export class SubscriptionService {
     }
   }
 
+  async getPatientId(subscriptionId: string) {
+    try {
+      const query = `query GetPatientId($subscriptionId: String!) {
+        patient(where: {subscription: {_eq: $subscriptionId}}) {
+          id
+        }
+      }`;
+      const resp = await this.gqlService.client.request(query, { subscriptionId });
+      return resp.patient[0].id;
+    } catch (err) {
+      console.log(err);
+    }
+  }
+
   async getPatientDetails(userId: string): Promise<{
     subscriptionId: string;
     customerId: string;

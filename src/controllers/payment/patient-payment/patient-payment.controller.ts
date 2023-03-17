@@ -11,6 +11,7 @@ import { ApiBearerAuth } from '@nestjs/swagger';
 import { User } from 'src/common/decorators/user.decorator';
 import { TransformResponseInterceptor } from 'src/common/interceptors/transform-response.interceptor';
 import { EventsService } from 'src/services/events/events.service';
+import { NovuService } from 'src/services/novu/novu.service';
 import { StripeService } from 'src/services/stripe/stripe.service';
 import { SubscriptionService } from 'src/services/subscription/subscription.service';
 import { SubscriptionStatusEnum } from 'src/types/enum';
@@ -27,6 +28,7 @@ export class PatientPaymentController {
     private stripeService: StripeService,
     private subsciptionService: SubscriptionService,
     private eventsService: EventsService,
+    private novuService: NovuService,
   ) {}
 
   @ApiBearerAuth('access-token')
@@ -556,6 +558,13 @@ export class PatientPaymentController {
         );
         const endDate = new Date(subscription.current_period_end * 1000).toISOString();
         await this.subsciptionService.setSubscriptionEndDate(subscriptionId, endDate);
+
+        const patientId = await this.subsciptionService.getPatientId(subscriptionId);
+        await this.novuService.novuClient.subscribers.update(patientId, {
+          data: {
+            paymentMade: true,
+          },
+        });
 
         return {
           status: 'success',
