@@ -62,6 +62,8 @@ import { ProviderChartsService } from './services/provider/charts/provider-chart
 import { DashboardService } from './services/provider/dashboard/dashboard.service';
 import { DashboardController } from './controllers/provider/dashboard.controller';
 import { TesterVideosService } from './services/tester-videos/tester-videos.service';
+import { PhiController } from './controllers/phi/phi.controller';
+import { PhiService } from './services/phi/phi.service';
 
 const winstonDailyRotateTransport = new winstonDailyRotateFile({
   dirname: '../nestjs-app-logs',
@@ -128,6 +130,7 @@ const nestLikeFormatting = winston.format.combine(
     PatientFeedbackController,
     SpeechSynthesisController,
     RewardsController,
+    PhiController,
     StatsController,
     PatientController,
     GameController,
@@ -181,6 +184,7 @@ const nestLikeFormatting = winston.format.combine(
     StsService,
     DashboardService,
     TesterVideosService,
+    PhiService,
   ],
 })
 export class AppModule {}
