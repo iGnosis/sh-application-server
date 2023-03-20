@@ -1,4 +1,6 @@
+import { ConfigService } from '@nestjs/config';
 import { Test, TestingModule } from '@nestjs/testing';
+import { GqlService } from '../clients/gql/gql.service';
 import { PhiService } from './phi.service';
 
 describe('PhiService', () => {
@@ -6,7 +8,7 @@ describe('PhiService', () => {
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
-      providers: [PhiService],
+      providers: [PhiService, GqlService, ConfigService],
     }).compile();
 
     service = module.get<PhiService>(PhiService);
