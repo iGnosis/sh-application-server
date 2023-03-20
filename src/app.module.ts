@@ -64,6 +64,7 @@ import { DashboardController } from './controllers/provider/dashboard.controller
 import { TesterVideosService } from './services/tester-videos/tester-videos.service';
 import { PhiController } from './controllers/phi/phi.controller';
 import { PhiService } from './services/phi/phi.service';
+import { NovuService } from './services/novu/novu.service';
 
 const winstonDailyRotateTransport = new winstonDailyRotateFile({
   dirname: '../nestjs-app-logs',
@@ -185,6 +186,7 @@ const nestLikeFormatting = winston.format.combine(
     DashboardService,
     TesterVideosService,
     PhiService,
+    NovuService,
   ],
 })
 export class AppModule {}

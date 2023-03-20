@@ -10,7 +10,7 @@ import {
 import { ConfigService } from '@nestjs/config';
 import { TransformResponseInterceptor } from 'src/common/interceptors/transform-response.interceptor';
 import { SmsAuthService } from 'src/services/sms-auth/sms-auth.service';
-import { UserRole, LoginUserType } from 'src/common/enums/enum';
+import { UserRole, LoginUserType } from 'src/types/enum';
 import { CreateTestJwtBody } from './mock-controller.dto';
 
 @Controller('mock')

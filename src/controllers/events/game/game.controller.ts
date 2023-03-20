@@ -5,11 +5,7 @@ import { ApiBearerAuth } from '@nestjs/swagger';
 import { createReadStream } from 'fs';
 import * as fs from 'fs/promises';
 import { join } from 'path';
-import { Roles } from 'src/common/decorators/roles.decorator';
 import { User } from 'src/common/decorators/user.decorator';
-import { UserRole } from 'src/common/enums/enum';
-import { AuthGuard } from 'src/common/guards/auth.guard';
-import { RolesGuard } from 'src/common/guards/roles.guard';
 import { StatsService } from 'src/services/patient-stats/stats.service';
 import { AggregateAnalyticsService } from 'src/services/aggregate-analytics/aggregate-analytics.service';
 import { S3Service } from 'src/services/clients/s3/s3.service';
@@ -52,6 +48,11 @@ export class GameController {
   async gameEnded(@Body() body: GameEnded) {
     const { gameId, patientId, endedAt, analytics, organizationId } = body;
     if (!endedAt) return;
+
+    // calculate total coins for a game
+    const totalGameCoins = analytics.reduce((sum, data) => data.result.coin + sum, 0);
+    await this.aggregateAnalyticsService.updatePatientTotalCoins(patientId, totalGameCoins);
+    await this.aggregateAnalyticsService.updateGameTotalCoins(gameId, totalGameCoins);
 
     // aggregating analytics for a game.
     const aggregatedInfo = {

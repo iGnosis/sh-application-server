@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsString } from 'class-validator';
-import { UserRole } from 'src/common/enums/enum';
+import { UserRole } from 'src/types/enum';
 
 export class CreateTestJwtBody {
   @ApiProperty({

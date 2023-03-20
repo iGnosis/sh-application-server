@@ -1,4 +1,4 @@
-import { UserRole } from 'src/common/enums/enum';
+import { UserRole } from 'src/types/enum';
 
 export interface BuildVersion {
   version: string;
@@ -28,7 +28,11 @@ export type AnalyticsReactionDTO = {
 export type AnalyticsResultDTO = {
   type: 'success' | 'failure';
   timestamp: number;
+  /**
+   * @deprecated Type `score` will be removed in future versions, please use `coin` instead.
+   */
   score: number;
+  coin: number;
 };
 
 // individual game data

@@ -1,7 +1,7 @@
 import { Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Test, TestingModule } from '@nestjs/testing';
-import { LoginUserType } from 'src/common/enums/enum';
+import { LoginUserType } from 'src/types/enum';
 import { GqlService } from 'src/services/clients/gql/gql.service';
 import { SmsService } from 'src/services/clients/sms/sms.service';
 import { Staff, Patient } from 'src/types/global';

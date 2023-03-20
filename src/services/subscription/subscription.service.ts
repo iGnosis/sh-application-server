@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { SubscriptionStatusEnum } from 'src/types/enum';
 import { GqlService } from '../clients/gql/gql.service';
 
 @Injectable()
@@ -109,6 +110,19 @@ export class SubscriptionService {
     });
   }
 
+  async setSubscriptionStatus(subscriptionId: string, subscriptionStatus: SubscriptionStatusEnum) {
+    const query = `mutation SetSubscriptionStatus($subscriptionStatus: subscription_status_enum = active, $subscriptionId: String!) {
+      update_subscriptions(_set: {status: $subscriptionStatus}, where: {subscriptionId: {_eq: $subscriptionId}}) {
+        affected_rows
+      }
+    }
+    `;
+    return this.gqlService.client.request(query, {
+      subscriptionId,
+      subscriptionStatus,
+    });
+  }
+
   async getSubscriptionId(customerId: string) {
     try {
       const query = `
@@ -119,6 +133,20 @@ export class SubscriptionService {
       }`;
       const resp = await this.gqlService.client.request(query, { customerId });
       return resp.patient[0].subscription;
+    } catch (err) {
+      console.log(err);
+    }
+  }
+
+  async getPatientId(subscriptionId: string) {
+    try {
+      const query = `query GetPatientId($subscriptionId: String!) {
+        patient(where: {subscription: {_eq: $subscriptionId}}) {
+          id
+        }
+      }`;
+      const resp = await this.gqlService.client.request(query, { subscriptionId });
+      return resp.patient[0].id;
     } catch (err) {
       console.log(err);
     }

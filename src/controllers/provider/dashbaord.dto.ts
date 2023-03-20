@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsEnum } from 'class-validator';
-import { DashboardMetricsEnums } from 'src/common/enums/enum';
+import { DashboardMetricEnum } from 'src/types/enum';
 
 export class DashboardDto {
   @ApiProperty({
@@ -16,6 +16,6 @@ export class DashboardDto {
   @ApiProperty({
     description: 'type of metric to calculate',
   })
-  @IsEnum(DashboardMetricsEnums)
-  type: DashboardMetricsEnums;
+  @IsEnum(DashboardMetricEnum)
+  type: DashboardMetricEnum;
 }
