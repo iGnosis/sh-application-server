@@ -5,7 +5,8 @@ export const User = createParamDecorator((data: string, ctx: ExecutionContext) =
 
   if (!request || !request.user || !request.user['https://hasura.io/jwt/claims']) {
     throw new HttpException(
-      'Please correctly set Hasura Action permissions to run this route',
+      `If it's an action, please ensure that Action permissions are set properly.
+       If it's an event, to access user properties in a elegant way, please use Hasura Request Transformers.`,
       HttpStatus.INTERNAL_SERVER_ERROR,
     );
   }
