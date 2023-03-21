@@ -1,10 +1,8 @@
-import { Body, Controller, Get, HttpCode, Post } from '@nestjs/common';
-import { ApiBearerAuth } from '@nestjs/swagger';
+import { Body, Controller, HttpCode, HttpException, HttpStatus, Post } from '@nestjs/common';
 import { DatabaseService } from 'src/database/database.service';
 import { PhiService } from 'src/services/phi/phi.service';
 import { PhiTokenizeBodyDTO } from './phi.dto';
 
-@ApiBearerAuth('access-token')
 @Controller('phi')
 export class PhiController {
   constructor(private databaseService: DatabaseService, private phiService: PhiService) {}
@@ -28,10 +26,10 @@ export class PhiController {
 
       if (hasValueChanged) {
         if (!['patient'].includes(tableName)) {
-          throw new Error('Invalid table name');
+          throw new HttpException('Invalid table name', HttpStatus.BAD_REQUEST);
         }
         if (!['email', 'phoneNumber'].includes(key)) {
-          throw new Error('Invalid column name');
+          throw new HttpException('Invalid column name', HttpStatus.BAD_REQUEST);
         }
 
         let result;
@@ -49,7 +47,7 @@ export class PhiController {
         }
 
         if (!result || !result.id) {
-          throw new Error('Failed to tokenize');
+          throw new HttpException('Failed to tokenize', HttpStatus.INTERNAL_SERVER_ERROR);
         }
         await this.phiService.audit({
           operationType: event.op,

@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { GqlService } from '../clients/gql/gql.service';
 
 @Injectable()
@@ -23,7 +23,7 @@ export class PhiService {
       return result.insert_health_records.returning[0];
     } catch (error) {
       console.log(error);
-      throw new Error(error);
+      throw new HttpException(error, HttpStatus.INTERNAL_SERVER_ERROR);
     }
   }
 
@@ -39,7 +39,7 @@ export class PhiService {
       return result.update_health_records_by_pk;
     } catch (error) {
       console.log(error);
-      throw new Error(error);
+      throw new HttpException(error, HttpStatus.INTERNAL_SERVER_ERROR);
     }
   }
 
@@ -57,7 +57,7 @@ export class PhiService {
       return result.health_records.map((record) => record.recordData);
     } catch (error) {
       console.log(error);
-      throw new Error(error);
+      throw new HttpException(error, HttpStatus.INTERNAL_SERVER_ERROR);
     }
   }
 
@@ -95,7 +95,7 @@ export class PhiService {
       return result.insert_audit;
     } catch (error) {
       console.log(error);
-      throw new Error(error);
+      throw new HttpException(error, HttpStatus.INTERNAL_SERVER_ERROR);
     }
   }
 }
