@@ -98,4 +98,43 @@ export class PhiService {
       throw new HttpException(error, HttpStatus.INTERNAL_SERVER_ERROR);
     }
   }
+
+  isUuid(value: string): boolean {
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-5][0-9a-f]{3}-[089ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+    return uuidRegex.test(value);
+  }
+
+  hasValueChanged(
+    newObj: { [key in any]: any },
+    oldObj: { [key in any]: any },
+    key: string,
+  ): boolean {
+    if (key === 'updatedAt' || this.isUuid(newObj[key])) return false;
+
+    let hasValueChanged: boolean;
+
+    if (typeof newObj[key] === 'object') {
+      hasValueChanged = JSON.stringify(newObj[key]) !== JSON.stringify(oldObj[key]);
+    } else {
+      hasValueChanged = newObj[key] !== oldObj[key];
+    }
+
+    return hasValueChanged;
+  }
+
+  async upsertPII(event: { [key: string]: any }, key: string) {
+    const shouldUpdatePII = event.op === 'UPDATE' && this.isUuid(event.data.old[key]);
+    if (shouldUpdatePII) {
+      return this.updateHealthData({
+        recordId: event.data.old[key],
+        recordData: { value: event.data.new[key] },
+      });
+    } else {
+      return this.tokenize({
+        recordType: key,
+        recordData: { value: event.data.new[key] },
+        organizationId: event.session_variables['x-hasura-organization-id'],
+      });
+    }
+  }
 }
