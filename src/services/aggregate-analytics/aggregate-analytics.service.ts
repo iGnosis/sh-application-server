@@ -6,22 +6,22 @@ import { GqlService } from '../clients/gql/gql.service';
 export class AggregateAnalyticsService {
   constructor(private gqlService: GqlService) {}
 
-  async updatePatientTotalCoins(patientId: string, totalCoins: number) {
-    const query = `mutation UpdatePatientTotalCoins($patientId: uuid!, $totalCoins: Int!) {
-      update_patient_by_pk(pk_columns: {id: $patientId}, _inc: {totalCoins: $totalCoins}) {
+  async updatePatientTotalMovementCoins(patientId: string, totalMovementCoins: number) {
+    const query = `mutation UpdatePatientTotalCoins($patientId: uuid!, $totalMovementCoins: Int!) {
+      update_patient_by_pk(pk_columns: {id: $patientId}, _inc: {totalMovementCoins: $totalMovementCoins}) {
         id
       }
     }`;
-    await this.gqlService.client.request(query, { patientId, totalCoins });
+    await this.gqlService.client.request(query, { patientId, totalMovementCoins });
   }
 
-  async updateGameTotalCoins(gameId: string, totalCoins: number) {
-    const query = `mutation UpdateGameTotalCoins($gameId: uuid!, $totalCoins: Int!) {
-      update_game_by_pk(pk_columns: {id: $gameId}, _inc: {totalCoins: $totalCoins}) {
+  async updateGameTotalCoins(gameId: string, totalXpCoins: number) {
+    const query = `mutation UpdateGameTotalCoins($gameId: uuid!, $totalXpCoins: Int!) {
+      update_game_by_pk(pk_columns: {id: $gameId}, _inc: {totalXpCoins: $totalXpCoins}) {
         id
       }
     }`;
-    await this.gqlService.client.request(query, { gameId, totalCoins });
+    await this.gqlService.client.request(query, { gameId, totalXpCoins });
   }
 
   averageAchievementRatio(analytics: AnalyticsDTO[]) {

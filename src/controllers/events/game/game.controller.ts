@@ -51,7 +51,8 @@ export class GameController {
 
     // calculate total coins for a game
     const totalGameCoins = analytics.reduce((sum, data) => data.result.coin + sum, 0);
-    await this.aggregateAnalyticsService.updatePatientTotalCoins(patientId, totalGameCoins);
+    // TODO: need to know how to calculate Movement Coins earned from XP.
+    // await this.aggregateAnalyticsService.updatePatientTotalMovementCoins(patientId, totalGameCoins);
     await this.aggregateAnalyticsService.updateGameTotalCoins(gameId, totalGameCoins);
 
     // aggregating analytics for a game.
