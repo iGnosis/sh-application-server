@@ -1,5 +1,6 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { GqlService } from '../clients/gql/gql.service';
+import { isEqual } from 'lodash';
 
 @Injectable()
 export class PhiService {
@@ -8,17 +9,17 @@ export class PhiService {
   async tokenize(payload: {
     recordType: string;
     recordData: { value: string };
-    organizationId?: string;
+    organizationId: string;
+    patientId: string;
   }) {
     try {
-      const mutation = `
-        mutation InsertHealthRecords($recordType: String, $recordData: jsonb, $organizationId: uuid) {
-            insert_health_records(objects: {recordType: $recordType, recordData: $recordData, organizationId: $organizationId}) {
-                returning {
-                    id
-                }
-            }
-        }`;
+      const mutation = `mutation InsertHealthRecords($recordType: String, $recordData: jsonb, $organizationId: uuid, $patientId: uuid!) {
+        insert_health_records(objects: {recordType: $recordType, recordData: $recordData, organizationId: $organizationId, patient: $patientId}) {
+          returning {
+            id
+          }
+        }
+      }`;
       const result = await this.gqlService.client.request(mutation, payload);
       return result.insert_health_records.returning[0];
     } catch (error) {
@@ -43,18 +44,15 @@ export class PhiService {
     }
   }
 
-  async deTokenize(recordIds: string[]) {
+  async deTokenize(recordId: string) {
     try {
-      const query = `
-        query GetHealthRecords($recordIds: [uuid!] = []) {
-            health_records(where: {id: {_in: $recordIds}}) {
-              recordData(path: "value")
-            }
-          }`;
-      const result = await this.gqlService.client.request(query, {
-        recordIds,
-      });
-      return result.health_records.map((record) => record.recordData);
+      const query = `query Detokenize($recordId: uuid!) {
+        health_records_by_pk(id: $recordId) {
+          recordData(path: "value")
+        }
+      }`;
+      const result = await this.gqlService.client.request(query, { recordId });
+      return result.health_records_by_pk.recordData;
     } catch (error) {
       console.log(error);
       throw new HttpException(error, HttpStatus.INTERNAL_SERVER_ERROR);
@@ -85,7 +83,7 @@ export class PhiService {
         payload.oldRecord = res.audit[0].id;
       }
       const mutation = `
-        mutation InsertAudit($operationType: String, $healthRecordId: uuid, $newRecord: jsonb, $oldRecord: uuid, $organizationId: uuid, $modifiedByUser: uuid, $userRole: String) {
+        mutation InsertAudit($operationType: String, $healthRecordId: uuid, $newRecord: jsonb, $oldRecord: uuid, $organizationId: uuid, $modifiedByUser: uuid = "", $userRole: String) {
             insert_audit(objects: {operationType: $operationType, healthRecordId: $healthRecordId, newRecord: $newRecord, oldRecord: $oldRecord, organizationId: $organizationId, modifiedByUser: $modifiedByUser, userRole: $userRole}) {
               affected_rows
             }
@@ -104,25 +102,7 @@ export class PhiService {
     return uuidRegex.test(value);
   }
 
-  hasValueChanged(
-    newObj: { [key in any]: any },
-    oldObj: { [key in any]: any },
-    key: string,
-  ): boolean {
-    if (key === 'updatedAt' || this.isUuid(newObj[key])) return false;
-
-    let hasValueChanged: boolean;
-
-    if (typeof newObj[key] === 'object') {
-      hasValueChanged = JSON.stringify(newObj[key]) !== JSON.stringify(oldObj[key]);
-    } else {
-      hasValueChanged = newObj[key] !== oldObj[key];
-    }
-
-    return hasValueChanged;
-  }
-
-  async upsertPII(event: { [key: string]: any }, key: string) {
+  async upsertPII(event: { [key: string]: any }, key: string, patientId: string) {
     const shouldUpdatePII = event.op === 'UPDATE' && this.isUuid(event.data.old[key]);
     if (shouldUpdatePII) {
       return this.updateHealthData({
@@ -134,6 +114,7 @@ export class PhiService {
         recordType: key,
         recordData: { value: event.data.new[key] },
         organizationId: event.session_variables['x-hasura-organization-id'],
+        patientId,
       });
     }
   }

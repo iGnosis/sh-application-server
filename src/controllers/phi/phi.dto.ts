@@ -3,18 +3,32 @@ import { IsNotEmpty } from 'class-validator';
 
 export class PhiTokenizeBodyDTO {
   @ApiProperty({
-    description: 'Tokenize PHI data and replace with original value',
+    description: 'Hasura event object',
   })
   @IsNotEmpty()
   event: { [key: string]: any };
+
   @ApiProperty({
-    description: 'Table details',
+    description: 'Hasura table object',
+  })
+  table: {
+    schema: string;
+    name: string;
+  };
+}
+
+export class UpdatePhiColumnDto {
+  @ApiProperty({
+    description: 'Hasura event object',
   })
   @IsNotEmpty()
-  table: { [key: string]: any };
+  event: { [key: string]: any };
+
   @ApiProperty({
-    description: 'User ID',
+    description: 'Hasura table object',
   })
-  @IsNotEmpty()
-  userId: string;
+  table: {
+    schema: string;
+    name: string;
+  };
 }

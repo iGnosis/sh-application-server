@@ -4,8 +4,10 @@ import { PatientFeedback } from 'src/types/global';
 import { EventsService } from 'src/services/events/events.service';
 import { FeedbackReceivedEvent, NewPatientDto } from './patient.dto';
 import { NovuService } from 'src/services/novu/novu.service';
-import { NovuTriggerEnum } from 'src/types/enum';
+import { NovuTriggerEnum, UserRole } from 'src/types/enum';
 import { ConfigService } from '@nestjs/config';
+import { PhiService } from 'src/services/phi/phi.service';
+import { DatabaseService } from 'src/database/database.service';
 
 @Controller('events/patient')
 export class PatientController {
@@ -15,6 +17,8 @@ export class PatientController {
     private novuService: NovuService,
     private logger: Logger,
     private configService: ConfigService,
+    private phiService: PhiService,
+    private databaseService: DatabaseService,
   ) {}
 
   @HttpCode(200)
@@ -59,6 +63,7 @@ export class PatientController {
       phoneNumber,
     } = body;
 
+    // TODO: Remove PinPoint related codes once Novu is functional.
     const response = await this.eventsService.updateEndpoint(
       { id: patientId, emailAddress: email, nickname },
       patientId,
@@ -79,10 +84,6 @@ export class PatientController {
         env: this.configService.get('ENV_NAME') || 'local',
       },
     });
-
-    // just testing that subscriber data was saved properly.
-    // const subscriber = await this.novuService.novuClient.subscribers.get(patientId);
-    // console.log(subscriber.data);
 
     try {
       // send welcome email to subscriber

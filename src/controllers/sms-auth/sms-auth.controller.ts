@@ -10,7 +10,7 @@ import {
   UseInterceptors,
 } from '@nestjs/common';
 import { TransformResponseInterceptor } from 'src/common/interceptors/transform-response.interceptor';
-import { Staff, Patient, ShAdmin, Organization } from 'src/types/global';
+import { Staff, Patient, ShAdmin } from 'src/types/global';
 import { SMSLoginBody, SMSVerifyBody } from './sms-auth.dto';
 import { SmsAuthService } from '../../services/sms-auth/sms-auth.service';
 import { UserRole, LoginUserType } from 'src/types/enum';
@@ -52,7 +52,7 @@ export class SmsAuthController {
 
     const { phoneCountryCode, phoneNumber } = body;
     const otp = this.smsAuthService.generateOtp();
-    let user: Patient | Staff | ShAdmin;
+    let user: Patient | Staff | ShAdmin | undefined;
 
     // TODO: cap the org admin sign-ups
     if (body.inviteCode) {
@@ -71,15 +71,33 @@ export class SmsAuthController {
     // NOTE: some organization allows public patient sign-ups.
     if (userType === LoginUserType.PATIENT) {
       const organization = await this.smsAuthService.getOrganization(orgName);
+      console.log('organization::', organization);
       if (organization && organization.isPublicSignUpEnabled) {
         try {
-          await this.smsAuthService.insertPatient({
-            phoneCountryCode: body.phoneCountryCode,
-            phoneNumber: body.phoneNumber,
-            organizationId: organization.id,
-            type: UserRole.PATIENT,
-          });
+          let user: Patient;
+
+          user = await this.smsAuthService.fetchPatient(
+            body.phoneCountryCode,
+            body.phoneNumber,
+            orgName,
+          );
+          console.log('user::', user);
+          if (!user) {
+            user = await this.smsAuthService.insertPatient({
+              phoneCountryCode: body.phoneCountryCode,
+              phoneNumber: body.phoneNumber,
+              organizationId: organization.id,
+              type: UserRole.PATIENT,
+            });
+          }
+          await this.smsAuthService.insertOtp(userType, user.id, otp);
+          await this.smsAuthService.sendOtp(phoneCountryCode, phoneNumber, otp);
+          return {
+            message: 'OTP sent successfully.',
+            isExistingUser: user && user.email ? true : false,
+          };
         } catch (error) {
+          console.log(error);
           this.logger.log('patient might already exist');
         }
       }
@@ -89,13 +107,21 @@ export class SmsAuthController {
       user = await this.smsAuthService.fetchShAdmin(phoneCountryCode, phoneNumber);
     } else if (userType === LoginUserType.STAFF) {
       user = await this.smsAuthService.fetchStaff(phoneCountryCode, phoneNumber, orgName);
-    } else if (userType === LoginUserType.PATIENT) {
-      user = await this.smsAuthService.fetchPatient(phoneCountryCode, phoneNumber, orgName);
     } else if (userType === LoginUserType.BENCHMARK) {
       user = await this.smsAuthService.fetchPatient(phoneCountryCode, phoneNumber, orgName);
       if (!user || !user.canBenchmark) {
         throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
       }
+    }
+
+    if (!user) {
+      throw new HttpException(
+        {
+          msg: 'Unauthorized',
+          reason: 'Account does not exist. Please ask your provider to create an account for you.',
+        },
+        HttpStatus.UNAUTHORIZED,
+      );
     }
 
     await this.smsAuthService.insertOtp(userType, user.id, otp);
@@ -212,6 +238,7 @@ export class SmsAuthController {
       throw new HttpException('Invalid request', HttpStatus.BAD_REQUEST);
     }
 
+    console.log('user::', user);
     const auth = await this.smsAuthService.fetchLatestOtp(userType, user.id);
     const isExpired = this.smsAuthService.isOtpExpired(auth.expiryAt);
 

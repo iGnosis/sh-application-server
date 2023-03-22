@@ -80,12 +80,37 @@ export class SmsAuthService {
     phoneCountryCode: string,
     phoneNumber: string,
     orgName: string,
-  ): Promise<Patient> {
+  ): Promise<Patient | undefined> {
+    const getPatientHealthRecord = `query GetHealthRecords($jsonFilter: jsonb!) {
+      health_records(where: {recordType: {_eq: "phoneNumber"}, recordData: {_contains: $jsonFilter}}) {
+        id
+        recordData
+      }
+    }`;
+    const jsonFilter = {
+      value: phoneNumber,
+    };
+
+    const patientHealthRecord = await this.gqlService.client.request(getPatientHealthRecord, {
+      jsonFilter,
+    });
+
+    if (
+      !patientHealthRecord ||
+      !patientHealthRecord.health_records ||
+      !Array.isArray(patientHealthRecord.health_records) ||
+      !patientHealthRecord.health_records.length
+    ) {
+      return;
+    }
+
     const query = `query FetchPatient($phoneCountryCode: String!, $phoneNumber: String!, $orgName: String!) {
       patient(where: {phoneCountryCode: {_eq: $phoneCountryCode}, phoneNumber: {_eq: $phoneNumber}, organization: {name: {_eq: $orgName}}}) {
         id
         canBenchmark
-        email
+        phoneCountryCode
+        phoneNumber: pii_phoneNumber(path: "value")
+        email: pii_email(path: "value")
         organizationId
         organization {
           id
@@ -97,17 +122,11 @@ export class SmsAuthService {
     }`;
     const resp = await this.gqlService.client.request(query, {
       phoneCountryCode,
-      phoneNumber,
+      phoneNumber: patientHealthRecord.health_records[0].id,
       orgName,
     });
     if (!resp || !resp.patient || !isArray(resp.patient) || !resp.patient.length) {
-      throw new HttpException(
-        {
-          msg: 'Unauthorized',
-          reason: 'Account does not exist. Please ask your provider to create an account for you.',
-        },
-        HttpStatus.UNAUTHORIZED,
-      );
+      return;
     }
     return resp.patient[0];
   }
@@ -228,7 +247,9 @@ export class SmsAuthService {
   async insertPatient(patientObj: Patient) {
     const query = `mutation InsertPatient($phoneCountryCode: String!, $phoneNumber: String!, $email: String = null, $namePrefix: String = null, $firstName: String = null, $lastName: String = null, $organizationId: uuid!) {
       insert_patient(objects: {phoneCountryCode: $phoneCountryCode, phoneNumber: $phoneNumber, email: $email, namePrefix: $namePrefix, firstName: $firstName, lastName: $lastName, organizationId: $organizationId}) {
-        affected_rows
+        returning {
+          id
+        }
       }
     }`;
 
@@ -243,7 +264,7 @@ export class SmsAuthService {
     } = patientObj;
 
     try {
-      await this.gqlService.client.request(query, {
+      const resp = await this.gqlService.client.request(query, {
         phoneCountryCode,
         phoneNumber: phoneNumber,
         namePrefix,
@@ -252,6 +273,7 @@ export class SmsAuthService {
         email,
         organizationId,
       });
+      return resp.insert_patient.returning;
     } catch (err) {
       this.logger.error('insertUser: ' + JSON.stringify(err));
       throw new HttpException('Error while signing up patient', HttpStatus.INTERNAL_SERVER_ERROR);
