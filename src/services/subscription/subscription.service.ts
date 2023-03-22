@@ -164,7 +164,7 @@ export class SubscriptionService {
           patient_by_pk(id: $id) {
             subscription
             customerId
-            email
+            email: pii_email(path: "value")
             nickname
             createdAt
           }
