@@ -59,11 +59,6 @@ export class PhiController {
         patientId: event.data.new['id'],
       });
     } else {
-      // detokenized the 'old' record.
-      const oldData = await this.phiService.deTokenize(event.data.old[phiColumn]);
-      if (isEqual(event.data.new[phiColumn], oldData)) {
-        return;
-      }
       record = await this.phiService.updateHealthData({
         recordId: event.data.old[phiColumn],
         recordData: { value: event.data.new[phiColumn] },
