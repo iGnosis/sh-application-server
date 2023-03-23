@@ -80,24 +80,8 @@ export class SmsAuthService {
     phoneCountryCode: string,
     phoneNumber: string,
     orgName: string,
+    orgId: string,
   ): Promise<Patient | undefined> {
-    const orgIdRespQuery = `query GetOrgId($orgName: String!) {
-      organization(where: {name: {_eq: $orgName}}) {
-        id
-      }
-    }`;
-    const orgIdResp = await this.gqlService.client.request(orgIdRespQuery, { orgName });
-    if (
-      !orgIdResp ||
-      !orgIdResp.organization ||
-      !orgIdResp.organization ||
-      !Array.isArray(orgIdResp.organization) ||
-      !orgIdResp.organization.length
-    ) {
-      return;
-    }
-    const organizationId = orgIdResp.organization[0].id;
-
     const getPatientHealthRecord = `query GetHealthRecords($jsonFilter: jsonb!, $organizationId: uuid!) {
       health_records(where: {recordType: {_eq: "phoneNumber"}, recordData: {_contains: $jsonFilter}, organizationId: {_eq: $organizationId}}) {
         id
@@ -109,7 +93,7 @@ export class SmsAuthService {
       jsonFilter: {
         value: phoneNumber,
       },
-      organizationId,
+      organizationId: orgId,
     });
 
     if (

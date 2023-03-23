@@ -40,6 +40,13 @@ export class SmsAuthController {
       throw new HttpException('Org name missing', HttpStatus.BAD_REQUEST);
     }
 
+    const organization = await this.smsAuthService.getOrganization(orgName);
+    if (!organization) {
+      throw new HttpException('Org does not exist', HttpStatus.BAD_REQUEST);
+    }
+
+    this.logger.log('organization:: ' + JSON.stringify(organization));
+
     if (
       !userType ||
       (userType !== LoginUserType.PATIENT &&
@@ -70,8 +77,6 @@ export class SmsAuthController {
 
     // NOTE: some organization allows public patient sign-ups.
     if (userType === LoginUserType.PATIENT) {
-      const organization = await this.smsAuthService.getOrganization(orgName);
-      console.log('organization::', organization);
       if (organization && organization.isPublicSignUpEnabled) {
         try {
           let user: Patient;
@@ -80,8 +85,9 @@ export class SmsAuthController {
             body.phoneCountryCode,
             body.phoneNumber,
             orgName,
+            organization.id,
           );
-          console.log('user::', user);
+          this.logger.log('user::', user);
           if (!user) {
             user = await this.smsAuthService.insertPatient({
               phoneCountryCode: body.phoneCountryCode,
@@ -108,7 +114,12 @@ export class SmsAuthController {
     } else if (userType === LoginUserType.STAFF) {
       user = await this.smsAuthService.fetchStaff(phoneCountryCode, phoneNumber, orgName);
     } else if (userType === LoginUserType.BENCHMARK) {
-      user = await this.smsAuthService.fetchPatient(phoneCountryCode, phoneNumber, orgName);
+      user = await this.smsAuthService.fetchPatient(
+        phoneCountryCode,
+        phoneNumber,
+        orgName,
+        organization.id,
+      );
       if (!user || !user.canBenchmark) {
         throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
       }
@@ -147,6 +158,12 @@ export class SmsAuthController {
       throw new HttpException('Org name missing', HttpStatus.BAD_REQUEST);
     }
 
+    const organization = await this.smsAuthService.getOrganization(orgName);
+    if (!organization) {
+      throw new HttpException('Org does not exist', HttpStatus.BAD_REQUEST);
+    }
+    this.logger.log('organization:: ' + JSON.stringify(organization));
+
     if (
       !userType ||
       (userType !== LoginUserType.PATIENT &&
@@ -161,9 +178,19 @@ export class SmsAuthController {
 
     let user: Staff | Patient | ShAdmin;
     if (userType === LoginUserType.PATIENT) {
-      user = await this.smsAuthService.fetchPatient(phoneCountryCode, phoneNumber, orgName);
+      user = await this.smsAuthService.fetchPatient(
+        phoneCountryCode,
+        phoneNumber,
+        orgName,
+        organization.id,
+      );
     } else if (userType === LoginUserType.BENCHMARK) {
-      user = await this.smsAuthService.fetchPatient(phoneCountryCode, phoneNumber, orgName);
+      user = await this.smsAuthService.fetchPatient(
+        phoneCountryCode,
+        phoneNumber,
+        orgName,
+        organization.id,
+      );
       if (!user.canBenchmark) {
         throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
       }
@@ -208,6 +235,12 @@ export class SmsAuthController {
       throw new HttpException('Org name missing', HttpStatus.BAD_REQUEST);
     }
 
+    const organization = await this.smsAuthService.getOrganization(orgName);
+    if (!organization) {
+      throw new HttpException('Org does not exist', HttpStatus.BAD_REQUEST);
+    }
+    this.logger.log('organization:: ' + JSON.stringify(organization));
+
     if (
       !userType ||
       (userType !== LoginUserType.PATIENT &&
@@ -222,9 +255,19 @@ export class SmsAuthController {
     let user: Staff | Patient | ShAdmin;
 
     if (userType === LoginUserType.PATIENT) {
-      user = await this.smsAuthService.fetchPatient(phoneCountryCode, phoneNumber, orgName);
+      user = await this.smsAuthService.fetchPatient(
+        phoneCountryCode,
+        phoneNumber,
+        orgName,
+        organization.id,
+      );
     } else if (userType === LoginUserType.BENCHMARK) {
-      user = await this.smsAuthService.fetchPatient(phoneCountryCode, phoneNumber, orgName);
+      user = await this.smsAuthService.fetchPatient(
+        phoneCountryCode,
+        phoneNumber,
+        orgName,
+        organization.id,
+      );
       if (!user.canBenchmark) {
         throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
       }
