@@ -83,7 +83,6 @@ export class SmsAuthController {
         orgName,
         organization.id,
       );
-      this.logger.log('user::' + JSON.stringify(user));
       try {
         // NOTE: some organization allows public patient sign-ups.
         if (!user && organization && organization.isPublicSignUpEnabled) {
@@ -94,9 +93,13 @@ export class SmsAuthController {
             type: UserRole.PATIENT,
           });
         }
-        this.logger.log('new inserted user:: ' + JSON.stringify(user));
+        this.logger.log('user:: ' + JSON.stringify(user));
         await this.smsAuthService.insertOtp(userType, user.id, otp);
         await this.smsAuthService.sendOtp(phoneCountryCode, phoneNumber, otp);
+        if (user && user.email) {
+          this.logger.log(`sending Login OTP email to ${user.email}`);
+          await this.smsAuthService.sendOtpEmail(user.email, otp);
+        }
         return {
           message: 'OTP sent successfully.',
           isExistingUser: user && user.email ? true : false,
