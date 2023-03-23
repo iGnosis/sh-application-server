@@ -77,35 +77,32 @@ export class SmsAuthController {
 
     // NOTE: some organization allows public patient sign-ups.
     if (userType === LoginUserType.PATIENT) {
-      if (organization && organization.isPublicSignUpEnabled) {
-        try {
-          let user: Patient;
-
-          user = await this.smsAuthService.fetchPatient(
-            body.phoneCountryCode,
-            body.phoneNumber,
-            orgName,
-            organization.id,
-          );
-          this.logger.log('user::', user);
-          if (!user) {
-            user = await this.smsAuthService.insertPatient({
-              phoneCountryCode: body.phoneCountryCode,
-              phoneNumber: body.phoneNumber,
-              organizationId: organization.id,
-              type: UserRole.PATIENT,
-            });
-          }
-          await this.smsAuthService.insertOtp(userType, user.id, otp);
-          await this.smsAuthService.sendOtp(phoneCountryCode, phoneNumber, otp);
-          return {
-            message: 'OTP sent successfully.',
-            isExistingUser: user && user.email ? true : false,
-          };
-        } catch (error) {
-          console.log(error);
-          this.logger.log('patient might already exist');
+      let user: Patient;
+      user = await this.smsAuthService.fetchPatient(
+        body.phoneCountryCode,
+        body.phoneNumber,
+        orgName,
+        organization.id,
+      );
+      this.logger.log('user::' + user);
+      try {
+        if (!user && organization && organization.isPublicSignUpEnabled) {
+          user = await this.smsAuthService.insertPatient({
+            phoneCountryCode: body.phoneCountryCode,
+            phoneNumber: body.phoneNumber,
+            organizationId: organization.id,
+            type: UserRole.PATIENT,
+          });
         }
+        await this.smsAuthService.insertOtp(userType, user.id, otp);
+        await this.smsAuthService.sendOtp(phoneCountryCode, phoneNumber, otp);
+        return {
+          message: 'OTP sent successfully.',
+          isExistingUser: user && user.email ? true : false,
+        };
+      } catch (error) {
+        console.log(error);
+        this.logger.log('patient might already exist');
       }
     }
 

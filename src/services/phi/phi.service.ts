@@ -1,6 +1,5 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { GqlService } from '../clients/gql/gql.service';
-import { isEqual } from 'lodash';
 
 @Injectable()
 export class PhiService {
@@ -11,10 +10,11 @@ export class PhiService {
     recordData: { value: string };
     organizationId: string;
     patientId: string;
+    env: string;
   }) {
     try {
-      const mutation = `mutation InsertHealthRecords($recordType: String, $recordData: jsonb, $organizationId: uuid, $patientId: uuid!) {
-        insert_health_records(objects: {recordType: $recordType, recordData: $recordData, organizationId: $organizationId, patient: $patientId}) {
+      const mutation = `mutation InsertHealthRecords($recordType: String, $recordData: jsonb, $organizationId: uuid, $patientId: uuid!, $env: String!) {
+        insert_health_records(objects: {recordType: $recordType, recordData: $recordData, organizationId: $organizationId, patient: $patientId, env: $env}) {
           returning {
             id
           }
@@ -100,22 +100,5 @@ export class PhiService {
   isUuid(value: string): boolean {
     const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-5][0-9a-f]{3}-[089ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
     return uuidRegex.test(value);
-  }
-
-  async upsertPII(event: { [key: string]: any }, key: string, patientId: string) {
-    const shouldUpdatePII = event.op === 'UPDATE' && this.isUuid(event.data.old[key]);
-    if (shouldUpdatePII) {
-      return this.updateHealthData({
-        recordId: event.data.old[key],
-        recordData: { value: event.data.new[key] },
-      });
-    } else {
-      return this.tokenize({
-        recordType: key,
-        recordData: { value: event.data.new[key] },
-        organizationId: event.session_variables['x-hasura-organization-id'],
-        patientId,
-      });
-    }
   }
 }

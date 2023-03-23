@@ -2,14 +2,18 @@ import { Body, Controller, HttpCode, HttpException, HttpStatus, Param, Post } fr
 import { DatabaseService } from 'src/database/database.service';
 import { PhiService } from 'src/services/phi/phi.service';
 import { PhiTokenizeBodyDTO, UpdatePhiColumnDto } from './phi.dto';
-import { isEqual } from 'lodash';
+import { ConfigService } from '@nestjs/config';
 
 @Controller('phi')
 export class PhiController {
   ALLOWED_PII_COLUMNS = ['email', 'phoneNumber'];
   ALLOWED_TABLES = ['patient'];
 
-  constructor(private databaseService: DatabaseService, private phiService: PhiService) {}
+  constructor(
+    private databaseService: DatabaseService,
+    private phiService: PhiService,
+    private configService: ConfigService,
+  ) {}
 
   @HttpCode(200)
   @Post('tokenize/:column')
@@ -57,6 +61,7 @@ export class PhiController {
         },
         organizationId: event.data.new['organizationId'] || '',
         patientId: event.data.new['id'],
+        env: this.configService.get('ENV_NAME'),
       });
     } else {
       record = await this.phiService.updateHealthData({
@@ -121,6 +126,7 @@ export class PhiController {
         },
         organizationId: event.data.new['organizationId'] || '',
         patientId: event.data.new['id'],
+        env: this.configService.get('ENV_NAME'),
       });
 
       const sql = `UPDATE ${table.name} SET "${column}" = $1 WHERE id = $2`;
