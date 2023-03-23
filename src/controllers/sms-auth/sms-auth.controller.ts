@@ -75,7 +75,6 @@ export class SmsAuthController {
       });
     }
 
-    // NOTE: some organization allows public patient sign-ups.
     if (userType === LoginUserType.PATIENT) {
       let user: Patient;
       user = await this.smsAuthService.fetchPatient(
@@ -84,8 +83,9 @@ export class SmsAuthController {
         orgName,
         organization.id,
       );
-      this.logger.log('user::' + user);
+      this.logger.log('user::' + JSON.stringify(user));
       try {
+        // NOTE: some organization allows public patient sign-ups.
         if (!user && organization && organization.isPublicSignUpEnabled) {
           user = await this.smsAuthService.insertPatient({
             phoneCountryCode: body.phoneCountryCode,
@@ -94,6 +94,7 @@ export class SmsAuthController {
             type: UserRole.PATIENT,
           });
         }
+        this.logger.log('new inserted user:: ' + JSON.stringify(user));
         await this.smsAuthService.insertOtp(userType, user.id, otp);
         await this.smsAuthService.sendOtp(phoneCountryCode, phoneNumber, otp);
         return {
