@@ -81,18 +81,35 @@ export class SmsAuthService {
     phoneNumber: string,
     orgName: string,
   ): Promise<Patient | undefined> {
-    const getPatientHealthRecord = `query GetHealthRecords($jsonFilter: jsonb!) {
-      health_records(where: {recordType: {_eq: "phoneNumber"}, recordData: {_contains: $jsonFilter}}) {
+    const orgIdRespQuery = `query GetOrgId($orgName: String!) {
+      organization(where: {name: {_eq: $orgName}}) {
+        id
+      }
+    }`;
+    const orgIdResp = await this.gqlService.client.request(orgIdRespQuery, { orgName });
+    if (
+      !orgIdResp ||
+      !orgIdResp.organization ||
+      !orgIdResp.organization ||
+      !Array.isArray(orgIdResp.organization) ||
+      !orgIdResp.organization.length
+    ) {
+      return;
+    }
+    const organizationId = orgIdResp.organization[0].id;
+
+    const getPatientHealthRecord = `query GetHealthRecords($jsonFilter: jsonb!, $organizationId: uuid!) {
+      health_records(where: {recordType: {_eq: "phoneNumber"}, recordData: {_contains: $jsonFilter}, organizationId: {_eq: $organizationId}}) {
         id
         recordData
       }
     }`;
-    const jsonFilter = {
-      value: phoneNumber,
-    };
 
     const patientHealthRecord = await this.gqlService.client.request(getPatientHealthRecord, {
-      jsonFilter,
+      jsonFilter: {
+        value: phoneNumber,
+      },
+      organizationId,
     });
 
     if (
