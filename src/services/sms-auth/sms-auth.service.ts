@@ -82,8 +82,8 @@ export class SmsAuthService {
     orgName: string,
     orgId: string,
   ): Promise<Patient | undefined> {
-    const getPatientHealthRecord = `query GetHealthRecords($jsonFilter: jsonb!, $organizationId: uuid!) {
-      health_records(where: {recordType: {_eq: "phoneNumber"}, recordData: {_contains: $jsonFilter}, organizationId: {_eq: $organizationId}}) {
+    const getPatientHealthRecord = `query GetHealthRecords($jsonFilter: jsonb!, $organizationId: uuid!, $env: String!) {
+      health_records(where: {recordType: {_eq: "phoneNumber"}, recordData: {_contains: $jsonFilter}, organizationId: {_eq: $organizationId}, env: {_eq: $env}}) {
         id
         recordData
       }
@@ -94,6 +94,7 @@ export class SmsAuthService {
         value: phoneNumber,
       },
       organizationId: orgId,
+      env: this.configService.get('ENV_NAME'),
     });
 
     if (
