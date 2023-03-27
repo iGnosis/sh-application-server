@@ -7,7 +7,7 @@ export class PhiService {
 
   async tokenize(payload: {
     recordType: string;
-    recordData: { value: string };
+    recordData: { value: any };
     organizationId: string;
     patientId: string;
     env: string;
