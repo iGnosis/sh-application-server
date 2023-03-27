@@ -126,8 +126,8 @@ export class PatientController {
         patient_feedback_by_pk(id: $feedbackId) {
           patientByPatient {
             id
-            nickname
-            email
+            nickname: pii_nickname(path: "value")
+            email: pii_email(path: "value")
           }
           createdAt
           updatedAt

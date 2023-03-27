@@ -165,7 +165,7 @@ export class SubscriptionService {
             subscription
             customerId
             email: pii_email(path: "value")
-            nickname
+            nickname: pii_nickname(path: "value")
             createdAt
           }
         } `;
