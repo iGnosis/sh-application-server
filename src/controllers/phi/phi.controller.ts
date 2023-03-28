@@ -15,7 +15,14 @@ import { ConfigService } from '@nestjs/config';
 
 @Controller('phi')
 export class PhiController {
-  ALLOWED_PII_COLUMNS = ['email', 'phoneNumber', 'firstName', 'lastName', 'nickname'];
+  ALLOWED_PII_COLUMNS = [
+    'email',
+    'phoneNumber',
+    'firstName',
+    'lastName',
+    'nickname',
+    'medicalConditions',
+  ];
   ALLOWED_TABLES = ['patient'];
 
   constructor(
