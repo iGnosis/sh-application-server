@@ -12,6 +12,7 @@ import { DatabaseService } from 'src/database/database.service';
 import { PhiService } from 'src/services/phi/phi.service';
 import { PhiTokenizeBodyDTO, UpdatePhiColumnDto } from './phi.dto';
 import { ConfigService } from '@nestjs/config';
+import { validate as uuidValidate } from 'uuid';
 
 @Controller('phi')
 export class PhiController {
@@ -65,12 +66,14 @@ export class PhiController {
       }
     }
 
-    if (this.phiService.isUuid(event.data.new[phiColumn])) {
+    if (uuidValidate(event.data.new[phiColumn])) {
       return;
     }
 
+    this.logger.log('[update] phiColumn:: ' + phiColumn);
+    this.logger.log('[update] event.data.new:: ' + JSON.stringify(event.data.new));
     let record;
-    if (!this.phiService.isUuid(event.data.old[phiColumn])) {
+    if (!uuidValidate(event.data.old[phiColumn])) {
       record = await this.phiService.tokenize({
         recordType: phiColumn,
         recordData: {
