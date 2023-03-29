@@ -347,6 +347,11 @@ export class PatientPaymentController {
     const { customerId } = await this.subsciptionService.getPatientDetails(userId);
     const customer: any = await this.stripeService.stripeClient.customers.retrieve(customerId);
     const defaultPaymentMethodId: string = customer.invoice_settings.default_payment_method;
+
+    if (!defaultPaymentMethodId) {
+      throw new HttpException('No default payment method found', HttpStatus.BAD_REQUEST);
+    }
+
     const paymentMethod = await this.stripeService.stripeClient.paymentMethods.retrieve(
       defaultPaymentMethodId,
     );
