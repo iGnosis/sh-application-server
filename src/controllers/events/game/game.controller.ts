@@ -73,6 +73,8 @@ export class GameController {
     const fileName = `${patientId}.${gameId}.json`;
     const filePath = join(downloadsDir, fileName);
 
+    this.logger.log('gameEnded:filePath: ' + filePath);
+
     try {
       // IFF the file exists.
       await fs.access(filePath);
