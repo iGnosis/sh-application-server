@@ -69,7 +69,7 @@ export class GameController {
       },
     );
 
-    const downloadsDir = join(process.cwd(), 'pose-documents');
+    const downloadsDir = join(process.cwd(), 'storage/pose-documents');
     const fileName = `${patientId}.${gameId}.json`;
     const filePath = join(downloadsDir, fileName);
 
