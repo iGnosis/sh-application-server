@@ -5,6 +5,7 @@ import {
   Headers,
   HttpException,
   HttpStatus,
+  Logger,
   Post,
   RawBodyRequest,
   Req,
@@ -34,6 +35,7 @@ export class PatientPaymentController {
     private eventsService: EventsService,
     private configService: ConfigService,
     private novuService: NovuService,
+    private logger: Logger,
   ) {}
 
   @ApiBearerAuth('access-token')
@@ -134,24 +136,30 @@ export class PatientPaymentController {
     if (!subscriptionId) {
       throw new HttpException('SubscriptionId Not Found', HttpStatus.BAD_REQUEST);
     }
-    const subscription = await this.stripeService.stripeClient.subscriptions.update(
-      subscriptionId,
-      {
-        pause_collection: {
-          behavior: 'void',
-          // stripe will take seconds instead of milliseconds
-          resumes_at: new Date(resumesAt).getTime() / 1000,
+
+    try {
+      const subscription = await this.stripeService.stripeClient.subscriptions.update(
+        subscriptionId,
+        {
+          pause_collection: {
+            behavior: 'void',
+            // stripe will take seconds instead of milliseconds
+            resumes_at: new Date(resumesAt).getTime() / 1000,
+          },
         },
-      },
-    );
+      );
+      // setting the status to paused
+      await this.subsciptionService.setSubscriptionStatus(
+        subscriptionId,
+        SubscriptionStatusEnum.PAUSED,
+      );
 
-    // setting the status to paused
-    await this.subsciptionService.setSubscriptionStatus(
-      subscriptionId,
-      SubscriptionStatusEnum.PAUSED,
-    );
-
-    return subscription;
+      return subscription;
+    } catch (err) {
+      const patient = await this.subsciptionService.getPatient(subscriptionId);
+      await this.novuService.failedToPauseSubscription(patient);
+      this.logger.error('[pauseSubscription] ' + JSON.stringify(err));
+    }
   }
 
   @ApiBearerAuth('access-token')
@@ -263,6 +271,11 @@ export class PatientPaymentController {
 
     await this.subsciptionService.setSubscriptionId(userId, subscription.id);
 
+    // trigger reminder for trail ends
+    const reminderDate = new Date(endDate);
+    reminderDate.setDate(reminderDate.getDate() - 5);
+    await this.novuService.freeTrialEndingReminder(userId, reminderDate.toISOString());
+
     return {
       subscription,
     };
@@ -326,8 +339,14 @@ export class PatientPaymentController {
         startDate.toISOString(),
         endDate.toISOString(),
       );
+
       // setting subscription data in patient table
       await this.subsciptionService.setSubscriptionId(userId, subscription.id);
+
+      // trigger reminder for trail ends
+      const reminderDate = new Date(endDate);
+      reminderDate.setDate(reminderDate.getDate() - 5);
+      await this.novuService.freeTrialEndingReminder(userId, reminderDate.toISOString());
 
       return {
         subscription,
@@ -367,16 +386,35 @@ export class PatientPaymentController {
       userId,
     );
     await this.eventsService.sendCancellationEmail(email, nickname);
-    const subscription = await this.stripeService.stripeClient.subscriptions.update(
-      subscriptionId,
-      {
-        cancel_at_period_end: true,
-      },
-    );
-    await this.subsciptionService.removeSubscription(userId, subscriptionId);
-    return {
-      subscription,
-    };
+    try {
+      const subscription = await this.stripeService.stripeClient.subscriptions.update(
+        subscriptionId,
+        {
+          cancel_at_period_end: true,
+        },
+      );
+      await this.subsciptionService.removeSubscription(userId, subscriptionId);
+      return {
+        subscription,
+      };
+    } catch (err) {
+      const patient = await this.subsciptionService.getPatient(subscriptionId);
+      const subscription = await this.stripeService.stripeClient.subscriptions.retrieve(
+        subscriptionId,
+      );
+      const date = new Date(subscription.current_period_end * 1000);
+      const dateString = date.toLocaleString('en-US', {
+        timeZone: patient.timezone,
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+      });
+      await this.novuService.failedToCancelSubscription(patient, dateString);
+      this.logger.error('cancelSubscription error' + JSON.stringify(err));
+    }
   }
 
   @ApiBearerAuth('access-token')
@@ -548,46 +586,61 @@ export class PatientPaymentController {
         signature,
         this.configService.get('STRIPE_WEBHOOK_SECRET'),
       );
-      if (event.type == 'payment_intent.requires_action') {
-        const paymentIntent = event.data.object as any;
-        const subscriptionId = await this.subsciptionService.getSubscriptionId(
-          paymentIntent.customer as string,
-        );
+
+      const paymentIntent = event.data.object as any;
+      const subscriptionId = await this.subsciptionService.getSubscriptionId(
+        paymentIntent.customer,
+      );
+      const patient = await this.subsciptionService.getPatient(subscriptionId);
+
+      if (event.type === 'payment_intent.requires_action') {
         if (paymentIntent.next_action?.use_stripe_sdk?.stripe_js) {
           await this.subsciptionService.setPaymentAuthUrl(
             subscriptionId,
             paymentIntent.next_action.use_stripe_sdk.stripe_js,
           );
         }
-
-        return {
-          status: 'success',
-        };
-      } else if (event.type == 'payment_intent.succeeded') {
-        const paymentIntent = event.data.object as any;
-        const subscriptionId = await this.subsciptionService.getSubscriptionId(
-          paymentIntent.customer as string,
-        );
+      } else if (event.type === 'payment_intent.succeeded') {
         await this.subsciptionService.setPaymentAuthUrl(subscriptionId, '');
-
         // updating the subscription end date
         const subscription = await this.stripeService.stripeClient.subscriptions.retrieve(
           subscriptionId,
         );
         const endDate = new Date(subscription.current_period_end * 1000).toISOString();
         await this.subsciptionService.setSubscriptionEndDate(subscriptionId, endDate);
-
-        const patientId = await this.subsciptionService.getPatientId(subscriptionId);
-        await this.novuService.novuClient.subscribers.update(patientId, {
+        await this.novuService.novuClient.subscribers.update(patient.id, {
           data: {
-            paymentMade: true,
+            firstPaymentMade: true,
           },
         });
-
-        return {
-          status: 'success',
-        };
+        await this.novuService.firstPaymentSuccess(patient);
+      } else if (event.type === 'payment_intent.payment_failed') {
+        await this.novuService.paymentFailed(patient);
+      } else if (event.type === 'invoice.payment_failed') {
+        await this.novuService.renewPaymentFailed(patient);
+      } else if (event.type === 'invoice.payment_succeeded') {
+        const novuSubscriber = await this.novuService.getSubscriber(patient.id);
+        if (novuSubscriber && novuSubscriber.data && novuSubscriber.data.firstPaymentMade) {
+          await this.novuService.renewPaymentSuccess(patient);
+        } else {
+          await this.novuService.novuClient.subscribers.update(patient.id, {
+            data: {
+              firstPaymentMade: true,
+            },
+          });
+          await this.novuService.firstPaymentSuccess(patient);
+        }
+      } else if (event.type === 'customer.source.updated') {
+        await this.novuService.paymentMethodUpdatedSuccess(patient);
+      } else if (event.type === 'customer.subscription.deleted') {
+        await this.novuService.cancelSubscriptionSuccess(patient);
+      } else if (event.type === 'customer.subscription.paused') {
+        await this.novuService.pausedSubscriptionSuccess(patient);
       }
+
+      return {
+        status: 'success',
+      };
     } catch (err) {
       console.log(err);
       throw new HttpException(err.message, HttpStatus.INTERNAL_SERVER_ERROR);

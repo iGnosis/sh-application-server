@@ -146,7 +146,7 @@ export class Organization {
 export class Staff {
   id?: string;
   organizationId: string;
-  organization?: Organization;
+  organization?: Partial<Organization>;
   email?: string;
   password?: string;
   createdAt?: Date;
@@ -175,23 +175,24 @@ export class ShAdmin {
 
 export class Patient {
   id?: string;
-  organizationId: string;
-  organization?: Organization;
+  organizationId?: string;
+  organization?: Partial<Organization>;
   createdAt?: Date;
   updatedAt?: Date;
   activeCareplan?: string;
   identifier?: string;
   nickname?: string;
-  medicalConditions?: any;
+  medicalConditions?: string;
   preferredGenres?: any;
   primaryTherapist?: string;
   onboardedBy?: string;
   email?: string;
   careGiverEmail?: string;
-  phoneCountryCode: string;
-  phoneNumber: string;
+  phoneCountryCode?: string;
+  phoneNumber?: string;
   canBenchmark?: boolean;
   type?: UserRole; // workaround TS Unions.
+  timezone?: string;
   firstName?: string;
   lastName?: string;
   namePrefix?: string;
@@ -240,4 +241,33 @@ interface DashboardData {
   percentageChange?: number;
   showPercentageChange: boolean;
   metric: ConversionTypeEnum;
+}
+
+export class NovuSubscriberData {
+  nickname: string;
+  namePrefix: string;
+  lastActivityPlayedOn?: string;
+  firstPaymentMade: boolean;
+  firstActivityPlayed: boolean;
+  pastSameActivityCount: number;
+  activityStreakCount: number;
+  sendInactiveUserReminder: boolean;
+  quitDuringCalibrationMailSent: boolean;
+  quitDuringTutorialMailSent: boolean;
+  feedbackOn10ActiveDaysSent: boolean;
+  organizationId: string;
+  env: string;
+}
+
+export class NovuSubscriber {
+  firstName: string;
+  lastName: string;
+  email: string;
+  phone: string;
+  subscriberId: string;
+  createdAt: string;
+  updatedAt: string;
+  deleted: boolean;
+  channels: string[];
+  data: NovuSubscriberData;
 }

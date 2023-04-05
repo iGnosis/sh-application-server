@@ -44,6 +44,12 @@ export class NewPatientDto {
   })
   @IsNotEmpty()
   phoneNumber: string;
+
+  @ApiProperty({
+    description: 'Organization UUID that the patient belongs to',
+  })
+  @IsNotEmpty()
+  organizationId: string;
 }
 
 export class FeedbackReceivedEvent {

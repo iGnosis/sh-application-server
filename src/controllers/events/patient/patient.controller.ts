@@ -1,13 +1,11 @@
-import { Body, Controller, HttpCode, Logger, Post } from '@nestjs/common';
+import { Body, Controller, HttpCode, Post, UseInterceptors } from '@nestjs/common';
 import { GqlService } from 'src/services/clients/gql/gql.service';
-import { PatientFeedback } from 'src/types/global';
+import { NovuSubscriberData, PatientFeedback } from 'src/types/global';
 import { EventsService } from 'src/services/events/events.service';
 import { FeedbackReceivedEvent, NewPatientDto } from './patient.dto';
 import { NovuService } from 'src/services/novu/novu.service';
-import { NovuTriggerEnum, UserRole } from 'src/types/enum';
 import { ConfigService } from '@nestjs/config';
-import { PhiService } from 'src/services/phi/phi.service';
-import { DatabaseService } from 'src/database/database.service';
+import { User } from 'src/common/decorators/user.decorator';
 
 @Controller('events/patient')
 export class PatientController {
@@ -15,10 +13,7 @@ export class PatientController {
     private eventsService: EventsService,
     private gqlService: GqlService,
     private novuService: NovuService,
-    private logger: Logger,
     private configService: ConfigService,
-    private phiService: PhiService,
-    private databaseService: DatabaseService,
   ) {}
 
   @HttpCode(200)
@@ -61,15 +56,23 @@ export class PatientController {
       namePrefix,
       phoneCountryCode,
       phoneNumber,
+      organizationId,
     } = body;
 
-    // TODO: Remove PinPoint related codes once Novu is functional.
-    const response = await this.eventsService.updateEndpoint(
-      { id: patientId, emailAddress: email, nickname },
-      patientId,
-      'patient',
-    );
-    await this.eventsService.userSignUp(patientId);
+    const novuData: NovuSubscriberData = {
+      nickname,
+      namePrefix,
+      firstPaymentMade: false,
+      firstActivityPlayed: false,
+      pastSameActivityCount: 0,
+      activityStreakCount: 0,
+      sendInactiveUserReminder: false,
+      quitDuringCalibrationMailSent: false,
+      quitDuringTutorialMailSent: false,
+      feedbackOn10ActiveDaysSent: false,
+      organizationId,
+      env: this.configService.get('ENV_NAME') || 'local',
+    };
 
     // create Novu subscriber
     await this.novuService.novuClient.subscribers.identify(patientId, {
@@ -77,41 +80,65 @@ export class PatientController {
       firstName,
       lastName,
       phone: `${phoneCountryCode}${phoneNumber}`,
-      data: {
-        nickname,
-        namePrefix,
-        paymentMade: false,
-        env: this.configService.get('ENV_NAME') || 'local',
-      },
+      data: { ...novuData },
     });
 
-    try {
-      // send welcome email to subscriber
-      await this.novuService.novuClient.trigger(NovuTriggerEnum.WELCOME_EMAIL, {
-        to: {
-          subscriberId: patientId,
-        },
-        payload: {},
-      });
-    } catch (error) {
-      this.logger.error('error while sending welcome email ' + JSON.stringify(error));
-    }
+    const patient = await this.novuService.getPatientByPk(patientId);
 
-    try {
-      // remind patient if they didn't set payments after a while.
-      await this.novuService.novuClient.trigger(NovuTriggerEnum.PAYMENT_REMINDER, {
-        to: {
-          subscriberId: patientId,
-        },
-        payload: {},
-      });
-    } catch (error) {
-      this.logger.error(
-        'error while activating payment reminder template ' + JSON.stringify(error),
-      );
-    }
+    // trigger no payment done reminder
+    await this.novuService.noPaymentDoneReminder(patient);
 
-    return 'success';
+    // trigger no activity played reminder
+    await this.novuService.noActivityStartedReminder(patient);
+
+    return {
+      status: 'success',
+    };
+  }
+
+  @Post('quit-calibration')
+  async patientQuitCalibration(@User('id') id: string) {
+    await this.novuService.quitDuringCalibration(id);
+
+    const novuData: Partial<NovuSubscriberData> = {
+      quitDuringCalibrationMailSent: true,
+    };
+    await this.novuService.novuClient.subscribers.update(id, {
+      data: { ...novuData },
+    });
+    return {
+      status: 'success',
+    };
+  }
+
+  @Post('quit-tutorial')
+  async patientQuitTutorial(@User('id') id: string) {
+    await this.novuService.quitDuringTutorial(id);
+    const novuData: Partial<NovuSubscriberData> = {
+      quitDuringTutorialMailSent: true,
+    };
+    await this.novuService.novuClient.subscribers.update(id, {
+      data: { ...novuData },
+    });
+    return {
+      status: 'success',
+    };
+  }
+
+  @Post('contact-support-success')
+  async patientContactSupport(@User('id') id: string) {
+    await this.novuService.contactSupportSuccess(id);
+    return {
+      status: 'success',
+    };
+  }
+
+  @Post('feedback-fab-success')
+  async patientFeedbackSupport(@User('id') id: string) {
+    await this.novuService.fabFeedbackSuccess(id);
+    return {
+      status: 'success',
+    };
   }
 
   // called by Hasura on-off scheduled cron job.
