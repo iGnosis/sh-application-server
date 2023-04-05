@@ -323,13 +323,14 @@ export class NovuService {
     }
   }
 
-  async highScoreReached(patientId: string) {
+  async highScoreReached(patientId: string, gameName: string) {
     try {
       await this.novuClient.trigger(NovuTriggerEnum.HIGH_SCORE_REACHED, {
         to: {
           subscriberId: patientId,
         },
         payload: {
+          gameName,
           supportUrl: this.configService.get('SUPPORT_URL') || '',
         },
       });

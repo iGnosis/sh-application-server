@@ -184,8 +184,8 @@ export class GameController {
   }
 
   @Post('highscore-reached')
-  async highscoreReached(@User('id') userId: string) {
-    await this.novuService.highScoreReached(userId);
+  async highscoreReached(@User('id') userId: string, @Body('gameName') gameName: string) {
+    await this.novuService.highScoreReached(userId, gameName);
     return {
       status: 'success',
     };
