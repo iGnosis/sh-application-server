@@ -62,6 +62,7 @@ export enum NovuTriggerEnum {
 
   USER_PLAYING_SAME_GAME = 'sound-health-theres-more-to-explore-try-some-of-our-other-games',
   MAINTAINING_STREAK = 'maintaining-streaks',
+  ALMOST_BROKEN_STREAK = 'almost-broken-streaks',
   HIGH_SCORE_REACHED = 'high-scores-in-any-of-the-games',
 }
 

@@ -51,6 +51,14 @@ export class NovuService {
     }
   }
 
+  async cancelTrigger(triggerId: string) {
+    try {
+      await this.novuClient.events.cancel(triggerId);
+    } catch (err) {
+      this.logger.error('error while cancelTrigger ' + JSON.stringify(err));
+    }
+  }
+
   async paymentFailed(patient: Patient) {
     try {
       return await this.novuClient.trigger(NovuTriggerEnum.PAYMENT_FAILED, {
@@ -382,6 +390,24 @@ export class NovuService {
       });
     } catch (err) {
       this.logger.error('error while contactSupportSuccess ' + JSON.stringify(err));
+    }
+  }
+
+  async almostBrokenStreakReminder(patientId: string, sendAt: string, triggerId: string) {
+    try {
+      const resp = await this.novuClient.trigger(NovuTriggerEnum.ALMOST_BROKEN_STREAK, {
+        to: {
+          subscriberId: patientId,
+        },
+        payload: {
+          sendAt,
+        },
+        // @ts-ignore
+        transactionId: triggerId,
+      });
+      return resp.data;
+    } catch (err) {
+      this.logger.error('error while almostBrokenStreak ' + JSON.stringify(err));
     }
   }
 

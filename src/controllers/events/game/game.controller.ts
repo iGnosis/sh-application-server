@@ -54,6 +54,7 @@ export class GameController {
     // Trigger Novu events.
     // first activity played greeting.
     const subscriber = await this.novuService.getSubscriber(patientId);
+
     if (subscriber && subscriber.data && !subscriber.data.firstActivityPlayed) {
       await this.novuService.firstActivityCompleted(patientId);
 
@@ -64,6 +65,18 @@ export class GameController {
         data: { ...novuData },
       });
     }
+
+    // "Almost broken streak" notification to be sent after 24 hours.
+    const remindAt = new Date(endedAt);
+    remindAt.setHours(remindAt.getHours() + 24);
+    // we cancel previous "Almost broken streak" trigger if it exist.
+    const almostBrokenStreakTriggerId = `${patientId}-almost-broken-streak`;
+    await this.novuService.cancelTrigger(almostBrokenStreakTriggerId);
+    await this.novuService.almostBrokenStreakReminder(
+      patientId,
+      remindAt.toISOString(),
+      almostBrokenStreakTriggerId,
+    );
 
     const streak = await this.statsService.calculateStreak(patientId);
 
