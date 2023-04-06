@@ -16,6 +16,7 @@ import { SmsAuthService } from '../../services/sms-auth/sms-auth.service';
 import { UserRole, LoginUserType } from 'src/types/enum';
 import { CreateOrganizationService } from 'src/services/organization/create/create-organization.service';
 import { NovuService } from 'src/services/novu/novu.service';
+import { StripeService } from 'src/services/stripe/stripe.service';
 
 // TODO: Apply rate limiters (?)
 @UseInterceptors(new TransformResponseInterceptor())
@@ -26,6 +27,7 @@ export class SmsAuthController {
     private createOrganizationService: CreateOrganizationService,
     private readonly logger: Logger,
     private novuService: NovuService,
+    private stripeService: StripeService,
   ) {
     this.logger = new Logger(SmsAuthController.name);
   }
@@ -104,13 +106,32 @@ export class SmsAuthController {
       this.logger.log('user:: ' + JSON.stringify(user));
 
       try {
-        // create Novu subscriber for patients only.
-        const novuData: Partial<NovuSubscriberData> = {
-          firstPaymentMade: true,
-          organizationId: organization.id,
-        };
-        // TODO:
-        // await this.novuService.createNewSubscriber(user.id, phoneCountryCode, phoneNumber, novuData);
+        // check if Novu subscriber doesn't exist
+        const subscriber = await this.novuService.getSubscriber(user.id);
+        if (!subscriber || !subscriber.subscriberId) {
+          let firstPaymentMade = false;
+          if (user && user.customerId) {
+            const invoicesList = await this.stripeService.stripeClient.invoices.list({
+              customer: user.customerId,
+              status: 'paid',
+            });
+            if (invoicesList.data.length >= 1) {
+              firstPaymentMade = true;
+            }
+          }
+          // create Novu subscriber for patients only.
+          const novuData: Partial<NovuSubscriberData> = {
+            firstPaymentMade,
+            organizationId: organization.id,
+          };
+          const newSubscriber = await this.novuService.createNewSubscriber(
+            user.id,
+            phoneCountryCode,
+            phoneNumber,
+            novuData,
+          );
+          this.logger.log('createNewSubscriber:newSubscriber' + JSON.stringify(newSubscriber));
+        }
       } catch (err) {
         this.logger.error('error while creating novu sub:: ' + JSON.stringify(err));
       }

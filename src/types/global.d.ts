@@ -181,6 +181,7 @@ export class Patient {
   updatedAt?: Date;
   activeCareplan?: string;
   identifier?: string;
+  customerId?: string;
   nickname?: string;
   medicalConditions?: string;
   preferredGenres?: any;

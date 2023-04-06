@@ -71,10 +71,14 @@ export class NovuService {
       env: this.configService.get('ENV_NAME') || 'local',
       ...novuData,
     };
-    await this.novuClient.subscribers.identify(patientId, {
-      phone: `${phoneCountryCode}${phoneNumber}`,
-      data: { ...defaultNovuData },
-    });
+    try {
+      return await this.novuClient.subscribers.identify(patientId, {
+        phone: `${phoneCountryCode}${phoneNumber}`,
+        data: { ...defaultNovuData },
+      });
+    } catch (err) {
+      this.logger.error('error while createNewSubscriber ' + JSON.stringify(err));
+    }
   }
 
   async cancelTrigger(triggerId: string) {

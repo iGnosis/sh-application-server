@@ -113,6 +113,7 @@ export class SmsAuthService {
         id
         canBenchmark
         phoneCountryCode
+        customerId
         phoneNumber: pii_phoneNumber(path: "value")
         email: pii_email(path: "value")
         organizationId
