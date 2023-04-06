@@ -233,7 +233,7 @@ export class PatientPaymentController {
         id: promoCodeData.id,
         active: promoCodeData.active,
       }));
-      promoCodesPage = promoCodesList.filter(
+      promoCodesPage = promoCodesPage.filter(
         (code: { code: string; id: string; active: boolean }) => code.active,
       );
       promoCodesList.push(...promoCodesPage);
