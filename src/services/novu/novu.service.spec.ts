@@ -547,6 +547,15 @@ describe('NovuService', () => {
             },
           },
           {
+            phone: '+914455661122',
+            subscriberId: '919ab224-a816-41ff-b0c5-00fb1713ea91',
+            email: 'test22@test.com',
+            data: {
+              lastActivityPlayedOn: foutDayInPast,
+              sendInactiveUserReminder: false,
+            },
+          },
+          {
             phone: '+91123456789',
             subscriberId: '42efec9e-c993-42ec-810f-3e3ac5501c88',
             email: 'test@test.com',
