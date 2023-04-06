@@ -97,6 +97,8 @@ export class SmsAuthService {
       env: this.configService.get('ENV_NAME'),
     });
 
+    this.logger.log('fetchPatient:patientHealthRecord: ' + JSON.stringify(patientHealthRecord));
+
     if (
       !patientHealthRecord ||
       !patientHealthRecord.health_records ||
@@ -127,6 +129,7 @@ export class SmsAuthService {
       phoneNumber: patientHealthRecord.health_records[0].id,
       orgName,
     });
+    this.logger.log('fetchPatient:patient:' + JSON.stringify(resp));
     if (!resp || !resp.patient || !isArray(resp.patient) || !resp.patient.length) {
       return;
     }
@@ -248,10 +251,8 @@ export class SmsAuthService {
 
   async insertPatient(patientObj: Patient) {
     const query = `mutation InsertPatient($phoneCountryCode: String!, $phoneNumber: String!, $email: String = null, $namePrefix: String = null, $firstName: String = null, $lastName: String = null, $organizationId: uuid!) {
-      insert_patient(objects: {phoneCountryCode: $phoneCountryCode, phoneNumber: $phoneNumber, email: $email, namePrefix: $namePrefix, firstName: $firstName, lastName: $lastName, organizationId: $organizationId}) {
-        returning {
+      insert_patient_one(object: {phoneCountryCode: $phoneCountryCode, phoneNumber: $phoneNumber, email: $email, namePrefix: $namePrefix, firstName: $firstName, lastName: $lastName, organizationId: $organizationId}) {
           id
-        }
       }
     }`;
 
@@ -275,7 +276,7 @@ export class SmsAuthService {
         email,
         organizationId,
       });
-      return resp.insert_patient.returning;
+      return resp.insert_patient_one;
     } catch (err) {
       this.logger.error('insertUser: ' + JSON.stringify(err));
       throw new HttpException('Error while signing up patient', HttpStatus.INTERNAL_SERVER_ERROR);

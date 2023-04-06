@@ -2,10 +2,9 @@ import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Novu } from '@novu/node';
 import { NovuTriggerEnum } from 'src/types/enum';
-import { NovuSubscriber, NovuSubscriberData, Patient } from 'src/types/global';
 import { GqlService } from '../clients/gql/gql.service';
 import { Cron, CronExpression } from '@nestjs/schedule';
-
+import { NovuSubscriber, NovuSubscriberData, Patient } from 'src/types/global';
 @Injectable()
 export class NovuService {
   public novuClient: Novu;
@@ -49,6 +48,33 @@ export class NovuService {
     } catch (err) {
       this.logger.error('error while getSubscriber ' + JSON.stringify(err));
     }
+  }
+
+  async createNewSubscriber(
+    patientId: string,
+    phoneCountryCode: string,
+    phoneNumber: string,
+    novuData: Partial<NovuSubscriberData>,
+  ) {
+    const defaultNovuData: NovuSubscriberData = {
+      nickname: '',
+      namePrefix: '',
+      firstPaymentMade: false,
+      firstActivityPlayed: false,
+      pastSameActivityCount: 0,
+      activityStreakCount: 0,
+      sendInactiveUserReminder: false,
+      quitDuringCalibrationMailSent: false,
+      quitDuringTutorialMailSent: false,
+      feedbackOn10ActiveDaysSent: false,
+      organizationId: '',
+      env: this.configService.get('ENV_NAME') || 'local',
+      ...novuData,
+    };
+    await this.novuClient.subscribers.identify(patientId, {
+      phone: `${phoneCountryCode}${phoneNumber}`,
+      data: { ...defaultNovuData },
+    });
   }
 
   async cancelTrigger(triggerId: string) {

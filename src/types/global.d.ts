@@ -243,7 +243,7 @@ interface DashboardData {
   metric: ConversionTypeEnum;
 }
 
-export class NovuSubscriberData {
+interface NovuSubscriberData {
   nickname: string;
   namePrefix: string;
   lastActivityPlayedOn?: string;
@@ -259,7 +259,7 @@ export class NovuSubscriberData {
   env: string;
 }
 
-export class NovuSubscriber {
+interface NovuSubscriber {
   firstName: string;
   lastName: string;
   email: string;

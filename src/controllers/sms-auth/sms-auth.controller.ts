@@ -10,11 +10,12 @@ import {
   UseInterceptors,
 } from '@nestjs/common';
 import { TransformResponseInterceptor } from 'src/common/interceptors/transform-response.interceptor';
-import { Staff, Patient, ShAdmin } from 'src/types/global';
+import { Staff, Patient, ShAdmin, NovuSubscriberData } from 'src/types/global';
 import { SMSLoginBody, SMSVerifyBody } from './sms-auth.dto';
 import { SmsAuthService } from '../../services/sms-auth/sms-auth.service';
 import { UserRole, LoginUserType } from 'src/types/enum';
 import { CreateOrganizationService } from 'src/services/organization/create/create-organization.service';
+import { NovuService } from 'src/services/novu/novu.service';
 
 // TODO: Apply rate limiters (?)
 @UseInterceptors(new TransformResponseInterceptor())
@@ -24,6 +25,7 @@ export class SmsAuthController {
     private smsAuthService: SmsAuthService,
     private createOrganizationService: CreateOrganizationService,
     private readonly logger: Logger,
+    private novuService: NovuService,
   ) {
     this.logger = new Logger(SmsAuthController.name);
   }
@@ -83,17 +85,38 @@ export class SmsAuthController {
         orgName,
         organization.id,
       );
+      this.logger.log('fetchPatient:user: ' + JSON.stringify(user));
+
+      // NOTE: some organization allows public patient sign-ups.
+      if (!user && organization && !organization.isPublicSignUpEnabled) {
+        throw new HttpException('Public sign-ups are disabled.', HttpStatus.UNAUTHORIZED);
+      }
+
+      if (!user && organization && organization.isPublicSignUpEnabled) {
+        user = await this.smsAuthService.insertPatient({
+          phoneCountryCode: body.phoneCountryCode,
+          phoneNumber: body.phoneNumber,
+          organizationId: organization.id,
+          type: UserRole.PATIENT,
+        });
+      }
+
+      this.logger.log('user:: ' + JSON.stringify(user));
+
       try {
-        // NOTE: some organization allows public patient sign-ups.
-        if (!user && organization && organization.isPublicSignUpEnabled) {
-          user = await this.smsAuthService.insertPatient({
-            phoneCountryCode: body.phoneCountryCode,
-            phoneNumber: body.phoneNumber,
-            organizationId: organization.id,
-            type: UserRole.PATIENT,
-          });
-        }
-        this.logger.log('user:: ' + JSON.stringify(user));
+        // create Novu subscriber for patients only.
+        const novuData: Partial<NovuSubscriberData> = {
+          firstPaymentMade: true,
+          organizationId: organization.id,
+        };
+        // TODO:
+        // await this.novuService.createNewSubscriber(user.id, phoneCountryCode, phoneNumber, novuData);
+      } catch (err) {
+        this.logger.error('error while creating novu sub:: ' + JSON.stringify(err));
+      }
+
+      try {
+        this.logger.log('insertOtp::user.id::' + user.id);
         await this.smsAuthService.insertOtp(userType, user.id, otp);
         await this.smsAuthService.sendOtp(phoneCountryCode, phoneNumber, otp);
         if (user && user.email) {
@@ -104,9 +127,8 @@ export class SmsAuthController {
           message: 'OTP sent successfully.',
           isExistingUser: user && user.email ? true : false,
         };
-      } catch (error) {
-        console.log(error);
-        this.logger.log('patient might already exist');
+      } catch (err) {
+        console.log('error while sending OTP: ' + JSON.stringify(err));
       }
     }
 
