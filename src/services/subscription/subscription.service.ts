@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { SubscriptionStatusEnum } from 'src/types/enum';
 import { GqlService } from '../clients/gql/gql.service';
+import { Patient } from 'src/types/global';
 
 @Injectable()
 export class SubscriptionService {
@@ -123,7 +124,7 @@ export class SubscriptionService {
     });
   }
 
-  async getSubscriptionId(customerId: string) {
+  async getSubscriptionId(customerId: string): Promise<string> {
     try {
       const query = `
       query getSubscriptionFromCustomer($customerId: String = "") {
@@ -138,15 +139,20 @@ export class SubscriptionService {
     }
   }
 
-  async getPatientId(subscriptionId: string) {
+  async getPatient(subscriptionId: string): Promise<Patient> {
     try {
       const query = `query GetPatientId($subscriptionId: String!) {
         patient(where: {subscription: {_eq: $subscriptionId}}) {
           id
+          timezone
+          organization {
+            id
+            patientDomain
+          }
         }
       }`;
       const resp = await this.gqlService.client.request(query, { subscriptionId });
-      return resp.patient[0].id;
+      return resp.patient[0];
     } catch (err) {
       console.log(err);
     }
@@ -165,7 +171,7 @@ export class SubscriptionService {
             subscription
             customerId
             email: pii_email(path: "value")
-            nickname
+            nickname: pii_nickname(path: "value")
             createdAt
           }
         } `;

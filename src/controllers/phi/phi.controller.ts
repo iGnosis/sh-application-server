@@ -1,18 +1,36 @@
-import { Body, Controller, HttpCode, HttpException, HttpStatus, Param, Post } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  HttpCode,
+  HttpException,
+  HttpStatus,
+  Logger,
+  Param,
+  Post,
+} from '@nestjs/common';
 import { DatabaseService } from 'src/database/database.service';
 import { PhiService } from 'src/services/phi/phi.service';
 import { PhiTokenizeBodyDTO, UpdatePhiColumnDto } from './phi.dto';
 import { ConfigService } from '@nestjs/config';
+import { validate as uuidValidate } from 'uuid';
 
 @Controller('phi')
 export class PhiController {
-  ALLOWED_PII_COLUMNS = ['email', 'phoneNumber'];
+  ALLOWED_PII_COLUMNS = [
+    'email',
+    'phoneNumber',
+    'firstName',
+    'lastName',
+    'nickname',
+    'medicalConditions',
+  ];
   ALLOWED_TABLES = ['patient'];
 
   constructor(
     private databaseService: DatabaseService,
     private phiService: PhiService,
     private configService: ConfigService,
+    private logger: Logger,
   ) {}
 
   @HttpCode(200)
@@ -48,12 +66,14 @@ export class PhiController {
       }
     }
 
-    if (this.phiService.isUuid(event.data.new[phiColumn])) {
+    if (uuidValidate(event.data.new[phiColumn])) {
       return;
     }
 
+    this.logger.log('[update] phiColumn:: ' + phiColumn);
+    this.logger.log('[update] event.data.new:: ' + JSON.stringify(event.data.new));
     let record;
-    if (!this.phiService.isUuid(event.data.old[phiColumn])) {
+    if (!uuidValidate(event.data.old[phiColumn])) {
       record = await this.phiService.tokenize({
         recordType: phiColumn,
         recordData: {
@@ -82,6 +102,7 @@ export class PhiController {
       userRole: actionUserRole,
     });
 
+    this.logger.log('update: updated tokenized column: ' + phiColumn);
     return { success: true };
   }
 
@@ -139,6 +160,7 @@ export class PhiController {
         modifiedByUser: actionUserId,
         userRole: actionUserRole,
       });
+      this.logger.log('insert: tokenized column:: ' + column);
     }
 
     return {

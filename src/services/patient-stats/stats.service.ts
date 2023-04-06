@@ -453,13 +453,67 @@ export class StatsService {
         }
       });
 
-      // increment counter only if all the avaiable games were played.
-      if (seenGames.size === gamesAvailable.length) {
+      // increment counter only if at least one game was played.
+      if (seenGames.size >= 1) {
         daysCompleted++;
       }
     }
     return { daysCompleted, groupByCreatedAtDayGames: groupByRes };
   }
+
+  async getPastSameActivityCount(patientId: string) {
+    const query = `query GetGames($patientId: uuid!) {
+      game(where: {patient: {_eq: $patientId}}, order_by: {createdAt: desc}, limit: 10) {
+        id
+        game
+        createdAt
+      }
+    }`;
+    const resp = await this.gqlService.client.request(query, { patientId });
+
+    let pastSameActivityCount = 0;
+    for (let i = 0; i < resp.game.length - 1; i++) {
+      if (resp.game[i].game === resp.game[i + 1].game) {
+        pastSameActivityCount = pastSameActivityCount + 1;
+      }
+    }
+    return {
+      pastSameActivityCount,
+      sameActivityName: resp.game[0].game,
+    };
+  }
+
+  async calculateStreak(patientId: string) {
+    const query = `query GetGames($patientId: uuid!) {
+      game(where: {patient: {_eq: $patientId}}, order_by: {createdAt: desc}, limit: 50) {
+        id
+        game
+        createdAt
+      }
+    }`;
+    const resp = await this.gqlService.client.request(query, { patientId });
+
+    let streak = 0;
+    let prevDate: Date = null;
+
+    for (let i = 0; i < resp.game.length; i++) {
+      const currentDate = new Date(resp.game[i].createdAt);
+      if (prevDate !== null) {
+        const diffTime = Math.abs(currentDate.getTime() - prevDate.getTime());
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        if (diffDays === 1) {
+          streak = streak + 1;
+        } else if (diffDays > 1) {
+          break;
+        }
+      } else {
+        streak = 1;
+      }
+      prevDate = currentDate;
+    }
+    return streak;
+  }
+
   getFutureDate(currentDate: Date, numOfDaysInFuture: number) {
     return new Date(currentDate.getTime() + 86400000 * numOfDaysInFuture);
   }

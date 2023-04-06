@@ -14,7 +14,8 @@ import { GameCompletedPinpoint, GameEnded, GameStarted } from './game.dto';
 import * as events from 'events';
 import * as readLine from 'readline';
 import { ExtractInformationService } from 'src/services/extract-information/extract-information.service';
-import { PoseDataMessageBody } from 'src/types/global';
+import { NovuSubscriberData, PoseDataMessageBody } from 'src/types/global';
+import { NovuService } from 'src/services/novu/novu.service';
 
 @Controller('events/game')
 export class GameController {
@@ -27,6 +28,7 @@ export class GameController {
     private extractInformationService: ExtractInformationService,
     private aggregateAnalyticsService: AggregateAnalyticsService,
     private logger: Logger,
+    private novuService: NovuService,
   ) {
     this.envName = configService.get('ENV_NAME');
     this.logger = new Logger(GameController.name);
@@ -49,6 +51,50 @@ export class GameController {
     const { gameId, patientId, endedAt, analytics, organizationId } = body;
     if (!endedAt) return;
 
+    // Trigger Novu events.
+    // first activity played greeting.
+    const subscriber = await this.novuService.getSubscriber(patientId);
+
+    if (subscriber && subscriber.data && !subscriber.data.firstActivityPlayed) {
+      await this.novuService.firstActivityCompleted(patientId);
+
+      const novuData: Partial<NovuSubscriberData> = {
+        firstActivityPlayed: true,
+      };
+      await this.novuService.novuClient.subscribers.update(patientId, {
+        data: { ...novuData },
+      });
+    }
+
+    // "Almost broken streak" notification to be sent after 24 hours.
+    const remindAt = new Date(endedAt);
+    remindAt.setHours(remindAt.getHours() + 24);
+    // we cancel previous "Almost broken streak" trigger if it exist.
+    const almostBrokenStreakTriggerId = `${patientId}-almost-broken-streak`;
+    await this.novuService.cancelTrigger(almostBrokenStreakTriggerId);
+    await this.novuService.almostBrokenStreakReminder(
+      patientId,
+      remindAt.toISOString(),
+      almostBrokenStreakTriggerId,
+    );
+
+    const streak = await this.statsService.calculateStreak(patientId);
+
+    // incase if user is playing same activity over & over.
+    const { pastSameActivityCount, sameActivityName } =
+      await this.statsService.getPastSameActivityCount(patientId);
+    const novuData: Partial<NovuSubscriberData> = {
+      lastActivityPlayedOn: new Date().toISOString(),
+      sendInactiveUserReminder: true,
+      activityStreakCount: streak,
+      pastSameActivityCount,
+    };
+    await this.novuService.novuClient.subscribers.update(patientId, {
+      data: { ...novuData },
+    });
+    await this.novuService.userPlayingSameGame(patientId, sameActivityName);
+    await this.novuService.maintainingStreak(patientId);
+
     // calculate total coins for a game
     const totalGameCoins = analytics.reduce((sum, data) => data.result.coin + sum, 0);
     // TODO: need to know how to calculate Movement Coins earned from XP.
@@ -69,9 +115,11 @@ export class GameController {
       },
     );
 
-    const downloadsDir = join(process.cwd(), 'pose-documents');
+    const downloadsDir = join(process.cwd(), 'storage/pose-documents');
     const fileName = `${patientId}.${gameId}.json`;
     const filePath = join(downloadsDir, fileName);
+
+    this.logger.log('gameEnded:filePath: ' + filePath);
 
     try {
       // IFF the file exists.
@@ -135,6 +183,14 @@ export class GameController {
     };
   }
 
+  @Post('highscore-reached')
+  async highscoreReached(@User('id') userId: string, @Body('gameName') gameName: string) {
+    await this.novuService.highScoreReached(userId, gameName);
+    return {
+      status: 'success',
+    };
+  }
+
   // Call whenever a user lands on Patient Portal.
   @HttpCode(200)
   @ApiBearerAuth('access-token')
@@ -146,7 +202,7 @@ export class GameController {
     };
   }
 
-  // For pinpoint.
+  // For Novu.
   // Called from activity-exp (since it was pain to manage user localtime server-side)
   // on completion of a game.
   @HttpCode(200)
@@ -175,23 +231,36 @@ export class GameController {
 
     const { daysCompleted, groupByCreatedAtDayGames } = results;
 
-    const index = Object.keys(groupByCreatedAtDayGames).length - 1;
-    const key = Object.keys(groupByCreatedAtDayGames)[index];
-    const latestGameData = groupByCreatedAtDayGames[key];
+    if (daysCompleted >= 10) {
+      const subscriber = await this.novuService.getSubscriber(userId);
+      if (subscriber && subscriber.data && !subscriber.data.feedbackOn10ActiveDaysSent) {
+        await this.novuService.feedbackOn10ActiveDays(userId);
+        const novuData: Partial<NovuSubscriberData> = {
+          feedbackOn10ActiveDaysSent: true,
+        };
+        await this.novuService.novuClient.subscribers.update(userId, {
+          data: { ...novuData },
+        });
+      }
+    }
 
-    const numOfActivitesCompletedToday = latestGameData.length;
+    // const index = Object.keys(groupByCreatedAtDayGames).length - 1;
+    // const key = Object.keys(groupByCreatedAtDayGames)[index];
+    // const latestGameData = groupByCreatedAtDayGames[key];
 
-    let totalDailyDurationInSec = 0;
-    latestGameData.forEach((data) => {
-      totalDailyDurationInSec += data.durationInSec;
-    });
-    const totalDailyDurationInMin = parseFloat((totalDailyDurationInSec / 60).toFixed(2));
+    // const numOfActivitesCompletedToday = latestGameData.length;
 
-    await this.eventsService.gameEnded(userId, {
-      numOfActiveDays: daysCompleted,
-      numOfActivitesCompletedToday,
-      totalDailyDurationInMin: totalDailyDurationInMin,
-    });
+    // let totalDailyDurationInSec = 0;
+    // latestGameData.forEach((data) => {
+    //   totalDailyDurationInSec += data.durationInSec;
+    // });
+    // const totalDailyDurationInMin = parseFloat((totalDailyDurationInSec / 60).toFixed(2));
+
+    // await this.eventsService.gameEnded(userId, {
+    //   numOfActiveDays: daysCompleted,
+    //   numOfActivitesCompletedToday,
+    //   totalDailyDurationInMin: totalDailyDurationInMin,
+    // });
 
     return {
       status: 'success',
