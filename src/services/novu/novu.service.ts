@@ -72,10 +72,11 @@ export class NovuService {
       ...novuData,
     };
     try {
-      return await this.novuClient.subscribers.identify(patientId, {
+      const resp = await this.novuClient.subscribers.identify(patientId, {
         phone: `${phoneCountryCode}${phoneNumber}`,
         data: { ...defaultNovuData },
       });
+      return resp.data;
     } catch (err) {
       this.logger.error('error while createNewSubscriber ' + JSON.stringify(err));
     }
@@ -83,7 +84,8 @@ export class NovuService {
 
   async cancelTrigger(triggerId: string) {
     try {
-      await this.novuClient.events.cancel(triggerId);
+      const resp = await this.novuClient.events.cancel(triggerId);
+      return resp.data;
     } catch (err) {
       this.logger.error('error while cancelTrigger ' + JSON.stringify(err));
     }
@@ -126,6 +128,7 @@ export class NovuService {
           updatePaymentMethodUrl: patient.organization.patientDomain || '',
           supportUrl: this.configService.get('SUPPORT_URL') || '',
         },
+        overrides: this.overrides,
       });
     } catch (err) {
       this.logger.error('error while renewPaymentFailed ' + JSON.stringify(err));
@@ -141,6 +144,7 @@ export class NovuService {
         payload: {
           pauseSubscriptionUrl: patient.organization.patientDomain || '',
         },
+        overrides: this.overrides,
       });
     } catch (err) {
       this.logger.error('error while failedToPauseSubscription ' + JSON.stringify(err));
@@ -159,6 +163,7 @@ export class NovuService {
           subscriptionRenewalDate: renewalDate,
           customerSupportEmailAddr: 'support@pointmotion.us',
         },
+        overrides: this.overrides,
       });
     } catch (err) {
       this.logger.error('error while failedToCancelSubscription ' + JSON.stringify(err));
@@ -176,6 +181,7 @@ export class NovuService {
           referralProgramUrl: patient.organization.patientDomain || '',
           feedbackUrl: this.configService.get('FEEDBACK_URL') || '',
         },
+        overrides: this.overrides,
       });
     } catch (err) {
       this.logger.error('error while firstPaymentSuccess ' + JSON.stringify(err));
@@ -191,6 +197,7 @@ export class NovuService {
         payload: {
           supportUrl: this.configService.get('SUPPORT_URL') || '',
         },
+        overrides: this.overrides,
       });
     } catch (err) {
       this.logger.error('error while renewPaymentSuccess ' + JSON.stringify(err));
@@ -206,6 +213,7 @@ export class NovuService {
         payload: {
           supportEmailAddr: 'support@pointmotion.us',
         },
+        overrides: this.overrides,
       });
     } catch (err) {
       this.logger.error('error while paymentMethodUpdatedSuccess ' + JSON.stringify(err));
@@ -222,6 +230,7 @@ export class NovuService {
           pauseSubscriptionUrl: patient.organization.patientDomain || '',
           resumeSubscriptionUrl: patient.organization.patientDomain || '',
         },
+        overrides: this.overrides,
       });
     } catch (err) {
       this.logger.error('error while cancelSubscriptionSuccess ' + JSON.stringify(err));
@@ -239,6 +248,7 @@ export class NovuService {
           resumeSubscriptionUrl: patient.organization.patientDomain || '',
           supportUrl: this.configService.get('SUPPORT_URL') || '',
         },
+        overrides: this.overrides,
       });
     } catch (err) {
       this.logger.error('error while pausedSubscriptionSuccess ' + JSON.stringify(err));
@@ -255,6 +265,7 @@ export class NovuService {
           feedbackUrl: this.configService.get('FEEDBACK_URL') || '',
           supportUrl: this.configService.get('SUPPORT_URL') || '',
         },
+        overrides: this.overrides,
       });
     } catch (err) {
       this.logger.error('error while noPaymentDoneReminder ' + JSON.stringify(err));
@@ -271,6 +282,7 @@ export class NovuService {
           getStartedUrl: patient.organization.patientDomain || '',
           supportUrl: this.configService.get('SUPPORT_URL') || '',
         },
+        overrides: this.overrides,
       });
     } catch (err) {
       this.logger.error('error while noActivityStartedReminder ' + JSON.stringify(err));
@@ -286,6 +298,7 @@ export class NovuService {
         payload: {
           supportUrl: this.configService.get('SUPPORT_URL') || '',
         },
+        overrides: this.overrides,
       });
     } catch (err) {
       this.logger.error('error while quitDuringCalibration ' + JSON.stringify(err));
@@ -301,6 +314,7 @@ export class NovuService {
         payload: {
           feedbackUrl: this.configService.get('FEEDBACK_URL') || '',
         },
+        overrides: this.overrides,
       });
     } catch (err) {
       this.logger.error('error while quitDuringTutorial ' + JSON.stringify(err));
@@ -316,6 +330,7 @@ export class NovuService {
         payload: {
           supportUrl: this.configService.get('SUPPORT_URL') || '',
         },
+        overrides: this.overrides,
       });
     } catch (err) {
       this.logger.error('error while firstActivityCompleted ' + JSON.stringify(err));
@@ -332,6 +347,7 @@ export class NovuService {
           activityName: activityName,
           supportUrl: this.configService.get('SUPPORT_URL') || '',
         },
+        overrides: this.overrides,
       });
     } catch (err) {
       this.logger.error('error while userPlayingSameGame ' + JSON.stringify(err));
@@ -347,6 +363,7 @@ export class NovuService {
         payload: {
           supportUrl: this.configService.get('SUPPORT_URL') || '',
         },
+        overrides: this.overrides,
       });
     } catch (err) {
       this.logger.error('error while maintainingStreak ' + JSON.stringify(err));
@@ -363,6 +380,7 @@ export class NovuService {
           gameName,
           supportUrl: this.configService.get('SUPPORT_URL') || '',
         },
+        overrides: this.overrides,
       });
     } catch (err) {
       this.logger.error('error while highScoreReached ' + JSON.stringify(err));
@@ -379,6 +397,7 @@ export class NovuService {
           renewSubscriptionUrl: '',
           sendAt,
         },
+        overrides: this.overrides,
       });
     } catch (err) {
       this.logger.error('error while freeTrialEndingReminder ' + JSON.stringify(err));
@@ -392,6 +411,7 @@ export class NovuService {
           subscriberId: patientId,
         },
         payload: {},
+        overrides: this.overrides,
       });
     } catch (err) {
       this.logger.error('error while contactSupportSuccess ' + JSON.stringify(err));
@@ -405,6 +425,7 @@ export class NovuService {
           subscriberId: patientId,
         },
         payload: {},
+        overrides: this.overrides,
       });
     } catch (err) {
       this.logger.error('error while contactSupportSuccess ' + JSON.stringify(err));
@@ -418,6 +439,7 @@ export class NovuService {
           subscriberId: patientId,
         },
         payload: {},
+        overrides: this.overrides,
       });
     } catch (err) {
       this.logger.error('error while contactSupportSuccess ' + JSON.stringify(err));
@@ -433,6 +455,7 @@ export class NovuService {
         payload: {
           sendAt,
         },
+        overrides: this.overrides,
         // @ts-ignore
         transactionId: triggerId,
       });
