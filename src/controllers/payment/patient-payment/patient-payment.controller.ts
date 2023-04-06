@@ -146,16 +146,25 @@ export class PatientPaymentController {
     if (isSubscriptionValid)
       throw new HttpException('Subscription already exists.', HttpStatus.BAD_REQUEST);
 
-    const promoCodes = await this.stripeService.stripeClient.promotionCodes.list();
-    let promoCodesList = promoCodes.data.map((promoCodeData: Stripe.PromotionCode) => ({
-      code: promoCodeData.code,
-      id: promoCodeData.id,
-      active: promoCodeData.active,
-    }));
-    promoCodesList = promoCodesList.filter(
-      (code: { code: string; id: string; active: boolean }) => code.active,
-    );
-    console.log('promocodes::', promoCodesList);
+    let startingAfter;
+    const promoCodesList = [];
+    do {
+      const params: Stripe.PaginationParams = { limit: 100 };
+      if (startingAfter) {
+        params.starting_after = startingAfter;
+      }
+      const promoCodes = await this.stripeService.stripeClient.promotionCodes.list(params);
+      let promoCodesPage = promoCodes.data.map((promoCodeData: Stripe.PromotionCode) => ({
+        code: promoCodeData.code,
+        id: promoCodeData.id,
+        active: promoCodeData.active,
+      }));
+      promoCodesPage = promoCodesPage.filter(
+        (code: { code: string; id: string; active: boolean }) => code.active,
+      );
+      promoCodesList.push(...promoCodesPage);
+      startingAfter = promoCodes.data[promoCodes.data.length - 1]?.id;
+    } while (startingAfter);
 
     if (
       !promoCodesList.filter(
