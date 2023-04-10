@@ -2,12 +2,24 @@ import { ApiProperty } from '@nestjs/swagger';
 import { IsNotEmpty } from 'class-validator';
 import { AnalyticsDTO } from 'src/types/global';
 
-export class GameStarted {
+export class SetGameEndedatEvent {
   @ApiProperty({
-    description: 'Patient UUID.',
+    description: 'Game ended at event.',
   })
   @IsNotEmpty()
-  patientId: string;
+  payload: {
+    gameId: string;
+    createdAt: string;
+  };
+  comment: string;
+}
+
+export class GameStarted {
+  @ApiProperty({
+    description: 'Game UUID.',
+  })
+  @IsNotEmpty()
+  gameId: string;
 
   @ApiProperty({
     description: 'Timestamp of when the game was created.',

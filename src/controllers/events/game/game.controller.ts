@@ -10,12 +10,15 @@ import { StatsService } from 'src/services/patient-stats/stats.service';
 import { AggregateAnalyticsService } from 'src/services/aggregate-analytics/aggregate-analytics.service';
 import { S3Service } from 'src/services/clients/s3/s3.service';
 import { EventsService } from 'src/services/events/events.service';
-import { GameCompletedPinpoint, GameEnded, GameStarted } from './game.dto';
+import { GameCompletedPinpoint, GameEnded, GameStarted, SetGameEndedatEvent } from './game.dto';
 import * as events from 'events';
 import * as readLine from 'readline';
 import { ExtractInformationService } from 'src/services/extract-information/extract-information.service';
 import { NovuSubscriberData, PoseDataMessageBody } from 'src/types/global';
 import { NovuService } from 'src/services/novu/novu.service';
+import { CronService } from 'src/services/cron/cron.service';
+import { GqlService } from 'src/services/clients/gql/gql.service';
+import { GameService } from 'src/services/game/game.service';
 
 @Controller('events/game')
 export class GameController {
@@ -29,19 +32,47 @@ export class GameController {
     private aggregateAnalyticsService: AggregateAnalyticsService,
     private logger: Logger,
     private novuService: NovuService,
+    private cronService: CronService,
+    private gameService: GameService,
   ) {
     this.envName = configService.get('ENV_NAME');
     this.logger = new Logger(GameController.name);
   }
 
+  @Post('set-game-endedat')
+  async setGameEndedAt(@Body() body: SetGameEndedatEvent) {
+    const game = await this.gameService.getGameByPk(body.payload.gameId);
+    if (game.endedAt) return;
+
+    let endedAt;
+    if (!game.analytics.length) {
+      endedAt = body.payload.createdAt;
+    } else {
+      // get last prompt timestamp
+      endedAt = new Date(game.analytics[game.analytics.length - 1].prompt.timestamp).toISOString();
+    }
+
+    await this.gameService.setGameEndedAt(body.payload.gameId, endedAt);
+    return {
+      status: 'success',
+    };
+  }
+
   // called whenever a 'game' is inserted in the table.
   @Post('start')
   async gameStarted(@Body() body: GameStarted) {
-    const { patientId, createdAt } = body;
-    await this.eventsService.gameStarted(patientId);
+    // schedule a cronjob to run after 45 minutes.
+    const now = new Date();
+    const scheduledAt = new Date(now.setMinutes(now.getMinutes() + 45));
+    await this.cronService.scheduleOneOffCron(
+      scheduledAt.toISOString(),
+      '/events/game/set-game-endedat',
+      { ...body },
+      'sets endedAt of a game.',
+    );
+    // await this.eventsService.gameStarted(patientId);
     return {
       status: 'success',
-      data: {},
     };
   }
 
