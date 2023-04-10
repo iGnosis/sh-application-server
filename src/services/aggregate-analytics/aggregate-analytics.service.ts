@@ -26,7 +26,7 @@ export class AggregateAnalyticsService {
 
   averageAchievementRatio(analytics: AnalyticsDTO[]) {
     const correctPromptsCount = analytics.reduce((count, data) => {
-      if (data.result.type === 'success') {
+      if (data.prompt.type !== 'start' && data.result.type === 'success') {
         count++;
       }
       return count;
