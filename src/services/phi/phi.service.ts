@@ -67,6 +67,7 @@ export class PhiService {
     organizationId: string;
     modifiedByUser: string;
     userRole: string;
+    changeReason: string;
   }) {
     try {
       const query = `
@@ -82,14 +83,12 @@ export class PhiService {
       if (res.audit.length > 0) {
         payload.oldRecord = res.audit[0].id;
       }
-      const mutation = `
-        mutation InsertAudit($operationType: String, $healthRecordId: uuid, $newRecord: jsonb, $oldRecord: uuid, $organizationId: uuid, $modifiedByUser: uuid = "", $userRole: String) {
-            insert_audit(objects: {operationType: $operationType, healthRecordId: $healthRecordId, newRecord: $newRecord, oldRecord: $oldRecord, organizationId: $organizationId, modifiedByUser: $modifiedByUser, userRole: $userRole}) {
-              affected_rows
-            }
-        }`;
-
-      const result = await this.gqlService.client.request(mutation, payload);
+      const inserAuditQuery = `mutation InsertAudit($operationType: String, $healthRecordId: uuid, $newRecord: jsonb, $oldRecord: uuid, $organizationId: uuid, $modifiedByUser: uuid = "", $userRole: String, $changeReason: String = "") {
+        insert_audit(objects: {operationType: $operationType, healthRecordId: $healthRecordId, newRecord: $newRecord, oldRecord: $oldRecord, organizationId: $organizationId, modifiedByUser: $modifiedByUser, userRole: $userRole, changeReason: $changeReason}) {
+          affected_rows
+        }
+      }`;
+      const result = await this.gqlService.client.request(inserAuditQuery, payload);
       return result.insert_audit;
     } catch (error) {
       console.log(error);

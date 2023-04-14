@@ -100,6 +100,7 @@ export class PhiController {
       organizationId: event.data.new['organizationId'] || '',
       modifiedByUser: actionUserId,
       userRole: actionUserRole,
+      changeReason: event.data.new['lastPiiChangeReason'] || '',
     });
 
     this.logger.log('update: updated tokenized column: ' + phiColumn);
@@ -159,6 +160,7 @@ export class PhiController {
         organizationId: event.data.new['organizationId'] || '',
         modifiedByUser: actionUserId,
         userRole: actionUserRole,
+        changeReason: event.data.new['lastPiiChangeReason'] || '',
       });
       this.logger.log('insert: tokenized column:: ' + column);
     }
