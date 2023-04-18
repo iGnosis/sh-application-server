@@ -9,7 +9,7 @@ import { DatabaseService } from './database.service';
 // Ref: https://javascript.plainenglish.io/how-to-execute-raw-postgresql-queries-in-nestjs-1967a0cb950b
 
 const databasePoolFactory = async (configService: ConfigService) => {
-  return new Pool({
+  const pool = new Pool({
     user: configService.get('POSTGRES_USER'),
     host: configService.get('POSTGRES_HOST'),
     database: configService.get('POSTGRES_DB'),
@@ -17,6 +17,11 @@ const databasePoolFactory = async (configService: ConfigService) => {
     port: configService.get('POSTGRES_PORT'),
     ssl: configService.get('ENV_NAME') === 'local' ? false : true,
   });
+  pool.on('connect', (client) => {
+    // set a timeout of 30 seconds for idle connections
+    client.query('SET SESSION idle_in_transaction_session_timeout = 30000');
+  });
+  return pool;
 };
 
 @Global()
