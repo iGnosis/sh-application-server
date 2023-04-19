@@ -16,11 +16,10 @@ const databasePoolFactory = async (configService: ConfigService) => {
     password: configService.get('POSTGRES_PASSWORD'),
     port: configService.get('POSTGRES_PORT'),
     ssl: configService.get('ENV_NAME') === 'local' ? false : true,
+    max: 8,
+    idleTimeoutMillis: 60 * 1000, // each connection stay idle for 1 min.
   });
-  pool.on('connect', (client) => {
-    // set a timeout of 30 seconds for idle connections
-    client.query('SET SESSION idle_in_transaction_session_timeout = 30000');
-  });
+
   return pool;
 };
 
