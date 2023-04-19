@@ -18,6 +18,7 @@ const databasePoolFactory = async (configService: ConfigService) => {
     ssl: configService.get('ENV_NAME') === 'local' ? false : true,
     max: 8,
     idleTimeoutMillis: 60 * 1000, // each connection stay idle for 1 min.
+    idle_in_transaction_session_timeout: 2 * 60 * 1000, // each transaction can run for 2 min max,
   });
 
   return pool;
