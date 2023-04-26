@@ -64,6 +64,9 @@ export enum NovuTriggerEnum {
   MAINTAINING_STREAK = 'maintaining-streaks',
   ALMOST_BROKEN_STREAK = 'almost-broken-streaks',
   HIGH_SCORE_REACHED = 'high-scores-in-any-of-the-games',
+
+  CALENDAR_EVENT_INAPP_NOTIFICATION = 'calendar-event-notification',
+  REQUEST_CALENDAR_EVENT = 'request-calendar-event',
 }
 
 export enum SubscriptionStatusEnum {

@@ -121,6 +121,7 @@ export class SmsAuthController {
           }
           // create Novu subscriber for patients only.
           const novuData: Partial<NovuSubscriberData> = {
+            ...subscriber.data,
             firstPaymentMade,
             organizationId: organization.id,
           };
@@ -132,6 +133,7 @@ export class SmsAuthController {
           );
           this.logger.log('createNewSubscriber:newSubscriber' + JSON.stringify(newSubscriber));
         }
+        await this.novuService.triggerCalendarNotification(user.id);
       } catch (err) {
         this.logger.error('error while creating novu sub:: ' + JSON.stringify(err));
       }

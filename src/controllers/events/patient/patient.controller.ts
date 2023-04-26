@@ -1,11 +1,13 @@
-import { Body, Controller, HttpCode, Post, UseInterceptors } from '@nestjs/common';
-import { GqlService } from 'src/services/clients/gql/gql.service';
-import { NovuSubscriberData, PatientFeedback } from 'src/types/global';
-import { EventsService } from 'src/services/events/events.service';
-import { FeedbackReceivedEvent, NewPatientDto } from './patient.dto';
-import { NovuService } from 'src/services/novu/novu.service';
+import { PutObjectCommand } from '@aws-sdk/client-s3';
+import { Body, Controller, HttpCode, HttpException, HttpStatus, Post } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { User } from 'src/common/decorators/user.decorator';
+import { GqlService } from 'src/services/clients/gql/gql.service';
+import { S3Service } from 'src/services/clients/s3/s3.service';
+import { EventsService } from 'src/services/events/events.service';
+import { NovuService } from 'src/services/novu/novu.service';
+import { NovuSubscriberData, PatientFeedback } from 'src/types/global';
+import { FeedbackReceivedEvent, NewPatientDto, RequestCalendarEvent } from './patient.dto';
 
 @Controller('events/patient')
 export class PatientController {
@@ -14,6 +16,7 @@ export class PatientController {
     private gqlService: GqlService,
     private novuService: NovuService,
     private configService: ConfigService,
+    private s3Service: S3Service,
   ) {}
 
   @HttpCode(200)
@@ -70,6 +73,8 @@ export class PatientController {
       quitDuringCalibrationMailSent: false,
       quitDuringTutorialMailSent: false,
       feedbackOn10ActiveDaysSent: false,
+      scheduleCalendarEventMailSent: false,
+      lastOnlineAt: '',
       organizationId,
       env: this.configService.get('ENV_NAME') || 'local',
     };
@@ -100,7 +105,10 @@ export class PatientController {
   async patientQuitCalibration(@User('id') id: string) {
     await this.novuService.quitDuringCalibration(id);
 
+    const subscriber = await this.novuService.getSubscriber(id);
+
     const novuData: Partial<NovuSubscriberData> = {
+      ...subscriber.data,
       quitDuringCalibrationMailSent: true,
     };
     await this.novuService.novuClient.subscribers.update(id, {
@@ -114,7 +122,9 @@ export class PatientController {
   @Post('quit-tutorial')
   async patientQuitTutorial(@User('id') id: string) {
     await this.novuService.quitDuringTutorial(id);
+    const subscriber = await this.novuService.getSubscriber(id);
     const novuData: Partial<NovuSubscriberData> = {
+      ...subscriber.data,
       quitDuringTutorialMailSent: true,
     };
     await this.novuService.novuClient.subscribers.update(id, {
@@ -172,5 +182,47 @@ export class PatientController {
     return {
       status: 'success',
     };
+  }
+
+  @Post('request-calendar-event')
+  async requestCalendarEvent(@User('id') id: string, @Body() body: RequestCalendarEvent) {
+    try {
+      const { fileValue } = body;
+
+      const bucketName = 'soundhealth-calendar-invites';
+      const buffer = Buffer.from(fileValue);
+      const envName = this.configService.get('ENV_NAME') || 'local';
+      const fileKey = `${envName}/${id}.ics`;
+
+      const command = new PutObjectCommand({
+        Bucket: bucketName,
+        Key: fileKey,
+        Body: buffer,
+        ContentLength: buffer.length,
+        ContentDisposition: 'attachment; filename="invite.ics"',
+      });
+
+      await this.s3Service.client.send(command);
+
+      const url = await this.s3Service.getObjectedSignedUrl(bucketName, fileKey);
+
+      await this.novuService.requestCalendarEvent(id, url);
+
+      const subscriber = await this.novuService.getSubscriber(id);
+      const novuData: Partial<NovuSubscriberData> = {
+        ...subscriber.data,
+        scheduleCalendarEventMailSent: true,
+      };
+      await this.novuService.novuClient.subscribers.update(id, {
+        data: { ...novuData },
+      });
+
+      return {
+        status: 'success',
+      };
+    } catch (error) {
+      console.log(error);
+      throw new HttpException('Unable to send calendar invite', HttpStatus.BAD_REQUEST);
+    }
   }
 }

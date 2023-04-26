@@ -90,6 +90,7 @@ export class GameController {
       await this.novuService.firstActivityCompleted(patientId);
 
       const novuData: Partial<NovuSubscriberData> = {
+        ...subscriber.data,
         firstActivityPlayed: true,
       };
       await this.novuService.novuClient.subscribers.update(patientId, {
@@ -115,6 +116,7 @@ export class GameController {
     const { pastSameActivityCount, sameActivityName } =
       await this.statsService.getPastSameActivityCount(patientId);
     const novuData: Partial<NovuSubscriberData> = {
+      ...subscriber.data,
       lastActivityPlayedOn: new Date().toISOString(),
       sendInactiveUserReminder: true,
       activityStreakCount: streak,
@@ -267,6 +269,7 @@ export class GameController {
       if (subscriber && subscriber.data && !subscriber.data.feedbackOn10ActiveDaysSent) {
         await this.novuService.feedbackOn10ActiveDays(userId);
         const novuData: Partial<NovuSubscriberData> = {
+          ...subscriber.data,
           feedbackOn10ActiveDaysSent: true,
         };
         await this.novuService.novuClient.subscribers.update(userId, {
