@@ -30,7 +30,7 @@ describe('GoalGeneratorService', () => {
     const goal1: Goal = {
       id: '124',
       patientId: '111',
-      name: 'Streak_10',
+      name: 'Login in for 10 days',
       rewards: [
         {
           id: '111',

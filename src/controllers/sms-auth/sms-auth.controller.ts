@@ -129,6 +129,7 @@ export class SmsAuthController {
             user.id,
             phoneCountryCode,
             phoneNumber,
+            user.email,
             novuData,
           );
           this.logger.log('createNewSubscriber:newSubscriber' + JSON.stringify(newSubscriber));

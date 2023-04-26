@@ -54,6 +54,7 @@ export class NovuService {
     patientId: string,
     phoneCountryCode: string,
     phoneNumber: string,
+    email: string,
     novuData: Partial<NovuSubscriberData>,
   ) {
     const defaultNovuData: NovuSubscriberData = {
@@ -76,6 +77,7 @@ export class NovuService {
     try {
       const resp = await this.novuClient.subscribers.identify(patientId, {
         phone: `${phoneCountryCode}${phoneNumber}`,
+        email,
         data: { ...defaultNovuData },
       });
       return resp.data;

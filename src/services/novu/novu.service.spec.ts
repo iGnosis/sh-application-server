@@ -88,6 +88,7 @@ describe('NovuService', () => {
     const subscriberId = 'testSubId';
     const phoneCountryCode = '+91';
     const phoneNumber = '123456789';
+    const email = 'test@test.com';
     const mockNovuData: Partial<NovuSubscriberData> = {
       nickname: 'test-nickname',
       namePrefix: 'Mr.',
@@ -115,6 +116,7 @@ describe('NovuService', () => {
       subscriberId,
       phoneCountryCode,
       phoneNumber,
+      email,
       mockNovuData,
     );
 
@@ -125,6 +127,7 @@ describe('NovuService', () => {
         ...mockNovuData,
       },
       phone: `${phoneCountryCode}${phoneNumber}`,
+      email: 'test@test.com',
     });
   });
 
