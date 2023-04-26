@@ -275,3 +275,21 @@ interface NovuSubscriber {
   data: NovuSubscriberData;
   lastOnlineAt: string;
 }
+
+interface UserContext {
+  patient_streak: number;
+}
+
+interface Badge {
+  id: string;
+  name: string;
+  metric: string;
+  tier: string;
+}
+
+interface Goal {
+  id: string;
+  patientId: string;
+  name: string;
+  rewards: Array<Badge>;
+}
