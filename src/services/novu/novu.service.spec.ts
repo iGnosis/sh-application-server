@@ -100,6 +100,8 @@ describe('NovuService', () => {
       quitDuringTutorialMailSent: false,
       feedbackOn10ActiveDaysSent: false,
       organizationId: '',
+      lastOnlineAt: new Date().toISOString(),
+      scheduleCalendarEventMailSent: false,
       env: 'local',
     };
     const spy = jest
