@@ -62,3 +62,11 @@ export class FeedbackReceivedEvent {
   };
   comment: string;
 }
+
+export class RequestCalendarEvent {
+  @ApiProperty({
+    description: 'Calendar event to send as email attachment.',
+  })
+  @IsNotEmpty()
+  fileValue: string;
+}

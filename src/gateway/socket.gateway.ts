@@ -24,6 +24,7 @@ import {
 import { ConfigService } from '@nestjs/config';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { GqlService } from 'src/services/clients/gql/gql.service';
+import { NovuService } from 'src/services/novu/novu.service';
 
 @WebSocketGateway({ cors: true })
 export class MediapipePoseGateway
@@ -40,6 +41,7 @@ export class MediapipePoseGateway
     private smsAuthSerivce: SmsAuthService,
     private configService: ConfigService,
     private gqlService: GqlService,
+    private novuService: NovuService,
   ) {
     this.logger = new Logger(MediapipePoseGateway.name);
   }
@@ -91,6 +93,7 @@ export class MediapipePoseGateway
     this.logger.log(`Client disconnected: ${client.id}`);
     const { userId } = client.handshake.query;
     if (userId) {
+      this.novuService.setLastOnline(userId as string);
       if (Object.keys(this.numOfClientsInARoom).includes(userId as string)) {
         this.numOfClientsInARoom[userId as string]--;
       }

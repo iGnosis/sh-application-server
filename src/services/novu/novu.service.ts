@@ -69,7 +69,9 @@ export class NovuService {
       quitDuringTutorialMailSent: false,
       feedbackOn10ActiveDaysSent: false,
       organizationId: '',
+      scheduleCalendarEventMailSent: false,
       env: this.configService.get('ENV_NAME') || 'local',
+      lastOnlineAt: new Date().toISOString(),
       ...novuData,
     };
     try {
@@ -107,6 +109,49 @@ export class NovuService {
       });
     } catch (err) {
       this.logger.error('error while paymentFailed ' + JSON.stringify(err));
+    }
+  }
+
+  async triggerCalendarNotification(patientId: string) {
+    try {
+      const subscriber: NovuSubscriber = await this.getSubscriber(patientId);
+      const lastOnlineAt = subscriber.data.lastOnlineAt
+        ? new Date(subscriber.data.lastOnlineAt)
+        : '';
+
+      const hasLoggedInWithin2Days =
+        lastOnlineAt && lastOnlineAt >= new Date(new Date().setDate(new Date().getDate() - 2));
+
+      if (!hasLoggedInWithin2Days && !subscriber.data.scheduleCalendarEventMailSent) {
+        return await this.novuClient.trigger(NovuTriggerEnum.CALENDAR_EVENT_INAPP_NOTIFICATION, {
+          to: {
+            subscriberId: patientId,
+          },
+          payload: {
+            supportUrl: this.configService.get('SUPPORT_URL') || '',
+          },
+          overrides: this.overrides,
+        });
+      }
+    } catch (err) {
+      this.logger.error('error while triggerCalendarNotification ' + JSON.stringify(err));
+    }
+  }
+
+  async requestCalendarEvent(patientId: string, fileUrl: string) {
+    try {
+      return await this.novuClient.trigger(NovuTriggerEnum.REQUEST_CALENDAR_EVENT, {
+        to: {
+          subscriberId: patientId,
+        },
+        payload: {
+          supportUrl: this.configService.get('SUPPORT_URL') || '',
+          fileUrl,
+        },
+        overrides: this.overrides,
+      });
+    } catch (err) {
+      this.logger.error('error while requestCalendarEvent ' + JSON.stringify(err));
     }
   }
 
@@ -219,6 +264,22 @@ export class NovuService {
       });
     } catch (err) {
       this.logger.error('error while paymentMethodUpdatedSuccess ' + JSON.stringify(err));
+    }
+  }
+
+  async setLastOnline(patientId: string) {
+    try {
+      const date = new Date();
+      const subscriber = await this.getSubscriber(patientId);
+      const novuData: Partial<NovuSubscriberData> = {
+        ...subscriber.data,
+        lastOnlineAt: date.toISOString(),
+      };
+      await this.novuClient.subscribers.update(patientId, {
+        data: { ...novuData },
+      });
+    } catch (err) {
+      this.logger.error('error while setOnlineStatus ' + JSON.stringify(err));
     }
   }
 
@@ -458,6 +519,7 @@ export class NovuService {
           sendAt,
         },
         overrides: this.overrides,
+        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
         // @ts-ignore
         transactionId: triggerId,
       });

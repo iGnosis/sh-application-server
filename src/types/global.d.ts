@@ -258,6 +258,8 @@ interface NovuSubscriberData {
   feedbackOn10ActiveDaysSent: boolean;
   organizationId: string;
   env: string;
+  scheduleCalendarEventMailSent: boolean;
+  lastOnlineAt: string;
 }
 
 interface NovuSubscriber {
@@ -271,6 +273,7 @@ interface NovuSubscriber {
   deleted: boolean;
   channels: string[];
   data: NovuSubscriberData;
+  lastOnlineAt: string;
 }
 
 interface UserContext {
