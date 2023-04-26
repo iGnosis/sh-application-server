@@ -242,6 +242,7 @@ interface DashboardData {
   percentageChange?: number;
   showPercentageChange: boolean;
   metric: ConversionTypeEnum;
+  tooltip: string;
 }
 
 interface NovuSubscriberData {

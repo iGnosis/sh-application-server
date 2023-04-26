@@ -44,12 +44,15 @@ export class DashboardController {
       const [newCount, oldCount] = await Promise.all([p1, p2]);
       response = this.dashboardService.buildMetricResponse(response, newCount, oldCount);
       response.metric = DashboardMetricEnum.NEW_USERS;
+      response.tooltip = '';
     } else if (type == DashboardMetricEnum.ACTIVATION_MILESTONE) {
       const p1 = this.dashboardService.activationMilestone(startDate, endDate, orgId);
       const p2 = this.dashboardService.activationMilestone(prevStartDate, prevEndDate, orgId);
       const [newCount, oldCount] = await Promise.all([p1, p2]);
       response = this.dashboardService.buildMetricResponse(response, newCount, oldCount);
       response.metric = DashboardMetricEnum.ACTIVATION_MILESTONE;
+      response.tooltip =
+        'A milestone for users that marks their activation within the system. Typically, this milestone is achieved by completing a specific action, here: running their first activity.';
     } else if (type == DashboardMetricEnum.ACTIVATION_RATE) {
       const p1 = this.dashboardService.newUsers(startDate, endDate, orgId);
       const p2 = this.dashboardService.newUsers(prevStartDate, prevEndDate, orgId);
@@ -72,6 +75,8 @@ export class DashboardController {
         oldActivationRate,
       );
       response.metric = DashboardMetricEnum.ACTIVATION_RATE;
+      response.tooltip =
+        'The percentage of users who have successfully completed the activation milestone or point, here: running their first activity.';
     }
     return response;
   }
@@ -132,6 +137,8 @@ export class DashboardController {
         oldActiveSubs !== 0 ? oldAvgUserEngagement : 0,
       );
       response.metric = DashboardMetricEnum.AVG_USER_ENGAGEMENT;
+      response.tooltip =
+        'This metric is used to measure the duration of user interaction and participation in gameplay over a certain period of time.';
     } else if (type === DashboardMetricEnum.AVG_ACTIVITIES_PLAYED) {
       // TODO: get activity count dynamically!
       const numOfActivities = 4;
@@ -149,6 +156,8 @@ export class DashboardController {
         oldAvgActivitiesPlayed,
       );
       response.metric = DashboardMetricEnum.AVG_ACTIVITIES_PLAYED;
+      response.tooltip =
+        'This metric is used to measure the number of games played over a certain period of time.';
     } else if (type === DashboardMetricEnum.ADOPTION_RATE) {
       const p1 = this.dashboardService.adpotionRate(startDate, endDate, orgId);
       const p2 = this.dashboardService.adpotionRate(prevStartDate, prevEndDate, orgId);
@@ -159,6 +168,8 @@ export class DashboardController {
         oldAdoptionRate,
       );
       response.metric = DashboardMetricEnum.ADOPTION_RATE;
+      response.tooltip =
+        'This metric is used to measure the rate at which users are adopting the platform';
     }
 
     return response;
@@ -186,6 +197,8 @@ export class DashboardController {
         oldActiveUsersCount,
       );
       response.metric = DashboardMetricEnum.ACTIVE_USERS;
+      response.tooltip =
+        'The number of users who have engaged with the platform within a certain period of time.';
     } else if (type === DashboardMetricEnum.TOTAL_USERS) {
       const p1 = this.dashboardService.totalActiveSubscriptions(startDate, endDate, orgId);
       const p2 = this.dashboardService.totalActiveSubscriptions(prevStartDate, prevEndDate, orgId);
@@ -196,6 +209,7 @@ export class DashboardController {
         oldActiveUsers,
       );
       response.metric = DashboardMetricEnum.TOTAL_USERS;
+      response.tooltip = '';
     } else if (type === DashboardMetricEnum.STICKINESS) {
       // DAO - total number of users who played at least one game of a given day(today by default )
       // MAO - total number of users who played at least 1 game in the given month(by default the current month or last 30 days)
@@ -240,6 +254,8 @@ export class DashboardController {
 
       response = this.dashboardService.buildMetricResponse(response, newStickiness, oldStickiness);
       response.metric = DashboardMetricEnum.STICKINESS;
+      response.tooltip =
+        'The ratio of active users to total users within a specific time frame. High stickiness metric indicates that users are finding value (repeated value) and are likely to continue using it in the future.';
     }
 
     return response;
