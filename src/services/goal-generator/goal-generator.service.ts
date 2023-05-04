@@ -86,11 +86,19 @@ export class GoalGeneratorService {
     return goals;
   }
 
+  async updatePatientContext(patientId: string, metric: Metrics) {
+    // 1. input "metric" so we know which metric to update
+    // 2. fetches a patientContext
+    // 3. fetches metrics so we an update user context
+    // 4. update patient context with latest calculated metric
+  }
+
   async verifyGoalCompletion(patientId: string) {
-    // 1. Fetches a patientContext, patient goal from patientID
-    // 2. Checks rewards criteria and verifies that it's been met
-    // 3. Make an entry in patient_badge table /or/ increment count of badge if already unlocked
-    // 4. Mark goal as completed
+    // 1. fetches a patientContext and patient goal from patientID
+    const context = await this.getUserContext(patientId);
+    // 2. checks rewards criteria and verifies that it's been met
+    // 3. make an entry in patient_badge table /or/ increment count of badge if already unlocked
+    // 4. mark goal as completed
   }
 
   // async getGoalStatus(goalId: string) {}

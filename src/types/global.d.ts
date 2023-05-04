@@ -1,4 +1,5 @@
 import { UserRole } from 'src/types/enum';
+import { Metrics } from 'src/types/enum';
 
 export interface BuildVersion {
   version: string;
