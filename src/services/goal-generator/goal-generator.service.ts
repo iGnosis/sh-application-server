@@ -72,7 +72,7 @@ export class GoalGeneratorService {
       const expiredAt = new Date();
       expiredAt.setDate(expiredAt.getDate() + 1);
 
-      this.AddGoalToDB(goal, patientId, expiredAt.toISOString());
+      this.addGoalToDB(goal, patientId, expiredAt.toISOString());
 
       goals.push(goal);
     });
@@ -166,7 +166,7 @@ export class GoalGeneratorService {
     return await this.gqlService.client.request(query, { patientId });
   }
 
-  async AddGoalToDB(goal: Goal, patientId: string, expiredAt: string) {
+  async addGoalToDB(goal: Goal, patientId: string, expiredAt: string) {
     const query = `
     mutation AddGoal($expiryAt: timestamptz!, $patientId: uuid!, $rewards: jsonb!, $name: String!) {
       insert_goal(objects: {expiryAt: $expiryAt, patientId: $patientId, rewards: $rewards, name: $name}) {
