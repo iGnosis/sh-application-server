@@ -1,16 +1,20 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { GoalGeneratorService } from './goal-generator.service';
 import { Badge, Goal, PatientBadge, UserContext } from 'src/types/global';
-import { Metrics } from 'src/types/enum';
+import { GoalStatus, Metrics } from 'src/types/enum';
 import { GqlService } from '../clients/gql/gql.service';
 import { ConfigService } from '@nestjs/config';
+import { StatsService } from '../patient-stats/stats.service';
+import { GameService } from '../game/game.service';
+import { DatabaseModule } from 'src/database/database.module';
 
 describe('GoalGeneratorService', () => {
   let service: GoalGeneratorService;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
-      providers: [GoalGeneratorService, GqlService, ConfigService],
+      providers: [GoalGeneratorService, GqlService, ConfigService, StatsService, GameService],
+      imports: [DatabaseModule],
     }).compile();
 
     service = module.get<GoalGeneratorService>(GoalGeneratorService);
@@ -31,13 +35,14 @@ describe('GoalGeneratorService', () => {
     const achievableBadges: Badge[] = await service.getAchievableBadges(userContext, userBadges);
 
     // When
-    const goals = await service.generateGoals(achievableBadges, patientId);
+    const goals = await service.generateGoals(patientId);
     console.log('goals::', goals);
 
     // Then
     const goal1: Goal = {
       patientId: '111',
       name: 'Login in for 10 days in a row',
+      status: GoalStatus.COMPLETED,
       rewards: [
         {
           id: '111',
