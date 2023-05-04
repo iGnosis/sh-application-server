@@ -2,13 +2,15 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { GoalGeneratorService } from './goal-generator.service';
 import { Badge, Goal, PatientBadge, UserContext } from 'src/types/global';
 import { Metrics } from 'src/types/enum';
+import { GqlService } from '../clients/gql/gql.service';
+import { ConfigService } from '@nestjs/config';
 
 describe('GoalGeneratorService', () => {
   let service: GoalGeneratorService;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
-      providers: [GoalGeneratorService],
+      providers: [GoalGeneratorService, GqlService, ConfigService],
     }).compile();
 
     service = module.get<GoalGeneratorService>(GoalGeneratorService);
