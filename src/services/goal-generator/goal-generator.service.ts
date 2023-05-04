@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { HttpException, Injectable } from '@nestjs/common';
 import { GqlService } from '../clients/gql/gql.service';
 import { Badge, Goal, PatientBadge, UserContext } from 'src/types/global';
 import { Metrics } from 'src/types/enum';
@@ -7,30 +7,18 @@ export class GoalGeneratorService {
   constructor(private gqlService: GqlService) {}
 
   async getGoal(patientId: string): Promise<Goal[]> {
-    // 1. Check if goals already generated for patient today
-
     const recentGoal: { createdAt: string } = await this.getRecentGoal(patientId);
     // we don't want to generate goals for the same day
     if (recentGoal && new Date(recentGoal.createdAt).toDateString() === new Date().toDateString()) {
-      return;
+      throw new HttpException('Goals already generated for today', 400);
     }
 
-    // 2. Fetch patient's context object
     const userContext: UserContext = await this.getUserContext(patientId);
-
-    // 3. Fetch all the active badges available
-
-    // 4. Filter out / remove badges that are single-time unlock & has already been unlocked
     const userBadges = await this.getUserBadges(patientId);
 
-    // 5. Pick achieveable badges -- need to build algorithm for this.
     const achievableBadges = await this.getAchievableBadges(userContext, userBadges);
 
-    // 6. Create goal for the patient
     const goals = await this.generateGoals(achievableBadges, patientId);
-
-    // 7. Return goals
-
     return goals;
   }
 
@@ -46,18 +34,12 @@ export class GoalGeneratorService {
       }
       return true;
     });
-    console.log('filteredBadges::', filteredBadges);
-
     const achievableBadges = filteredBadges.filter((badge) => {
-      switch (badge.metric) {
-        case Metrics.PATIENT_STREAK:
-          if (userContext.PATIENT_STREAK < badge.minVal) {
-            return true;
-          }
-          break;
-        // TODO: Add more cases here
-        default:
-          return false;
+      if (badge.metric) {
+        // if the metric value in userContext is less than the minVal of badge, then it's achievable
+        if (userContext[badge.metric] < badge.minVal) {
+          return true;
+        }
       }
       return false;
     });
@@ -66,7 +48,13 @@ export class GoalGeneratorService {
 
   async generateGoals(availableBadges: Badge[], patientId: string) {
     const goals: Goal[] = [];
+    const metricsGenerated: Metrics[] = [];
+
     availableBadges.forEach((badge) => {
+      if (metricsGenerated.includes(badge.metric)) {
+        return;
+      }
+
       const goal: Goal = {
         patientId,
         name: this.generateGoalName(badge),
@@ -79,8 +67,13 @@ export class GoalGeneratorService {
           },
         ],
       };
+      metricsGenerated.push(badge.metric);
 
-      // TODO: Add goal to DB
+      const expiredAt = new Date();
+      expiredAt.setDate(expiredAt.getDate() + 1);
+
+      this.AddGoalToDB(goal, patientId, expiredAt.toISOString());
+
       goals.push(goal);
     });
     return goals;
@@ -171,6 +164,21 @@ export class GoalGeneratorService {
       }
     }`;
     return await this.gqlService.client.request(query, { patientId });
+  }
+
+  async AddGoalToDB(goal: Goal, patientId: string, expiredAt: string) {
+    const query = `
+    mutation AddGoal($expiryAt: timestamptz!, $patientId: uuid!, $rewards: jsonb!, $name: String!) {
+      insert_goal(objects: {expiryAt: $expiryAt, patientId: $patientId, rewards: $rewards, name: $name}) {
+        affected_rows
+      }
+    }`;
+    return await this.gqlService.client.request(query, {
+      patientId,
+      expiredAt,
+      rewards: goal.rewards,
+      name: goal.name,
+    });
   }
 
   async getRecentGoal(patientId: string) {
