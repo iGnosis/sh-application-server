@@ -1,6 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { GoalGeneratorService } from './goal-generator.service';
-import { Goal, UserContext } from 'src/types/global';
+import { Badge, Goal, PatientBadge, UserContext } from 'src/types/global';
+import { Metrics } from 'src/types/enum';
 
 describe('GoalGeneratorService', () => {
   let service: GoalGeneratorService;
@@ -17,26 +18,34 @@ describe('GoalGeneratorService', () => {
     expect(service).toBeDefined();
   });
 
-  xit('should streak generate goals', () => {
+  xit('should generate goals', async () => {
+    const patientId = '111';
     // Given
     const userContext: UserContext = {
-      patient_streak: 6,
+      PATIENT_STREAK: 7,
     };
 
+    const userBadges: PatientBadge[] = [];
+    const achievableBadges: Badge[] = await service.getAchievableBadges(userContext, userBadges);
+
     // When
-    const goals = service.generateGoalsFromContext(userContext);
+    const goals = await service.generateGoals(achievableBadges, patientId);
+    console.log('goals::', goals);
 
     // Then
     const goal1: Goal = {
-      id: '124',
       patientId: '111',
-      name: 'Login in for 10 days',
+      name: 'Login in for 10 days in a row',
       rewards: [
         {
           id: '111',
-          metric: 'patient_streak',
+          dimension: 'patient',
+          metric: Metrics.PATIENT_STREAK,
+          minVal: 10,
+          maxVal: null,
           name: 'Streak_10',
           tier: 'bronze',
+          status: 'active',
         },
       ],
     };

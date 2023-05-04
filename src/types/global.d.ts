@@ -277,20 +277,34 @@ interface NovuSubscriber {
   lastOnlineAt: string;
 }
 
-interface UserContext {
-  patient_streak: number;
+export interface Goal {
+  id?: string;
+  patientId: string;
+  name: string;
+  rewards: Array<Partial<Badge>>;
 }
 
-interface Badge {
+export interface Badge {
   id: string;
+  dimension: string;
+  metric: Metrics | null;
+  maxVal: number | null;
+  minVal: number | null;
   name: string;
-  metric: string;
+  status: 'active' | 'retired';
   tier: string;
 }
 
-interface Goal {
+export type UserContext = {
+  [key in keyof typeof Metrics]?: number;
+  // add additional fields other than metrics here
+};
+
+export interface PatientBadge {
   id: string;
-  patientId: string;
-  name: string;
-  rewards: Array<Badge>;
+  count: number;
+  badge: string;
+  badgeByBadge: {
+    badgeType: 'singleUnlock' | 'unlimitedUnlock';
+  };
 }
