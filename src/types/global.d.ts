@@ -1,10 +1,22 @@
-import { UserRole } from 'src/types/enum';
-import { Metrics } from 'src/types/enum';
+import { UserRole, Metrics, BadgeType, GoalStatus } from 'src/types/enum';
 
 export interface BuildVersion {
   version: string;
   timestamp: Date;
 }
+
+export type Game = {
+  id: string;
+  patient: string;
+  createdAt: Date;
+  endedAt: Date;
+  analytics: AnalyticsDTO[];
+  maxCombo: number;
+  orbsCount?: {
+    red?: number;
+    blue?: number;
+  };
+};
 
 export type AnalyticsDTO = {
   prompt: AnalyticsPromptDTO;
@@ -281,6 +293,9 @@ interface NovuSubscriber {
 export interface Goal {
   id?: string;
   patientId: string;
+  createdAt?: Date;
+  expiryAt?: Date;
+  status: GoalStatus;
   name: string;
   rewards: Array<Partial<Badge>>;
 }
@@ -306,6 +321,6 @@ export interface PatientBadge {
   count: number;
   badge: string;
   badgeByBadge: {
-    badgeType: 'singleUnlock' | 'unlimitedUnlock';
+    badgeType: BadgeType;
   };
 }

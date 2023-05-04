@@ -1,13 +1,20 @@
 import { HttpException, Injectable } from '@nestjs/common';
 import { GqlService } from '../clients/gql/gql.service';
 import { Badge, Goal, PatientBadge, UserContext } from 'src/types/global';
-import { Metrics } from 'src/types/enum';
+import { BadgeType, GoalStatus, Metrics } from 'src/types/enum';
+import { StatsService } from '../patient-stats/stats.service';
+import { GameService } from '../game/game.service';
+import { GameName } from 'src/types/enum';
 @Injectable()
 export class GoalGeneratorService {
-  constructor(private gqlService: GqlService) {}
+  constructor(
+    private gqlService: GqlService,
+    private statsService: StatsService,
+    private gameService: GameService,
+  ) {}
 
-  async getGoal(patientId: string): Promise<Goal[]> {
-    const recentGoal: { createdAt: string } = await this.getRecentGoal(patientId);
+  async generateGoals(patientId: string): Promise<Goal[]> {
+    const recentGoal: Goal = await this.getRecentGoal(patientId);
     // we don't want to generate goals for the same day
     if (recentGoal && new Date(recentGoal.createdAt).toDateString() === new Date().toDateString()) {
       throw new HttpException('Goals already generated for today', 400);
@@ -18,7 +25,7 @@ export class GoalGeneratorService {
 
     const achievableBadges = await this.getAchievableBadges(userContext, userBadges);
 
-    const goals = await this.generateGoals(achievableBadges, patientId);
+    const goals = await this.createGoals(achievableBadges, patientId);
     return goals;
   }
 
@@ -28,7 +35,7 @@ export class GoalGeneratorService {
       // if badge is single-time unlock and already unlocked, then remove it
       const userBadge = userBadges.find((userBadge) => userBadge.badge === badge.id);
       if (userBadge) {
-        if (userBadge.badgeByBadge.badgeType === 'singleUnlock') {
+        if (userBadge.badgeByBadge.badgeType === BadgeType.SINGLE_UNLOCK) {
           return false;
         }
       }
@@ -46,11 +53,11 @@ export class GoalGeneratorService {
     return achievableBadges;
   }
 
-  async generateGoals(availableBadges: Badge[], patientId: string) {
+  async createGoals(availableBadges: Badge[], patientId: string) {
     const goals: Goal[] = [];
     const metricsGenerated: Metrics[] = [];
 
-    availableBadges.forEach((badge) => {
+    availableBadges.forEach(async (badge) => {
       if (metricsGenerated.includes(badge.metric)) {
         return;
       }
@@ -66,32 +73,147 @@ export class GoalGeneratorService {
             tier: badge.tier,
           },
         ],
+        status: GoalStatus.INPROGRESS,
       };
       metricsGenerated.push(badge.metric);
 
       const expiredAt = new Date();
       expiredAt.setDate(expiredAt.getDate() + 1);
 
-      this.addGoalToDB(goal, patientId, expiredAt.toISOString());
+      await this.addGoalToDB(goal, patientId, expiredAt.toISOString());
 
       goals.push(goal);
+
+      // atm, we only want to generate 1 goal at a time.
+      if (goals.length >= 1) {
+        return goals;
+      }
     });
     return goals;
   }
 
-  async updatePatientContext(patientId: string, metric: Metrics) {
-    // 1. input "metric" so we know which metric to update
-    // 2. fetches a patientContext
-    // 3. fetches metrics so we an update user context
-    // 4. update patient context with latest calculated metric
+  // TODO: Call this API at certian events.
+  // 1. Game end
+  // 2. Patient portal daily login -- when they checkin their mood.
+  async updatePatientContext(patientId: string, metrics: Metrics[]) {
+    const context = await this.getUserContext(patientId);
+
+    metrics.forEach(async (metric) => {
+      switch (metric) {
+        case Metrics.PATIENT_STREAK:
+          context[Metrics.PATIENT_STREAK] = await this.statsService.calculateStreak(patientId);
+          break;
+        case Metrics.PATIENT_TOTAL_ACTIVITY_DURATION:
+          context[Metrics.PATIENT_TOTAL_ACTIVITY_DURATION] =
+            await this.statsService.totalActivityDuration(patientId);
+          break;
+        case Metrics.PATIENT_TOTAL_ACTIVITY_COUNT:
+          context[Metrics.PATIENT_TOTAL_ACTIVITY_COUNT] =
+            await this.statsService.totalActivityCount(patientId);
+          break;
+        case Metrics.WEEKLY_TIME_SPENT:
+          context[Metrics.WEEKLY_TIME_SPENT] =
+            await this.statsService.totalWeeklyActivityTimeDuration(patientId);
+          break;
+        case Metrics.MONTHLY_TIME_SPENT:
+          context[Metrics.MONTHLY_TIME_SPENT] =
+            await this.statsService.totalMonthlyActivityTimeDuration(patientId);
+          break;
+        case Metrics.SIT_STAND_ACHIEVE_PROMPTS:
+          context[Metrics.SIT_STAND_ACHIEVE_PROMPTS] = await this.gameService.getMaxPrompts(
+            patientId,
+            GameName.SIT_STAND_ACHIEVE,
+          );
+          break;
+        case Metrics.BEAT_BOXER_PROMPTS:
+          context[Metrics.BEAT_BOXER_PROMPTS] = await this.gameService.getMaxPrompts(
+            patientId,
+            GameName.BEAT_BOXER,
+          );
+          break;
+        case Metrics.SOUND_EXPLORER_BLUE_ORBS:
+          context[Metrics.SOUND_EXPLORER_BLUE_ORBS] = await this.gameService.getMaxBlueOrbs(
+            patientId,
+          );
+          break;
+        case Metrics.SOUND_EXPLORER_RED_ORBS:
+          context[Metrics.SOUND_EXPLORER_RED_ORBS] = await this.gameService.getMaxRedOrbs(
+            patientId,
+          );
+          break;
+        case Metrics.MOVING_TONES_PROMPTS:
+          context[Metrics.MOVING_TONES_PROMPTS] = await this.gameService.getMaxPrompts(
+            patientId,
+            GameName.MOVING_TONES,
+          );
+          break;
+        case Metrics.SIT_STAND_ACHIEVE_COMBO:
+          context[Metrics.SIT_STAND_ACHIEVE_COMBO] = await this.gameService.getMaxCombo(
+            patientId,
+            GameName.SIT_STAND_ACHIEVE,
+          );
+          break;
+        case Metrics.BEAT_BOXER_COMBO:
+          context[Metrics.BEAT_BOXER_COMBO] = await this.gameService.getMaxCombo(
+            patientId,
+            GameName.BEAT_BOXER,
+          );
+          break;
+        case Metrics.SOUND_EXPLORER_COMBO:
+          context[Metrics.SOUND_EXPLORER_COMBO] = await this.gameService.getMaxCombo(
+            patientId,
+            GameName.SOUND_EXPLORER,
+          );
+          break;
+        case Metrics.MOVING_TONES_COMBO:
+          context[Metrics.MOVING_TONES_COMBO] = await this.gameService.getMaxCombo(
+            patientId,
+            GameName.MOVING_TONES,
+          );
+          break;
+        // case Metrics.LEADERBOARD_POSITION:
+        //   return
+        // case Metrics.GAME_XP:
+        //   return
+        // case Metrics.HIGHSCORE:
+        //   return
+        // case Metrics.SIT_STAND_ACHIEVE_LEADERBOARD_POSITION:
+        //   return
+        // case Metrics.BEAT_BOXER_LEADERBOARD_POSITION:
+        //   return
+        // case Metrics.SOUND_EXPLORER_LEADERBOARD_POSITION:
+        //   return
+        // case Metrics.MOVING_TONES_LEADERBOARD_POSITION:
+        //   return
+      }
+    });
+
+    const query = `mutation UpdateUserContext($patientId: uuid!, $context: jsonb!) {
+      update_patient_by_pk(pk_columns: {id: $patientId}, _set: {context: $context}) {
+        id
+      }
+    }`;
+    await this.gqlService.client.request(query, { patientId });
   }
 
   async verifyGoalCompletion(patientId: string) {
-    // 1. fetches a patientContext and patient goal from patientID
     const context = await this.getUserContext(patientId);
-    // 2. checks rewards criteria and verifies that it's been met
-    // 3. make an entry in patient_badge table /or/ increment count of badge if already unlocked
-    // 4. mark goal as completed
+    const mostRecentGoal = await this.getRecentGoal(patientId);
+    mostRecentGoal.rewards.forEach(async (reward) => {
+      if (context[reward.metric] >= reward.minVal && context[reward.metric] <= reward.maxVal) {
+        // reward criteria is met
+        let count = 0;
+        const badge = await this.isPatientBadgeExist(patientId, reward.id);
+        if (badge) {
+          count = badge.count;
+        }
+        await this.unlockBadge(patientId, reward.id, count);
+        await this.markGoalAsCompleted(mostRecentGoal.id);
+        // alert frontend client via sockets (?) to show real-time badge unlocks
+        // OR
+        // maintain some sort of cache in frontend (?)
+      }
+    });
   }
 
   // async getGoalStatus(goalId: string) {}
@@ -116,16 +238,18 @@ export class GoalGeneratorService {
         return 'Complete ' + badge.minVal + ' minutes of activities this week';
       case Metrics.MONTHLY_TIME_SPENT:
         return 'Complete ' + badge.minVal + ' minutes of activities this month';
-      case Metrics.LEADERBOARD_POSITION:
-        return 'Reach ' + badge.minVal + ' position on the leaderboard';
-      case Metrics.GAME_XP:
-        return 'Earn ' + badge.minVal + ' XP';
+      // case Metrics.LEADERBOARD_POSITION:
+      //   return 'Reach ' + badge.minVal + ' position on the leaderboard';
+      // case Metrics.GAME_XP:
+      //   return 'Earn ' + badge.minVal + ' XP';
       case Metrics.SIT_STAND_ACHIEVE_PROMPTS:
         return 'Complete ' + badge.minVal + ' prompts in Sit Stand Achieve';
       case Metrics.BEAT_BOXER_PROMPTS:
         return 'Complete ' + badge.minVal + ' prompts in Beat Boxer';
-      case Metrics.SOUND_EXPLORER_ORBS:
-        return 'Collect ' + badge.minVal + ' orbs in Sound Explorer';
+      case Metrics.SOUND_EXPLORER_RED_ORBS:
+        return 'Collect ' + badge.minVal + ' red orbs in Sound Explorer';
+      case Metrics.SOUND_EXPLORER_BLUE_ORBS:
+        return 'Collect ' + badge.minVal + ' blue orbs in Sound Explorer';
       case Metrics.MOVING_TONES_PROMPTS:
         return 'Complete ' + badge.minVal + ' prompts in Moving Tones';
       case Metrics.SIT_STAND_ACHIEVE_COMBO:
@@ -136,18 +260,18 @@ export class GoalGeneratorService {
         return 'Reach ' + badge.minVal + 'x combo in Sound Explorer';
       case Metrics.MOVING_TONES_COMBO:
         return 'Reach ' + badge.minVal + 'x combo in Moving Tones';
-      case Metrics.HIGHSCORE:
-        return 'Beat your previous highscore ' + badge.minVal;
-      case Metrics.SOUND_EXPLORER_RED_ORBS:
-        return 'Collect ' + badge.minVal + ' red orbs in Sound Explorer';
-      case Metrics.SIT_STAND_ACHIEVE_LEADERBOARD_POSITION:
-        return 'Reach ' + badge.minVal + ' position on the Sit Stand Achieve leaderboard';
-      case Metrics.BEAT_BOXER_LEADERBOARD_POSITION:
-        return 'Reach ' + badge.minVal + ' position on the Beat Boxer leaderboard';
-      case Metrics.SOUND_EXPLORER_LEADERBOARD_POSITION:
-        return 'Reach ' + badge.minVal + ' position on the Sound Explorer leaderboard';
-      case Metrics.MOVING_TONES_LEADERBOARD_POSITION:
-        return 'Reach ' + badge.minVal + ' position on the Moving Tones leaderboard';
+      // case Metrics.HIGHSCORE:
+      //   return 'Beat your previous highscore ' + badge.minVal;
+      // case Metrics.SOUND_EXPLORER_RED_ORBS:
+      //   return 'Collect ' + badge.minVal + ' red orbs in Sound Explorer';
+      // case Metrics.SIT_STAND_ACHIEVE_LEADERBOARD_POSITION:
+      //   return 'Reach ' + badge.minVal + ' position on the Sit Stand Achieve leaderboard';
+      // case Metrics.BEAT_BOXER_LEADERBOARD_POSITION:
+      //   return 'Reach ' + badge.minVal + ' position on the Beat Boxer leaderboard';
+      // case Metrics.SOUND_EXPLORER_LEADERBOARD_POSITION:
+      //   return 'Reach ' + badge.minVal + ' position on the Sound Explorer leaderboard';
+      // case Metrics.MOVING_TONES_LEADERBOARD_POSITION:
+      //   return 'Reach ' + badge.minVal + ' position on the Moving Tones leaderboard';
     }
   }
 
@@ -181,11 +305,16 @@ export class GoalGeneratorService {
     });
   }
 
-  async getRecentGoal(patientId: string) {
+  async getRecentGoal(patientId: string): Promise<Goal> {
     const query = `
     query GetRecentGoal($patientId: uuid!) {
       goal(where: {patientId: {_eq: $patientId}}, order_by: {createdAt: desc}, limit: 1) {
+        id
         createdAt
+        expiryAt
+        name
+        rewards
+        status
       }
     }`;
     const goals = await this.gqlService.client.request(query, { patientId });
@@ -219,5 +348,37 @@ export class GoalGeneratorService {
       }
     }`;
     return await this.gqlService.client.request(query);
+  }
+
+  async unlockBadge(patientId: string, badgeId: string, count: number) {
+    const query = `mutation UpsertPatientBadge($badge: uuid!, $patient: uuid!, $count: Int!) {
+      insert_patient_badge_one(object: {badge: $badge, patient: $patient, count: $count}, on_conflict: {constraint: patient_badge_patient_badge_key, update_columns: count}) {
+        id
+      }
+    }`;
+    await this.gqlService.client.request(query, { patientId, badgeId, count });
+  }
+
+  async markGoalAsCompleted(goalId: string) {
+    const query = `mutation MarkGoalAsCompleted($goalId: uuid!, $status: goal_status_enum = completed) {
+      update_goal_by_pk(pk_columns: {id: $goalId}, _set: {status: $status}) {
+        id
+      }
+    }`;
+    await this.gqlService.client.request(query, { goalId, status: GoalStatus.COMPLETED });
+  }
+
+  async isPatientBadgeExist(patientId: string, badgeId: string): Promise<PatientBadge | false> {
+    const query = `query GetPatientBadge($patientId: uuid!, $badgeId: uuid!) {
+      patient_badge(where: {badge: {_eq: $badgeId}, patient: {_eq: $patientId}}) {
+        id
+        count
+      }
+    }`;
+    const patientBadge = await this.gqlService.client.request(query, { patientId, badgeId });
+    if (patientBadge && patientBadge.patient_badge && patientBadge.patient_badge.id) {
+      return patientBadge.patient_badge;
+    }
+    return false;
   }
 }

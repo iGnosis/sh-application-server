@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { GqlService } from '../clients/gql/gql.service';
-import { AnalyticsDTO } from 'src/types/global';
+import { AnalyticsDTO, Game } from 'src/types/global';
+import { GameName } from 'src/types/enum';
 
 @Injectable()
 export class GameService {
@@ -22,6 +23,24 @@ export class GameService {
     return game.game_by_pk;
   }
 
+  async getGamesByName(patientId: string, gameName: GameName): Promise<Game[]> {
+    const query = `query GameByName($gameName: String!, $patientId: uuid!) {
+      game(where: {game_name: {name: {_eq: $gameName}}, patient: {_eq: $patientId}}, order_by: {createdAt: desc}) {
+        id
+        analytics
+        maxCombo
+        orbsCount
+      }
+    }`;
+
+    const response = await this.gqlService.client.request(query, {
+      patientId,
+      gameName,
+    });
+
+    return response.game;
+  }
+
   async setGameEndedAt(gameId: string, endedAt: string) {
     const query = `mutation SetGameEndedAt($gameId: uuid!, $endedAt: timestamptz!) {
       update_game_by_pk(pk_columns: {id: $gameId}, _set: {endedAt: $endedAt}) {
@@ -29,5 +48,32 @@ export class GameService {
       }
     }`;
     return await this.gqlService.client.request(query, { gameId, endedAt });
+  }
+
+  async getMaxPrompts(patientId: string, gameName: GameName) {
+    const games = await this.getGamesByName(patientId, gameName);
+    const analytics = games.map((game) => game.analytics);
+    let maxPromptsLen = 0;
+    analytics.forEach((a) => {
+      if (a.length > maxPromptsLen) {
+        maxPromptsLen = a.length;
+      }
+    });
+    return maxPromptsLen;
+  }
+
+  async getMaxCombo(patientId: string, gameName: GameName) {
+    const games = await this.getGamesByName(patientId, gameName);
+    return Math.max(...games.map((game) => game.maxCombo));
+  }
+
+  async getMaxRedOrbs(patientId: string, gameName: GameName = GameName.SOUND_EXPLORER) {
+    const games = await this.getGamesByName(patientId, gameName);
+    return Math.max(...games.map((game) => game.orbsCount.red));
+  }
+
+  async getMaxBlueOrbs(patientId: string, gameName: GameName = GameName.SOUND_EXPLORER) {
+    const games = await this.getGamesByName(patientId, gameName);
+    return Math.max(...games.map((game) => game.orbsCount.blue));
   }
 }

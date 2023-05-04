@@ -67,6 +67,7 @@ import { PhiService } from './services/phi/phi.service';
 import { NovuService } from './services/novu/novu.service';
 import { GameService } from './services/game/game.service';
 import { GoalGeneratorService } from './services/goal-generator/goal-generator.service';
+import { GoalGeneratorController } from './controllers/goal-generator/goal-generator.controller';
 
 const winstonDailyRotateTransport = new winstonDailyRotateFile({
   dirname: '../nestjs-app-logs',
@@ -151,6 +152,7 @@ const nestLikeFormatting = winston.format.combine(
     TesterVideosController,
     BuildVersionController,
     DashboardController,
+    GoalGeneratorController,
   ],
   providers: [
     AppService,

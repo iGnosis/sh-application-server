@@ -514,6 +514,64 @@ export class StatsService {
     return streak;
   }
 
+  async totalActivityDuration(patientId: string) {
+    const sql = `
+    SELECT SUM(EXTRACT(epoch FROM ("endedAt" - "createdAt"))) AS "totalDurationSec"
+    FROM game
+    WHERE
+      patient = '$1' AND
+      "endedAt" IS NOT NULL;
+    `;
+    const results = await this.databaseService.executeQuery(sql, [patientId]);
+    return parseFloat(parseFloat(results[0].totalDurationSec).toFixed(2));
+  }
+
+  async totalWeeklyActivityTimeDuration(patientId: string) {
+    const sql = `
+    SELECT
+    DATE_TRUNC('week', "createdAt") AS "weekStart",
+    SUM(EXTRACT(epoch FROM ("endedAt" - "createdAt"))) AS "totalDurationSec"
+    FROM game
+    WHERE
+      patient = '$1' AND
+      "endedAt" IS NOT NULL AND
+      "createdAt" >= DATE_TRUNC('week', NOW())
+    GROUP BY "weekStart"
+    ORDER BY "weekStart" DESC;
+    `;
+    const results = await this.databaseService.executeQuery(sql, [patientId]);
+    return parseFloat(parseFloat(results[0].totalDurationSec).toFixed(2));
+  }
+
+  async totalMonthlyActivityTimeDuration(patientId: string) {
+    const sql = `
+    SELECT
+      DATE_TRUNC('month', "createdAt") AS "monthStart",
+      SUM(EXTRACT(epoch FROM ("endedAt" - "createdAt"))) AS "totalDurationSec"
+    FROM game
+    WHERE
+      patient = '$1' AND
+      "endedAt" IS NOT NULL AND
+      "createdAt" >= DATE_TRUNC('month', NOW())
+    GROUP BY "monthStart"
+    ORDER BY "monthStart" DESC;
+    `;
+    const results = await this.databaseService.executeQuery(sql, [patientId]);
+    return parseFloat(parseFloat(results[0].totalDurationSec).toFixed(2));
+  }
+
+  async totalActivityCount(patientId: string) {
+    const query = `query TotalGameCount($patient: uuid!) {
+      game_aggregate(where: {patient: {_eq: $patient}}) {
+        aggregate {
+          count
+        }
+      }
+    }`;
+    const resp = await this.gqlService.client.request(query, { patientId });
+    return resp.game_aggregate.aggregate.count;
+  }
+
   getFutureDate(currentDate: Date, numOfDaysInFuture: number) {
     return new Date(currentDate.getTime() + 86400000 * numOfDaysInFuture);
   }
