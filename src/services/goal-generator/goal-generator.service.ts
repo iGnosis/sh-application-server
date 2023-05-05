@@ -217,6 +217,7 @@ export class GoalGeneratorService {
         }
         await this.unlockBadge(patientId, reward.id, count);
         await this.markGoalAsCompleted(mostRecentGoal.id);
+        await this.updatePatientXp(patientId, reward.xp);
         // alert frontend client via sockets (?) to show real-time badge unlocks
         // OR
         // maintain some sort of cache in frontend (?)
@@ -363,6 +364,7 @@ export class GoalGeneratorService {
         name
         status
         tier
+        xp
       }
     }`;
     const resp = await this.gqlService.client.request(query);
@@ -385,6 +387,12 @@ export class GoalGeneratorService {
       }
     }`;
     await this.gqlService.client.request(query, { goalId, status: GoalStatus.COMPLETED });
+  }
+
+  async updatePatientXp(patientId: string, xp: number) {
+    // get most recent game
+    // update game.xp with input xp.
+    const mostRecentGame = this.gameService;
   }
 
   async isPatientBadgeExist(patientId: string, badgeId: string): Promise<PatientBadge | false> {
