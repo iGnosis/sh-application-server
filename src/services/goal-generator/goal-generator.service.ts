@@ -41,7 +41,8 @@ export class GoalGeneratorService {
     const achievableBadges = filteredBadges.filter((badge) => {
       if (badge.metric) {
         // if the metric value in userContext is less than the minVal of badge, then it's achievable
-        if (userContext[badge.metric] < badge.minVal) {
+        const metricValue = userContext[badge.metric] || 0;
+        if (metricValue < badge.minVal) {
           return true;
         }
       }
