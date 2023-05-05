@@ -14,11 +14,10 @@ export class GoalGeneratorService {
   ) {}
 
   async generateGoals(patientId: string): Promise<Goal[]> {
-    const recentGoal: Goal = await this.getRecentGoal(patientId);
-    // we don't want to generate goals for the same day
-    if (recentGoal && new Date(recentGoal.createdAt).toDateString() === new Date().toDateString()) {
-      throw new HttpException('Goals already generated for today', 400);
-    }
+    // const recentGoal: Goal = await this.getRecentGoal(patientId);
+    // if (recentGoal && new Date(recentGoal.createdAt).toDateString() === new Date().toDateString()) {
+    //   throw new HttpException('Goals already generated for today', 400);
+    // }
 
     const userContext: UserContext = await this.getUserContext(patientId);
     const userBadges = await this.getUserBadges(patientId);
