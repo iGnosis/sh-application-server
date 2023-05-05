@@ -10,8 +10,8 @@ export class GoalGeneratorController {
   constructor(private goalGeneratorService: GoalGeneratorService) {}
 
   @Post('goal')
-  async generateGoal(@User('id') patientId: string, @Body('gameName') game: GameName) {
-    return await this.goalGeneratorService.generateGoals(patientId, game);
+  async generateGoal(@User('id') patientId: string, @Body() body: { gameName: GameName }) {
+    return await this.goalGeneratorService.generateGoals(patientId, body.gameName);
   }
 
   @Post('update-patient-context')

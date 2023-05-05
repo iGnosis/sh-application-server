@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { GqlService } from '../clients/gql/gql.service';
 import { Badge, Goal, PatientBadge, UserContext } from 'src/types/global';
 import { BadgeType, GoalStatus, Metrics } from 'src/types/enum';
@@ -11,6 +11,7 @@ export class GoalGeneratorService {
     private gqlService: GqlService,
     private statsService: StatsService,
     private gameService: GameService,
+    private logger: Logger,
   ) {}
 
   async generateGoals(patientId: string, gameName: GameName): Promise<Goal[]> {
@@ -20,9 +21,13 @@ export class GoalGeneratorService {
     // }
 
     const userContext: UserContext = await this.getUserContext(patientId);
+    // this.logger.log('generateGoals:userContext: ' + JSON.stringify(userContext));
     const userBadges = await this.getUserBadges(patientId);
+    // this.logger.log('generateGoals:userBadges: ' + JSON.stringify(userBadges));
     const achievableBadges = await this.getAchievableBadges(userContext, userBadges);
+    // this.logger.log('generateGoals:achievableBadges: ' + JSON.stringify(achievableBadges));
     const goals = await this.createGoals(achievableBadges, patientId, gameName);
+    this.logger.log('generateGoals:goals: ' + JSON.stringify(goals));
     return goals;
   }
 
@@ -55,15 +60,14 @@ export class GoalGeneratorService {
     const goals: Goal[] = [];
     const metricsGenerated: Metrics[] = [];
 
-    availableBadges.forEach(async (badge) => {
+    for (let i = 0; i < availableBadges.length; i++) {
+      const badge = availableBadges[i];
       if (metricsGenerated.includes(badge.metric)) {
-        return;
+        continue;
       }
-
       if (!badge.metric.includes(gameName)) {
-        return;
+        continue;
       }
-
       const goal: Goal = {
         patientId,
         name: this.generateGoalName(badge),
@@ -77,16 +81,15 @@ export class GoalGeneratorService {
         ],
         status: GoalStatus.PENDING,
       };
-
       metricsGenerated.push(badge.metric);
 
       const expiredAt = new Date();
       expiredAt.setDate(expiredAt.getDate() + 1);
+      goal.expiryAt = expiredAt;
 
-      await this.addGoalToDB(goal, patientId, expiredAt.toISOString());
-      goals.push(goal);
-    });
-
+      const createdGoal = await this.addGoalToDB(goal, patientId);
+      goals.push(createdGoal);
+    }
     return goals;
   }
 
@@ -289,19 +292,28 @@ export class GoalGeneratorService {
     return resp.patient_badge;
   }
 
-  async addGoalToDB(goal: Goal, patientId: string, expiredAt: string) {
+  async addGoalToDB(goal: Goal, patientId: string): Promise<Goal> {
     const query = `
-    mutation AddGoal($expiryAt: timestamptz!, $patientId: uuid!, $rewards: jsonb!, $name: String!) {
+      mutation AddGoal($expiryAt: timestamptz!, $patientId: uuid!, $rewards: jsonb!, $name: String!) {
       insert_goal(objects: {expiryAt: $expiryAt, patientId: $patientId, rewards: $rewards, name: $name}) {
-        affected_rows
+        returning {
+          id
+          patientId
+          createdAt
+          expiryAt
+          status
+          name
+          rewards
+        }
       }
     }`;
-    return await this.gqlService.client.request(query, {
+    const resp = await this.gqlService.client.request(query, {
       patientId,
-      expiredAt,
+      expiryAt: goal.expiryAt,
       rewards: goal.rewards,
       name: goal.name,
     });
+    return resp.insert_goal.returning[0];
   }
 
   async getRecentGoal(patientId: string): Promise<Goal> {
