@@ -11,6 +11,8 @@ export type Game = {
   createdAt: Date;
   endedAt: Date;
   analytics: AnalyticsDTO[];
+  totalXpCoins: number;
+  totalMovementCoins: number;
   maxCombo: number;
   orbsCount?: {
     red?: number;

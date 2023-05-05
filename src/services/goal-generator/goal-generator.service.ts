@@ -390,9 +390,9 @@ export class GoalGeneratorService {
   }
 
   async updatePatientXp(patientId: string, xp: number) {
-    // get most recent game
-    // update game.xp with input xp.
-    const mostRecentGame = this.gameService;
+    const game = await this.gameService.getMostRecentGame(patientId);
+    const totalXp = game.totalXpCoins + xp;
+    await this.gameService.updateGameXp(game.id, totalXp);
   }
 
   async isPatientBadgeExist(patientId: string, badgeId: string): Promise<PatientBadge | false> {
