@@ -6,6 +6,7 @@ import { StatsService } from 'src/services/patient-stats/stats.service';
 import { GameService } from 'src/services/game/game.service';
 import { ConfigService } from '@nestjs/config';
 import { DatabaseModule } from 'src/database/database.module';
+import { Logger } from '@nestjs/common';
 
 describe('GoalGeneratorController', () => {
   let controller: GoalGeneratorController;
@@ -13,7 +14,14 @@ describe('GoalGeneratorController', () => {
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       controllers: [GoalGeneratorController],
-      providers: [GoalGeneratorService, GqlService, StatsService, GameService, ConfigService],
+      providers: [
+        GoalGeneratorService,
+        GqlService,
+        StatsService,
+        GameService,
+        ConfigService,
+        Logger,
+      ],
       imports: [DatabaseModule],
     }).compile();
 
