@@ -73,7 +73,7 @@ export class GoalGeneratorService {
             tier: badge.tier,
           },
         ],
-        status: GoalStatus.INPROGRESS,
+        status: GoalStatus.PENDING,
       };
       metricsGenerated.push(badge.metric);
 
