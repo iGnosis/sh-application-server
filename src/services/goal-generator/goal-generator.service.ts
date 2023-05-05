@@ -13,7 +13,7 @@ export class GoalGeneratorService {
     private gameService: GameService,
   ) {}
 
-  async generateGoals(patientId: string): Promise<Goal[]> {
+  async generateGoals(patientId: string, gameName: GameName): Promise<Goal[]> {
     // const recentGoal: Goal = await this.getRecentGoal(patientId);
     // if (recentGoal && new Date(recentGoal.createdAt).toDateString() === new Date().toDateString()) {
     //   throw new HttpException('Goals already generated for today', 400);
@@ -21,10 +21,8 @@ export class GoalGeneratorService {
 
     const userContext: UserContext = await this.getUserContext(patientId);
     const userBadges = await this.getUserBadges(patientId);
-
     const achievableBadges = await this.getAchievableBadges(userContext, userBadges);
-
-    const goals = await this.createGoals(achievableBadges, patientId);
+    const goals = await this.createGoals(achievableBadges, patientId, gameName);
     return goals;
   }
 
@@ -52,12 +50,17 @@ export class GoalGeneratorService {
     return achievableBadges;
   }
 
-  async createGoals(availableBadges: Badge[], patientId: string) {
+  async createGoals(availableBadges: Badge[], patientId: string, gameName: string) {
     const goals: Goal[] = [];
     const metricsGenerated: Metrics[] = [];
+    const recentGoal: Goal = await this.getRecentGoal(patientId);
 
     availableBadges.forEach(async (badge) => {
       if (metricsGenerated.includes(badge.metric)) {
+        return;
+      }
+
+      if (!badge.metric.includes(gameName)) {
         return;
       }
 
@@ -74,6 +77,12 @@ export class GoalGeneratorService {
         ],
         status: GoalStatus.PENDING,
       };
+
+      // so that previous goal is not same as new goal.
+      if (recentGoal.status === GoalStatus.EXPIRED && recentGoal.name === goal.name) {
+        return;
+      }
+
       metricsGenerated.push(badge.metric);
 
       const expiredAt = new Date();
