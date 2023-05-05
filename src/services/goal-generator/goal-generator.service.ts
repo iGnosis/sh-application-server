@@ -205,7 +205,7 @@ export class GoalGeneratorService {
         let count = 0;
         const badge = await this.isPatientBadgeExist(patientId, reward.id);
         if (badge) {
-          count = badge.count;
+          count = badge.count + 1;
         }
         await this.unlockBadge(patientId, reward.id, count);
         await this.markGoalAsCompleted(mostRecentGoal.id);
