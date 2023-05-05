@@ -1,4 +1,4 @@
-import { HttpException, Injectable } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { GqlService } from '../clients/gql/gql.service';
 import { Badge, Goal, PatientBadge, UserContext } from 'src/types/global';
 import { BadgeType, GoalStatus, Metrics } from 'src/types/enum';
@@ -54,7 +54,6 @@ export class GoalGeneratorService {
   async createGoals(availableBadges: Badge[], patientId: string, gameName: string) {
     const goals: Goal[] = [];
     const metricsGenerated: Metrics[] = [];
-    const recentGoal: Goal = await this.getRecentGoal(patientId);
 
     availableBadges.forEach(async (badge) => {
       if (metricsGenerated.includes(badge.metric)) {
@@ -79,11 +78,6 @@ export class GoalGeneratorService {
         status: GoalStatus.PENDING,
       };
 
-      // so that previous goal is not same as new goal.
-      if (recentGoal.status === GoalStatus.EXPIRED && recentGoal.name === goal.name) {
-        return;
-      }
-
       metricsGenerated.push(badge.metric);
 
       const expiredAt = new Date();
@@ -92,12 +86,8 @@ export class GoalGeneratorService {
       await this.addGoalToDB(goal, patientId, expiredAt.toISOString());
 
       goals.push(goal);
-
-      // atm, we only want to generate 1 goal at a time.
-      if (goals.length >= 1) {
-        return goals;
-      }
     });
+
     return goals;
   }
 
