@@ -345,7 +345,8 @@ export class GoalGeneratorService {
         tier
       }
     }`;
-    return await this.gqlService.client.request(query);
+    const resp = await this.gqlService.client.request(query);
+    return resp.badge;
   }
 
   async unlockBadge(patientId: string, badgeId: string, count: number) {
