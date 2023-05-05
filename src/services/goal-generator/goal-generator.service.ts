@@ -82,6 +82,7 @@ export class GoalGeneratorService {
         status: GoalStatus.PENDING,
       };
       metricsGenerated.push(badge.metric);
+      console.log('metricsGenerated::', metricsGenerated);
 
       const expiredAt = new Date();
       expiredAt.setDate(expiredAt.getDate() + 1);
@@ -131,6 +132,9 @@ export class GoalGeneratorService {
             patientId,
             GameName.BEAT_BOXER,
           );
+          break;
+        case Metrics.SOUND_EXPLORER_ORBS:
+          context[Metrics.SOUND_EXPLORER_ORBS] = await this.gameService.getMaxOrbs(patientId);
           break;
         case Metrics.SOUND_EXPLORER_BLUE_ORBS:
           context[Metrics.SOUND_EXPLORER_BLUE_ORBS] = await this.gameService.getMaxBlueOrbs(
@@ -247,6 +251,8 @@ export class GoalGeneratorService {
         return 'Complete ' + badge.minVal + ' prompts in Sit Stand Achieve';
       case Metrics.BEAT_BOXER_PROMPTS:
         return 'Complete ' + badge.minVal + ' prompts in Beat Boxer';
+      case Metrics.SOUND_EXPLORER_ORBS:
+        return 'Collect ' + badge.minVal + ' orbs in Sound Explorer';
       case Metrics.SOUND_EXPLORER_RED_ORBS:
         return 'Collect ' + badge.minVal + ' red orbs in Sound Explorer';
       case Metrics.SOUND_EXPLORER_BLUE_ORBS:
@@ -263,8 +269,6 @@ export class GoalGeneratorService {
         return 'Reach ' + badge.minVal + 'x combo in Moving Tones';
       // case Metrics.HIGHSCORE:
       //   return 'Beat your previous highscore ' + badge.minVal;
-      // case Metrics.SOUND_EXPLORER_RED_ORBS:
-      //   return 'Collect ' + badge.minVal + ' red orbs in Sound Explorer';
       // case Metrics.SIT_STAND_ACHIEVE_LEADERBOARD_POSITION:
       //   return 'Reach ' + badge.minVal + ' position on the Sit Stand Achieve leaderboard';
       // case Metrics.BEAT_BOXER_LEADERBOARD_POSITION:

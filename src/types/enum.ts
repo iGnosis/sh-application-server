@@ -93,6 +93,7 @@ export enum Metrics {
   SOUND_EXPLORER_COMBO = 'sound_explorer_combo',
   SOUND_EXPLORER_RED_ORBS = 'sound_explorer_red_orbs',
   SOUND_EXPLORER_BLUE_ORBS = 'sound_explorer_blue_orbs',
+  SOUND_EXPLORER_ORBS = 'sound_explorer_orbs',
   MOVING_TONES_COMBO = 'moving_tones_combo',
   MOVING_TONES_PROMPTS = 'moving_tones_prompts',
   // HIGHSCORE = 'highscore',

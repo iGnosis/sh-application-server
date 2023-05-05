@@ -76,4 +76,9 @@ export class GameService {
     const games = await this.getGamesByName(patientId, gameName);
     return Math.max(...games.map((game) => game.orbsCount.blue));
   }
+
+  async getMaxOrbs(patientId: string, gameName: GameName = GameName.SOUND_EXPLORER) {
+    const games = await this.getGamesByName(patientId, gameName);
+    return Math.max(...games.map((game) => game.orbsCount.blue + game.orbsCount.red));
+  }
 }
