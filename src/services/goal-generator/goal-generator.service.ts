@@ -84,7 +84,6 @@ export class GoalGeneratorService {
       expiredAt.setDate(expiredAt.getDate() + 1);
 
       await this.addGoalToDB(goal, patientId, expiredAt.toISOString());
-
       goals.push(goal);
     });
 
