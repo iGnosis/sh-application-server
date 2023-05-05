@@ -285,7 +285,8 @@ export class GoalGeneratorService {
         }
       }
     }`;
-    return await this.gqlService.client.request(query, { patientId });
+    const resp = await this.gqlService.client.request(query, { patientId });
+    return resp.patient_badge;
   }
 
   async addGoalToDB(goal: Goal, patientId: string, expiredAt: string) {
