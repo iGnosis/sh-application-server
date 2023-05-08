@@ -15,8 +15,11 @@ export class GoalGeneratorController {
   }
 
   @Post('update-patient-context')
-  async updatePatientContext(@User('id') patientId: string, @Body('metrics') metrics: Metrics[]) {
-    await this.goalGeneratorService.updatePatientContext(patientId, metrics);
+  async updatePatientContext(
+    @User('id') patientId: string,
+    @Body('metrics') metrics: { metrics: Metrics[] },
+  ) {
+    await this.goalGeneratorService.updatePatientContext(patientId, metrics.metrics);
     await this.goalGeneratorService.verifyGoalCompletion(patientId);
     return 'success';
   }

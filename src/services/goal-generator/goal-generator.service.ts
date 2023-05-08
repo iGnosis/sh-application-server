@@ -179,6 +179,8 @@ export class GoalGeneratorService {
             GameName.MOVING_TONES,
           );
           break;
+        default:
+          break;
         // case Metrics.LEADERBOARD_POSITION:
         //   return
         // case Metrics.GAME_XP:
@@ -201,7 +203,7 @@ export class GoalGeneratorService {
         id
       }
     }`;
-    await this.gqlService.client.request(query, { patientId });
+    await this.gqlService.client.request(query, { patientId, context });
   }
 
   async verifyGoalCompletion(patientId: string) {
@@ -325,9 +327,8 @@ export class GoalGeneratorService {
   }
 
   async getRecentGoal(patientId: string): Promise<Goal> {
-    const query = `
-    query GetRecentGoal($patientId: uuid!) {
-      goal(where: {patientId: {_eq: $patientId}}, order_by: {createdAt: desc}, limit: 1) {
+    const query = `query GetRecentGoal($patientId: uuid!) {
+      goal(where: {patientId: {_eq: $patientId}, status: {_eq: inprogress}}, order_by: {createdAt: desc}, limit: 1) {
         id
         createdAt
         expiryAt
