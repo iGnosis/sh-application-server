@@ -1,4 +1,4 @@
-import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
+import { HttpException, HttpStatus, Injectable, Logger } from '@nestjs/common';
 import { Dictionary } from 'lodash';
 import { groupBy as lodashGroupBy, merge as lodashMerge } from 'lodash';
 import { DatabaseService } from 'src/database/database.service';
@@ -9,7 +9,11 @@ import * as moment from 'moment';
 @Injectable()
 export class StatsService {
   numberOfGamesAvailable: number;
-  constructor(private databaseService: DatabaseService, private gqlService: GqlService) {
+  constructor(
+    private databaseService: DatabaseService,
+    private gqlService: GqlService,
+    private logger: Logger,
+  ) {
     // TODO: get activity count dynamically!
     this.numberOfGamesAvailable = 4;
   }
@@ -519,11 +523,15 @@ export class StatsService {
     SELECT SUM(EXTRACT(epoch FROM ("endedAt" - "createdAt"))) AS "totalDurationSec"
     FROM game
     WHERE
-      patient = '$1' AND
+      patient = $1 AND
       "endedAt" IS NOT NULL;
     `;
-    const results = await this.databaseService.executeQuery(sql, [patientId]);
-    return parseFloat(parseFloat(results[0].totalDurationSec).toFixed(2));
+    try {
+      const results = await this.databaseService.executeQuery(sql, [patientId]);
+      return parseFloat(parseFloat(results[0].totalDurationSec).toFixed(2));
+    } catch (err) {
+      this.logger.error('totalActivityDuration:err:', JSON.stringify(err));
+    }
   }
 
   async totalWeeklyActivityTimeDuration(patientId: string) {
@@ -533,7 +541,7 @@ export class StatsService {
     SUM(EXTRACT(epoch FROM ("endedAt" - "createdAt"))) AS "totalDurationSec"
     FROM game
     WHERE
-      patient = '$1' AND
+      patient = $1 AND
       "endedAt" IS NOT NULL AND
       "createdAt" >= DATE_TRUNC('week', NOW())
     GROUP BY "weekStart"
@@ -550,7 +558,7 @@ export class StatsService {
       SUM(EXTRACT(epoch FROM ("endedAt" - "createdAt"))) AS "totalDurationSec"
     FROM game
     WHERE
-      patient = '$1' AND
+      patient = $1 AND
       "endedAt" IS NOT NULL AND
       "createdAt" >= DATE_TRUNC('month', NOW())
     GROUP BY "monthStart"
@@ -560,7 +568,7 @@ export class StatsService {
     return parseFloat(parseFloat(results[0].totalDurationSec).toFixed(2));
   }
 
-  async totalActivityCount(patientId: string) {
+  async totalActivityCount(patient: string) {
     const query = `query TotalGameCount($patient: uuid!) {
       game_aggregate(where: {patient: {_eq: $patient}}) {
         aggregate {
@@ -568,7 +576,7 @@ export class StatsService {
         }
       }
     }`;
-    const resp = await this.gqlService.client.request(query, { patientId });
+    const resp = await this.gqlService.client.request(query, { patient });
     return resp.game_aggregate.aggregate.count;
   }
 
