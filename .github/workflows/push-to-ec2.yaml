@@ -126,7 +126,7 @@ jobs:
           (. ~/.pmc-secrets; \
           . ~/.pmc-build; \
           cd $SSH_REMOTE_PATH; \
-          nohup node main.js > /dev/null 2>&1 &)"
+          nohup node main.js > /tmp/nest_logs.txt 2>&1 &)"
 
   update-coverage-badge:
     runs-on: ubuntu-latest

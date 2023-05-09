@@ -86,7 +86,7 @@ export class GameService {
     const analytics = games.map((game) => game.analytics);
     let maxPromptsLen = 0;
     analytics.forEach((a) => {
-      if (a.length > maxPromptsLen) {
+      if (a && a.length && a.length > maxPromptsLen) {
         maxPromptsLen = a.length;
       }
     });

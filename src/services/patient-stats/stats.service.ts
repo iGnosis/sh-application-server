@@ -547,8 +547,12 @@ export class StatsService {
     GROUP BY "weekStart"
     ORDER BY "weekStart" DESC;
     `;
-    const results = await this.databaseService.executeQuery(sql, [patientId]);
-    return parseFloat(parseFloat(results[0].totalDurationSec).toFixed(2));
+    try {
+      const results = await this.databaseService.executeQuery(sql, [patientId]);
+      return parseFloat(parseFloat(results[0].totalDurationSec).toFixed(2));
+    } catch (err) {
+      this.logger.error('totalWeeklyActivityTimeDuration:err:', JSON.stringify(err));
+    }
   }
 
   async totalMonthlyActivityTimeDuration(patientId: string) {
@@ -564,8 +568,12 @@ export class StatsService {
     GROUP BY "monthStart"
     ORDER BY "monthStart" DESC;
     `;
-    const results = await this.databaseService.executeQuery(sql, [patientId]);
-    return parseFloat(parseFloat(results[0].totalDurationSec).toFixed(2));
+    try {
+      const results = await this.databaseService.executeQuery(sql, [patientId]);
+      return parseFloat(parseFloat(results[0].totalDurationSec).toFixed(2));
+    } catch (err) {
+      this.logger.error('totalMonthlyActivityTimeDuration:err:', JSON.stringify(err));
+    }
   }
 
   async totalActivityCount(patient: string) {
