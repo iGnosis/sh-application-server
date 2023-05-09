@@ -3,6 +3,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { DatabaseModule } from 'src/database/database.module';
 import { GqlService } from 'src/services/clients/gql/gql.service';
 import { StatsService } from './stats.service';
+import { Logger } from '@nestjs/common';
 
 describe('Stat Service', () => {
   let service: StatsService;
@@ -10,7 +11,7 @@ describe('Stat Service', () => {
   beforeAll(async () => {
     const module: TestingModule = await Test.createTestingModule({
       imports: [DatabaseModule],
-      providers: [StatsService, GqlService, ConfigService],
+      providers: [StatsService, GqlService, ConfigService, Logger],
     }).compile();
     service = module.get<StatsService>(StatsService);
   });
