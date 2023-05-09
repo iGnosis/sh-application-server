@@ -1,9 +1,11 @@
 import { Body, Controller, Logger, Post, UseInterceptors } from '@nestjs/common';
+import { ApiBearerAuth } from '@nestjs/swagger';
 import { User } from 'src/common/decorators/user.decorator';
 import { TransformResponseInterceptor } from 'src/common/interceptors/transform-response.interceptor';
 import { GoalGeneratorService } from 'src/services/goal-generator/goal-generator.service';
 import { GameName, Metrics } from 'src/types/enum';
 
+@ApiBearerAuth('access-token')
 @Controller('goal-generator')
 @UseInterceptors(new TransformResponseInterceptor())
 export class GoalGeneratorController {
