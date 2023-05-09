@@ -82,20 +82,11 @@ export class GameController {
     const { gameId, patientId, endedAt, analytics, organizationId } = body;
     if (!endedAt) return;
 
-    // Trigger Novu events.
-    // first activity played greeting.
     const subscriber = await this.novuService.getSubscriber(patientId);
 
-    if (subscriber && subscriber.data && !subscriber.data.firstActivityPlayed) {
+    const totalActivityCount = await this.statsService.totalActivityCount(patientId);
+    if (totalActivityCount === 1) {
       await this.novuService.firstActivityCompleted(patientId);
-
-      const novuData: Partial<NovuSubscriberData> = {
-        ...subscriber.data,
-        firstActivityPlayed: true,
-      };
-      await this.novuService.novuClient.subscribers.update(patientId, {
-        data: { ...novuData },
-      });
     }
 
     // "Almost broken streak" notification to be sent after 24 hours.
