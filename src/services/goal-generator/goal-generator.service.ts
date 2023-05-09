@@ -209,8 +209,35 @@ export class GoalGeneratorService {
   async verifyGoalCompletion(patientId: string) {
     const context = await this.getUserContext(patientId);
     const mostRecentGoal = await this.getRecentGoal(patientId);
+
+    if (!mostRecentGoal || !mostRecentGoal.rewards) {
+      return;
+    }
+
     mostRecentGoal.rewards.forEach(async (reward) => {
-      if (context[reward.metric] >= reward.minVal && context[reward.metric] <= reward.maxVal) {
+      let unlockReward = false;
+
+      if (!reward || !reward.metric) {
+        return;
+      }
+
+      if (reward.minVal) {
+        if (context[reward.metric] >= reward.minVal) {
+          unlockReward = true;
+        } else {
+          unlockReward = false;
+        }
+      }
+
+      if (reward.maxVal) {
+        if (context[reward.metric] <= reward.maxVal) {
+          unlockReward = true;
+        } else {
+          unlockReward = false;
+        }
+      }
+
+      if (unlockReward) {
         // reward criteria is met
         let count = 0;
         const badge = await this.isPatientBadgeExist(patientId, reward.id);
@@ -220,15 +247,9 @@ export class GoalGeneratorService {
         await this.unlockBadge(patientId, reward.id, count);
         await this.markGoalAsCompleted(mostRecentGoal.id);
         await this.updatePatientXp(patientId, reward.xp);
-        // alert frontend client via sockets (?) to show real-time badge unlocks
-        // OR
-        // maintain some sort of cache in frontend (?)
       }
     });
   }
-
-  // async getGoalStatus(goalId: string) {}
-  // async refreshGoal(goalId: string) {}
 
   capitalize(str: string | string[]) {
     if (!Array.isArray(str)) {
@@ -338,6 +359,11 @@ export class GoalGeneratorService {
       }
     }`;
     const goals = await this.gqlService.client.request(query, { patientId });
+
+    if (!goals || !goals.goal || !goals.goal.length) {
+      return;
+    }
+
     return goals.goal[0];
   }
 
