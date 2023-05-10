@@ -198,6 +198,10 @@ export class GoalGeneratorService {
       }
     });
 
+    this.logger.log(
+      `updatePatientContext:patient:${patientId}:updating context to ` + JSON.stringify(context),
+    );
+
     const query = `mutation UpdateUserContext($patientId: uuid!, $context: jsonb!) {
       update_patient_by_pk(pk_columns: {id: $patientId}, _set: {context: $context}) {
         id
@@ -213,6 +217,13 @@ export class GoalGeneratorService {
     if (!mostRecentGoal || !mostRecentGoal.rewards) {
       return;
     }
+
+    this.logger.log(
+      `verifyGoalCompletion:patient:${patientId}:context: ` + JSON.stringify(context),
+    );
+    this.logger.log(
+      `verifyGoalCompletion:patient:${patientId}:mostRecentGoal: ` + JSON.stringify(mostRecentGoal),
+    );
 
     mostRecentGoal.rewards.forEach(async (reward) => {
       let unlockReward = false;
@@ -236,6 +247,10 @@ export class GoalGeneratorService {
           unlockReward = false;
         }
       }
+
+      this.logger.log(
+        `verifyGoalCompletion:patient:${patientId}:unlockReward: ` + JSON.stringify(unlockReward),
+      );
 
       if (unlockReward) {
         // reward criteria is met
