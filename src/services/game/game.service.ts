@@ -109,8 +109,8 @@ export class GameService {
     const games = await this.getGamesByName(patientId, gameName);
     return Math.max(
       ...games.map((game) => {
-        if (game && game.orbsCount && game.orbsCount.red) {
-          return game.orbsCount.red;
+        if (game && game.orbsCount && game.orbsCount.redOrbs) {
+          return game.orbsCount.redOrbs;
         }
         return 0;
       }),
@@ -121,8 +121,8 @@ export class GameService {
     const games = await this.getGamesByName(patientId, gameName);
     return Math.max(
       ...games.map((game) => {
-        if (game && game.orbsCount && game.orbsCount.blue) {
-          return game.orbsCount.blue;
+        if (game && game.orbsCount && game.orbsCount.normalOrbs) {
+          return game.orbsCount.normalOrbs;
         }
         return 0;
       }),
@@ -133,8 +133,8 @@ export class GameService {
     const games = await this.getGamesByName(patientId, gameName);
     return Math.max(
       ...games.map((game) => {
-        if (game && game.orbsCount && game.orbsCount.blue && game.orbsCount.red) {
-          return game.orbsCount.blue + game.orbsCount.red;
+        if (game && game.orbsCount && game.orbsCount.normalOrbs && game.orbsCount.redOrbs) {
+          return game.orbsCount.normalOrbs + game.orbsCount.redOrbs;
         }
         return 0;
       }),

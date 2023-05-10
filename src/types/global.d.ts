@@ -15,8 +15,8 @@ export type Game = {
   totalMovementCoins: number;
   maxCombo: number;
   orbsCount?: {
-    red?: number;
-    blue?: number;
+    redOrbs?: number;
+    normalOrbs?: number;
   };
 };
 

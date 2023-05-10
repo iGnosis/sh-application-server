@@ -553,7 +553,6 @@ export class NovuService {
         const lastActivityPlayedOn = new Date(patient.data.lastActivityPlayedOn).getTime();
         const diffInMs = now - lastActivityPlayedOn;
         const diffInDays = diffInMs / (1000 * 60 * 60 * 24);
-
         if (diffInDays > 3 && patient.data.sendInactiveUserReminder) {
           this.logger.log(
             'sending email to inactive patient ' + JSON.stringify(patient.subscriberId),
