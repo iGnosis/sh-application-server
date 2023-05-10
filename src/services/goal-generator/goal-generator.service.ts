@@ -102,6 +102,9 @@ export class GoalGeneratorService {
   // 2. Patient portal daily login -- when they checkin their mood.
   async updatePatientContext(patientId: string, metrics: Metrics[]) {
     const context = await this.getUserContext(patientId);
+    this.logger.log(
+      `updatePatientContext:patientId:${patientId}:metrics: ` + JSON.stringify(metrics),
+    );
 
     metrics.forEach(async (metric) => {
       switch (metric) {
