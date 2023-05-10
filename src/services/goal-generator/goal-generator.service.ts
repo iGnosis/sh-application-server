@@ -183,6 +183,7 @@ export class GoalGeneratorService {
           );
           break;
         default:
+          this.logger.log(`updatePatientContext:metric ${metric} not implemented`);
           break;
         // case Metrics.LEADERBOARD_POSITION:
         //   return

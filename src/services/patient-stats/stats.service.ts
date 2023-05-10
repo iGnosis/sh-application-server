@@ -585,6 +585,7 @@ export class StatsService {
       }
     }`;
     const resp = await this.gqlService.client.request(query, { patient });
+    this.logger.log('totalActivityCount:resp:' + JSON.stringify(resp));
     return resp.game_aggregate.aggregate.count;
   }
 
