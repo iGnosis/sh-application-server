@@ -258,7 +258,7 @@ export class GoalGeneratorService {
 
       if (unlockReward) {
         // reward criteria is met
-        let count = 0;
+        let count = 1;
         const badge = await this.isPatientBadgeExist(patientId, reward.id);
         if (badge) {
           count = badge.count + 1;
