@@ -423,7 +423,7 @@ export class GoalGeneratorService {
         id
       }
     }`;
-    await this.gqlService.client.request(query, { patientId, badgeId, count });
+    await this.gqlService.client.request(query, { patient: patientId, badge: badgeId, count });
   }
 
   async markGoalAsCompleted(goalId: string) {
