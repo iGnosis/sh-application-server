@@ -95,21 +95,49 @@ export class GameService {
 
   async getMaxCombo(patientId: string, gameName: GameName) {
     const games = await this.getGamesByName(patientId, gameName);
-    return Math.max(...games.map((game) => game.maxCombo));
+    return Math.max(
+      ...games.map((game) => {
+        if (game && game.maxCombo) {
+          return game.maxCombo;
+        }
+        return 0;
+      }),
+    );
   }
 
   async getMaxRedOrbs(patientId: string, gameName: GameName = GameName.SOUND_EXPLORER) {
     const games = await this.getGamesByName(patientId, gameName);
-    return Math.max(...games.map((game) => game.orbsCount.red));
+    return Math.max(
+      ...games.map((game) => {
+        if (game && game.orbsCount && game.orbsCount.red) {
+          return game.orbsCount.red;
+        }
+        return 0;
+      }),
+    );
   }
 
   async getMaxBlueOrbs(patientId: string, gameName: GameName = GameName.SOUND_EXPLORER) {
     const games = await this.getGamesByName(patientId, gameName);
-    return Math.max(...games.map((game) => game.orbsCount.blue));
+    return Math.max(
+      ...games.map((game) => {
+        if (game && game.orbsCount && game.orbsCount.blue) {
+          return game.orbsCount.blue;
+        }
+        return 0;
+      }),
+    );
   }
 
   async getMaxOrbs(patientId: string, gameName: GameName = GameName.SOUND_EXPLORER) {
     const games = await this.getGamesByName(patientId, gameName);
-    return Math.max(...games.map((game) => game.orbsCount.blue + game.orbsCount.red));
+    return Math.max(
+      ...games.map((game) => {
+        if (game && game.orbsCount && game.orbsCount.blue && game.orbsCount.red) {
+          return game.orbsCount.blue + game.orbsCount.red;
+        }
+        return 0;
+      }),
+    );
   }
 }
