@@ -437,6 +437,7 @@ export class GoalGeneratorService {
 
   async updatePatientXp(patientId: string, xp: number) {
     const game = await this.gameService.getMostRecentGame(patientId);
+    this.logger.log('updatePatientXp:getMostRecentGame: ' + JSON.stringify(game));
     const totalXp = game.totalXpCoins + xp;
     await this.gameService.updateGameXp(game.id, totalXp);
   }
