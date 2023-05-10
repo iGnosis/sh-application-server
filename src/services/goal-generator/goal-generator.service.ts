@@ -106,7 +106,7 @@ export class GoalGeneratorService {
       `updatePatientContext:patientId:${patientId}:metrics: ` + JSON.stringify(metrics),
     );
 
-    metrics.forEach(async (metric) => {
+    for (const metric of metrics) {
       switch (metric) {
         case Metrics.PATIENT_STREAK:
           context[Metrics.PATIENT_STREAK] = await this.statsService.calculateStreak(patientId);
@@ -200,7 +200,7 @@ export class GoalGeneratorService {
         // case Metrics.MOVING_TONES_LEADERBOARD_POSITION:
         //   return
       }
-    });
+    }
 
     this.logger.log(
       `updatePatientContext:patient:${patientId}:updating context to ` + JSON.stringify(context),
@@ -229,7 +229,7 @@ export class GoalGeneratorService {
       `verifyGoalCompletion:patient:${patientId}:mostRecentGoal: ` + JSON.stringify(mostRecentGoal),
     );
 
-    mostRecentGoal.rewards.forEach(async (reward) => {
+    for (const reward of mostRecentGoal.rewards) {
       let unlockReward = false;
 
       if (!reward || !reward.metric) {
@@ -267,7 +267,7 @@ export class GoalGeneratorService {
         await this.markGoalAsCompleted(mostRecentGoal.id);
         await this.updatePatientXp(patientId, reward.xp);
       }
-    });
+    }
   }
 
   capitalize(str: string | string[]) {
