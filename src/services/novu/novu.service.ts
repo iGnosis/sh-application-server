@@ -531,7 +531,7 @@ export class NovuService {
 
   @Cron(CronExpression.EVERY_DAY_AT_NOON)
   async noActivityInPast3Days() {
-    const patients = [];
+    const patients: NovuSubscriber[] = [];
 
     try {
       const resp = await this.novuClient.subscribers.list(0);
@@ -546,7 +546,7 @@ export class NovuService {
         }
       }
 
-      patients.forEach(async (patient: NovuSubscriber) => {
+      for (const patient of patients) {
         if (patient.deleted || !patient.data || !patient.data.lastActivityPlayedOn) return;
 
         const now = new Date().getTime();
@@ -573,7 +573,7 @@ export class NovuService {
             data: { ...novuData },
           });
         }
-      });
+      }
     } catch (err) {
       this.logger.error('error while noActivityInPast3Days ' + JSON.stringify(err));
     }
