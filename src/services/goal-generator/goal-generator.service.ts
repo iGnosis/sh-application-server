@@ -97,9 +97,6 @@ export class GoalGeneratorService {
     return goals;
   }
 
-  // TODO: Call this API at certian events.
-  // 1. Game end
-  // 2. Patient portal daily login -- when they checkin their mood.
   async updatePatientContext(patientId: string, metrics: Metrics[]) {
     const context = await this.getUserContext(patientId);
     this.logger.log(

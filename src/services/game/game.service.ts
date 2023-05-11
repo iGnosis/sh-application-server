@@ -45,6 +45,29 @@ export class GameService {
     return resp.game[0];
   }
 
+  // NOTE: Returns an array of games by design. To minimize the changes required.
+  async getMostRecentGameByName(patientId: string, gameName: GameName): Promise<Game[]> {
+    const query = `query MostRecentGameByName($patientId: uuid!, $gameName: game_name_enum!) {
+      game(where: {patient: {_eq: $patientId}, game: {_eq: $gameName}}, limit: 1, order_by: {createdAt: desc}) {
+        id
+        createdAt
+        endedAt
+        game
+        analytics
+        calibrationDuration
+        patient
+        repsCompleted
+        settings
+        totalDuration
+        totalMovementCoins
+        totalXpCoins
+        updatedAt
+      }
+    }`;
+    const resp = await this.gqlService.client.request(query, { patientId, gameName });
+    return resp.game;
+  }
+
   async getGamesByName(patientId: string, gameName: GameName): Promise<Game[]> {
     const query = `query GameByName($gameName: String!, $patientId: uuid!) {
       game(where: {game_name: {name: {_eq: $gameName}}, patient: {_eq: $patientId}}, order_by: {createdAt: desc}) {
@@ -82,7 +105,7 @@ export class GameService {
   }
 
   async getMaxPrompts(patientId: string, gameName: GameName) {
-    const games = await this.getGamesByName(patientId, gameName);
+    const games = await this.getMostRecentGameByName(patientId, gameName);
     const analytics = games.map((game) => game.analytics);
     let maxPromptsLen = 0;
     analytics.forEach((a) => {
@@ -94,7 +117,7 @@ export class GameService {
   }
 
   async getMaxCombo(patientId: string, gameName: GameName) {
-    const games = await this.getGamesByName(patientId, gameName);
+    const games = await this.getMostRecentGameByName(patientId, gameName);
     return Math.max(
       ...games.map((game) => {
         if (game && game.maxCombo) {
@@ -106,7 +129,7 @@ export class GameService {
   }
 
   async getMaxRedOrbs(patientId: string, gameName: GameName = GameName.SOUND_EXPLORER) {
-    const games = await this.getGamesByName(patientId, gameName);
+    const games = await this.getMostRecentGameByName(patientId, gameName);
     return Math.max(
       ...games.map((game) => {
         if (game && game.orbsCount && game.orbsCount.redOrbs) {
@@ -118,7 +141,7 @@ export class GameService {
   }
 
   async getMaxBlueOrbs(patientId: string, gameName: GameName = GameName.SOUND_EXPLORER) {
-    const games = await this.getGamesByName(patientId, gameName);
+    const games = await this.getMostRecentGameByName(patientId, gameName);
     return Math.max(
       ...games.map((game) => {
         if (game && game.orbsCount && game.orbsCount.normalOrbs) {
@@ -130,7 +153,7 @@ export class GameService {
   }
 
   async getMaxOrbs(patientId: string, gameName: GameName = GameName.SOUND_EXPLORER) {
-    const games = await this.getGamesByName(patientId, gameName);
+    const games = await this.getMostRecentGameByName(patientId, gameName);
     return Math.max(
       ...games.map((game) => {
         if (game && game.orbsCount && game.orbsCount.normalOrbs && game.orbsCount.redOrbs) {
