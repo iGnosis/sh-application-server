@@ -42,7 +42,7 @@ export class GameService {
       }
     }`;
     const resp = await this.gqlService.client.request(query, { patientId });
-    return resp.game;
+    return resp.game[0];
   }
 
   async getGamesByName(patientId: string, gameName: GameName): Promise<Game[]> {
