@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Get,
   HttpCode,
   HttpException,
   HttpStatus,
@@ -11,7 +12,7 @@ import {
 } from '@nestjs/common';
 import { DatabaseService } from 'src/database/database.service';
 import { PhiService } from 'src/services/phi/phi.service';
-import { MaskPhiDto, PhiTokenizeBodyDTO, UpdatePhiColumnDto } from './phi.dto';
+import { PhiTokenizeBodyDTO, UpdatePhiColumnDto } from './phi.dto';
 import { ConfigService } from '@nestjs/config';
 import { validate as uuidValidate } from 'uuid';
 import { maskPhone, maskEmail2 } from 'maskdata';
@@ -176,9 +177,8 @@ export class PhiController {
   }
 
   @HttpCode(200)
-  @Post('mask/:phiToken')
-  async maskPhi(@Body() body: MaskPhiDto) {
-    const { phiToken } = body;
+  @Get('mask/:phiToken')
+  async maskPhi(@Param('phiToken') phiToken: string) {
     const data = await this.phiService.deTokenize(phiToken);
     let maskedData = '';
 
@@ -208,5 +208,13 @@ export class PhiController {
     });
 
     return maskedData;
+  }
+
+  @HttpCode(200)
+  @Get('all/:patientId')
+  async quickPhi(@Param('patientId') patientId: string) {
+    // TODO: need to replace test values with actual values.
+    const organizationId = '00000000-0000-0000-0000-000000000000';
+    return await this.phiService.extractAllPhi(patientId, organizationId);
   }
 }

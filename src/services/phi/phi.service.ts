@@ -1,6 +1,7 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { GqlService } from '../clients/gql/gql.service';
 import { PiiDataType } from 'src/types/enum';
+import { HealthRecord } from 'src/types/global';
 
 @Injectable()
 export class PhiService {
@@ -45,13 +46,16 @@ export class PhiService {
     }
   }
 
-  async deTokenize(recordId: string): Promise<{
-    column: PiiDataType;
-    value: string;
-  }> {
+  async deTokenize(recordId: string): Promise<Partial<HealthRecord>> {
     try {
       const query = `query Detokenize($recordId: uuid!) {
         health_records_by_pk(id: $recordId) {
+          id
+          createdAt
+          updatedAt
+          patient
+          organizationId
+          env
           column: recordType
           value: recordData(path: "value")
         }
@@ -138,5 +142,28 @@ export class PhiService {
     const maskedString = str.slice(0, start) + maskedChars + str.slice(end + 1);
 
     return maskedString;
+  }
+
+  async extractAllPhi(patientId: string, organizationId: string): Promise<Partial<HealthRecord[]>> {
+    const query = `query ExtractAllPhi($patientId: uuid!, $organizationId: uuid!) {
+      health_records(where: {patient: {_eq: $patientId}, organizationId: {_eq: $organizationId}}) {
+        id
+        createdAt
+        updatedAt
+        patient
+        organizationId
+        env
+        column: recordType
+        data: recordData(path: "value")
+      }
+    }`;
+
+    try {
+      const resp = await this.gqlService.client.request(query, { patientId, organizationId });
+      return resp.health_records;
+    } catch (err) {
+      console.log(err);
+      throw new HttpException('error while [extractAllPhi]', HttpStatus.INTERNAL_SERVER_ERROR);
+    }
   }
 }

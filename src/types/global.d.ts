@@ -1,4 +1,4 @@
-import { UserRole, Metrics, BadgeType, GoalStatus } from 'src/types/enum';
+import { UserRole, Metrics, BadgeType, GoalStatus, PiiDataType } from 'src/types/enum';
 
 export interface BuildVersion {
   version: string;
@@ -326,4 +326,17 @@ export interface PatientBadge {
   badgeByBadge: {
     badgeType: BadgeType;
   };
+}
+
+export interface HealthRecord {
+  id: string;
+  createdAt: string;
+  updatedAt: string;
+  column: PiiDataType;
+  value: string;
+  patient: string;
+  organizationId: string;
+  env: string;
+  column: string;
+  data: string;
 }
