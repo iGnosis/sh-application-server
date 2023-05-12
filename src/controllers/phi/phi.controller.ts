@@ -7,13 +7,18 @@ import {
   Logger,
   Param,
   Post,
+  UseInterceptors,
 } from '@nestjs/common';
 import { DatabaseService } from 'src/database/database.service';
 import { PhiService } from 'src/services/phi/phi.service';
-import { PhiTokenizeBodyDTO, UpdatePhiColumnDto } from './phi.dto';
+import { MaskPhiDto, PhiTokenizeBodyDTO, UpdatePhiColumnDto } from './phi.dto';
 import { ConfigService } from '@nestjs/config';
 import { validate as uuidValidate } from 'uuid';
+import { maskPhone, maskEmail2 } from 'maskdata';
+import { PiiDataType } from 'src/types/enum';
+import { TransformResponseInterceptor } from 'src/common/interceptors/transform-response.interceptor';
 
+@UseInterceptors(new TransformResponseInterceptor())
 @Controller('phi')
 export class PhiController {
   ALLOWED_PII_COLUMNS = [
@@ -168,5 +173,40 @@ export class PhiController {
     return {
       success: true,
     };
+  }
+
+  @HttpCode(200)
+  @Post('mask/:phiToken')
+  async maskPhi(@Body() body: MaskPhiDto) {
+    const { phiToken } = body;
+    const data = await this.phiService.deTokenize(phiToken);
+    let maskedData = '';
+
+    switch (data.column) {
+      case PiiDataType.EMAIL:
+        maskedData = maskEmail2(data.value);
+        break;
+
+      case PiiDataType.PHONE_NUMBER:
+        maskedData = maskPhone(data.value);
+        break;
+
+      case PiiDataType.NICKNAME:
+      case PiiDataType.FIRST_NAME:
+      case PiiDataType.LAST_NAME:
+      default:
+        maskedData = this.phiService.maskString(data.value);
+        break;
+    }
+
+    // TODO: need to replace test values with actual values.
+    // This is kept as TODO becuase we likely won't be using PointMotion JWTs.
+    await this.phiService.readMaskedPhiAudit({
+      healthRecordId: phiToken,
+      userRole: 'test',
+      organizationId: '00000000-0000-0000-0000-000000000000',
+    });
+
+    return maskedData;
   }
 }

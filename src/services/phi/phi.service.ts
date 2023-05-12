@@ -1,5 +1,6 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { GqlService } from '../clients/gql/gql.service';
+import { PiiDataType } from 'src/types/enum';
 
 @Injectable()
 export class PhiService {
@@ -44,18 +45,46 @@ export class PhiService {
     }
   }
 
-  async deTokenize(recordId: string) {
+  async deTokenize(recordId: string): Promise<{
+    column: PiiDataType;
+    value: string;
+  }> {
     try {
       const query = `query Detokenize($recordId: uuid!) {
         health_records_by_pk(id: $recordId) {
-          recordData(path: "value")
+          column: recordType
+          value: recordData(path: "value")
         }
       }`;
       const result = await this.gqlService.client.request(query, { recordId });
-      return result.health_records_by_pk.recordData;
+      return result.health_records_by_pk;
     } catch (error) {
       console.log(error);
       throw new HttpException(error, HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+  }
+
+  async readMaskedPhiAudit(payload: {
+    healthRecordId: string;
+    userRole: string;
+    organizationId: string;
+  }) {
+    payload['operationType'] = 'READ_MASKED';
+
+    const query = `mutation InsertMaskedReadAudit($operationType: String!, $healthRecordId: uuid!, $organizationId: uuid!, $userRole: String!) {
+      insert_audit(objects: {operationType: $operationType, healthRecordId: $healthRecordId, organizationId: $organizationId, userRole: $userRole}) {
+        affected_rows
+      }
+    }`;
+
+    try {
+      return await this.gqlService.client.request(query, payload);
+    } catch (err) {
+      console.log(err);
+      throw new HttpException(
+        'Error while calling [readMaskedPhiAudit]',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
     }
   }
 
@@ -94,5 +123,20 @@ export class PhiService {
       console.log(error);
       throw new HttpException(error, HttpStatus.INTERNAL_SERVER_ERROR);
     }
+  }
+
+  maskString(str: string): string {
+    if (str.length === 0) {
+      return str;
+    }
+
+    const totalLength = str.length;
+    const start = Math.floor((totalLength - 1) / 3);
+    const end = Math.ceil((2 * (totalLength - 1)) / 3);
+
+    const maskedChars = str.slice(start, end + 1).replace(/./g, '*');
+    const maskedString = str.slice(0, start) + maskedChars + str.slice(end + 1);
+
+    return maskedString;
   }
 }

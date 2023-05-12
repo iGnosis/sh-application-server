@@ -32,3 +32,11 @@ export class UpdatePhiColumnDto {
     name: string;
   };
 }
+
+export class MaskPhiDto {
+  @ApiProperty({
+    description: 'PHI token UUID to be masked',
+  })
+  @IsNotEmpty()
+  phiToken: string;
+}

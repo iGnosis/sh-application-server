@@ -123,3 +123,11 @@ export enum GoalStatus {
   INPROGRESS = 'inprogress',
   EXPIRED = 'expired',
 }
+
+export enum PiiDataType {
+  FIRST_NAME = 'firstName',
+  LAST_NAME = 'lastName',
+  EMAIL = 'email',
+  PHONE_NUMBER = 'phoneNumber',
+  NICKNAME = 'nickname',
+}
