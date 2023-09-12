@@ -6,6 +6,11 @@ import { Twilio } from 'twilio';
 export class SmsService {
   public client: Twilio;
   constructor(private config: ConfigService) {
-    this.client = new Twilio(config.get('TWILIO_ACCOUNT_SID'), config.get('TWILIO_AUTH_TOKEN'));
+    const token = config.get('TWILIO_AUTH_TOKEN');
+    const sid = config.get('TWILIO_ACCOUNT_SID');
+    if (!token || !sid) {
+      throw new Error('Twilio API key tokens not set.');
+    }
+    this.client = new Twilio(sid, token);
   }
 }
