@@ -17,6 +17,7 @@ import { UserRole, LoginUserType } from 'src/types/enum';
 import { CreateOrganizationService } from 'src/services/organization/create/create-organization.service';
 import { NovuService } from 'src/services/novu/novu.service';
 import { StripeService } from 'src/services/stripe/stripe.service';
+import { ConfigService } from '@nestjs/config';
 
 // TODO: Apply rate limiters (?)
 @UseInterceptors(new TransformResponseInterceptor())
@@ -28,6 +29,7 @@ export class SmsAuthController {
     private readonly logger: Logger,
     private novuService: NovuService,
     private stripeService: StripeService,
+    private configService: ConfigService,
   ) {
     this.logger = new Logger(SmsAuthController.name);
   }
@@ -139,9 +141,10 @@ export class SmsAuthController {
         this.logger.error('error while creating novu sub:: ' + JSON.stringify(err));
       }
 
+      this.logger.log('insertOtp::user.id::' + user.id);
+      await this.smsAuthService.insertOtp(userType, user.id, otp);
+
       try {
-        this.logger.log('insertOtp::user.id::' + user.id);
-        await this.smsAuthService.insertOtp(userType, user.id, otp);
         await this.smsAuthService.sendOtp(phoneCountryCode, phoneNumber, otp);
         if (user && user.email) {
           this.logger.log(`sending Login OTP email to ${user.email}`);
@@ -153,6 +156,15 @@ export class SmsAuthController {
         };
       } catch (err) {
         console.log('error while sending OTP: ' + JSON.stringify(err));
+        if (
+          !this.configService.get('APP_TWILIO_ACCOUNT_SID') ||
+          !this.configService.get('APP_TWILIO_AUTH_TOKEN')
+        ) {
+          return {
+            message: `twilio mock:otp:${otp}`,
+            isExistingUser: user && user.email ? true : false,
+          };
+        }
       }
     }
 
@@ -183,6 +195,16 @@ export class SmsAuthController {
     }
 
     await this.smsAuthService.insertOtp(userType, user.id, otp);
+    if (
+      !this.configService.get('APP_TWILIO_ACCOUNT_SID') ||
+      !this.configService.get('APP_TWILIO_AUTH_TOKEN')
+    ) {
+      return {
+        message: `twilio mock:otp:${otp}`,
+        isExistingUser: user && user.email ? true : false,
+      };
+    }
+
     await this.smsAuthService.sendOtp(phoneCountryCode, phoneNumber, otp);
     if (user && user.email) {
       this.logger.log(`sending Login OTP email to ${user.email}`);
@@ -258,6 +280,16 @@ export class SmsAuthController {
 
     if (isOtpExpired) {
       await this.smsAuthService.insertOtp(userType, user.id, otp);
+    }
+
+    if (
+      !this.configService.get('APP_TWILIO_ACCOUNT_SID') ||
+      !this.configService.get('APP_TWILIO_AUTH_TOKEN')
+    ) {
+      return {
+        message: `twilio mock:otp:${otp}`,
+        isExistingUser: user && user.email ? true : false,
+      };
     }
 
     await this.smsAuthService.sendOtp(phoneCountryCode, phoneNumber, otp);

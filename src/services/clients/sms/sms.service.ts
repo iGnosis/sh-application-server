@@ -8,9 +8,10 @@ export class SmsService {
   constructor(private config: ConfigService) {
     const token = config.get('TWILIO_AUTH_TOKEN');
     const sid = config.get('TWILIO_ACCOUNT_SID');
-    if (!token || !sid) {
-      throw new Error('Twilio API key tokens not set.');
+    try {
+      this.client = new Twilio(sid, token);
+    } catch (err) {
+      console.error('Error initializing Twilio client:', err);
     }
-    this.client = new Twilio(sid, token);
   }
 }
