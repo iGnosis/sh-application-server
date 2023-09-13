@@ -1,12 +1,11 @@
 version: '3.9'
 services:
-  sh_application_server_prod:
+  sh_application_server:
     build:
       context: .
       dockerfile: docker/Local.Dockerfile
     profiles:
       - prod
-    env_file: .env
     environment:
       - ENV_NAME=${APP_ENV_NAME}
       - NEST_SERVER_PORT=${APP_NEST_SERVER_PORT}
