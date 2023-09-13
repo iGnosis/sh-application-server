@@ -1,6 +1,7 @@
 version: '3.9'
 services:
   sh_application_server:
+    container_name: application_server
     build:
       context: .
       dockerfile: docker/Local.Dockerfile
