@@ -1,5 +1,8 @@
 # sh-application-server ![check-code-coverage](https://img.shields.io/badge/code--coverage-25.36%25-red)
 
+Please refer to the [documentation](https://docs.pointmotion.us) for more information.
+
+
 ## Installation steps
 
 ## Install Docker and Docker Compose
